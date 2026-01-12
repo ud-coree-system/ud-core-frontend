@@ -27,9 +27,6 @@ export default function LaporanPage() {
 
     // Filters
     const [filterPeriode, setFilterPeriode] = useState('');
-    const [filterDapur, setFilterDapur] = useState('');
-    const [startDate, setStartDate] = useState('');
-    const [endDate, setEndDate] = useState('');
 
     // Data
     const [transactions, setTransactions] = useState([]);
@@ -49,7 +46,6 @@ export default function LaporanPage() {
             ]);
 
             if (periodeRes.data.success) setPeriodeList(periodeRes.data.data);
-            if (dapurRes.data.success) setDapurList(dapurRes.data.data);
             if (udRes.data.success) setUdList(udRes.data.data);
         } catch (error) {
             console.error('Failed to fetch options:', error);
@@ -63,9 +59,6 @@ export default function LaporanPage() {
                 limit: 1000,
                 status: 'completed',
                 periode_id: filterPeriode || undefined,
-                dapur_id: filterDapur || undefined,
-                tanggal_mulai: startDate || undefined,
-                tanggal_selesai: endDate || undefined,
             };
             const response = await transaksiAPI.getAll(params);
             if (response.data.success) {
@@ -195,6 +188,16 @@ export default function LaporanPage() {
         }
     };
 
+    // Helper to format date in Indonesian
+    const formatIndoDate = (date) => {
+        return new Intl.DateTimeFormat('id-ID', {
+            weekday: 'long',
+            day: 'numeric',
+            month: 'long',
+            year: 'numeric'
+        }).format(new Date(date));
+    };
+
     // Generate Excel Report
     const generateExcel = () => {
         const itemsByUD = getItemsByUD();
@@ -207,62 +210,177 @@ export default function LaporanPage() {
         try {
             const wb = XLSX.utils.book_new();
 
-            // Sheet 1: Data Pesanan (All transactions)
-            const allOrdersData = transactions.flatMap((trx) =>
-                trx.items?.map((item) => ({
-                    'Kode Transaksi': trx.kode_transaksi,
-                    'Tanggal': formatDateShort(trx.tanggal),
-                    'Dapur': trx.dapur_id?.nama_dapur || '-',
-                    'UD': item.ud_id?.nama_ud || '-',
-                    'Nama Barang': item.barang_id?.nama_barang || '-',
-                    'Satuan': item.barang_id?.satuan || '-',
-                    'Qty': item.qty,
-                    'Harga Jual': item.harga_jual,
-                    'Subtotal': item.subtotal_jual,
-                    'Harga Modal': item.harga_modal,
-                    'Total Modal': item.subtotal_modal,
-                    'Keuntungan': item.keuntungan,
-                })) || []
-            );
+            // Find selected period info
+            const period = filterPeriode ? periodeList.find(p => p._id === filterPeriode) : null;
+            const periodName = period ? period.nama_periode : 'Semua Periode';
+            const periodRange = period ? `(${formatDateShort(period.tanggal_mulai)} - ${formatDateShort(period.tanggal_selesai)})` : '';
 
-            const ws1 = XLSX.utils.json_to_sheet(allOrdersData);
-            XLSX.utils.book_append_sheet(wb, ws1, 'Data Pesanan');
+            // Calculate global totals
+            const totalJualAll = transactions.reduce((sum, trx) => sum + (trx.items?.reduce((s, i) => s + i.subtotal_jual, 0) || 0), 0);
+            const totalModalAll = transactions.reduce((sum, trx) => sum + (trx.items?.reduce((s, i) => s + i.subtotal_modal, 0) || 0), 0);
+            const totalUntungAll = transactions.reduce((sum, trx) => sum + (trx.items?.reduce((s, i) => s + i.keuntungan, 0) || 0), 0);
 
-            // Sheet per UD
-            itemsByUD.forEach((ud) => {
-                const udData = ud.items.map((item, idx) => ({
-                    'No': idx + 1,
-                    'Kode Transaksi': item.transaksi,
-                    'Tanggal': formatDateShort(item.tanggal),
-                    'Dapur': item.dapur || '-',
-                    'Nama Barang': item.barang_id?.nama_barang || '-',
-                    'Satuan': item.barang_id?.satuan || '-',
-                    'Qty': item.qty,
-                    'Harga Jual': item.harga_jual,
-                    'Subtotal': item.subtotal_jual,
-                }));
+            // --- Sheet 1: DATA PESANAN (Tidy Grouping) ---
+            const allOrdersAOA = [
+                [`LAPORAN PENJUALAN - ${periodName.toUpperCase()} ${periodRange}`],
+                [''],
+                ['RINGKASAN PERIODE'],
+                ['Total Penjualan', formatCurrency(totalJualAll)],
+                ['Total Modal', formatCurrency(totalModalAll)],
+                ['Total Keuntungan', formatCurrency(totalUntungAll)],
+                [''],
+                ['----------------------------------------------------------------------------------------------------------']
+            ];
 
-                // Add total row
-                udData.push({
-                    'No': '',
-                    'Kode Transaksi': '',
-                    'Tanggal': '',
-                    'Dapur': '',
-                    'Nama Barang': '',
-                    'Satuan': '',
-                    'Qty': '',
-                    'Harga Jual': 'TOTAL',
-                    'Subtotal': ud.totalJual,
+            // Group by date THEN by UD for strict clustering
+            const groupedData = {};
+            transactions.forEach(trx => {
+                const dateKey = trx.tanggal.split('T')[0];
+                if (!groupedData[dateKey]) groupedData[dateKey] = {};
+
+                trx.items?.forEach(item => {
+                    const udId = item.ud_id?._id || 'unknown';
+                    if (!groupedData[dateKey][udId]) {
+                        groupedData[dateKey][udId] = {
+                            nama_ud: item.ud_id?.nama_ud || 'Unknown UD',
+                            items: []
+                        };
+                    }
+                    groupedData[dateKey][udId].items.push(item);
+                });
+            });
+
+            // Sort dates descending (Newest first like in reference)
+            const sortedDates = Object.keys(groupedData).sort((a, b) => new Date(b) - new Date(a));
+
+            sortedDates.forEach(dateKey => {
+                const udGroups = groupedData[dateKey];
+
+                // Calculate date totals
+                let dateJual = 0;
+                let dateModal = 0;
+                let dateProfit = 0;
+                Object.values(udGroups).forEach(g => {
+                    g.items.forEach(i => {
+                        dateJual += i.subtotal_jual;
+                        dateModal += i.subtotal_modal;
+                        dateProfit += i.keuntungan;
+                    });
                 });
 
-                const wsUD = XLSX.utils.json_to_sheet(udData);
-                // Truncate sheet name to 31 chars (Excel limit)
-                const sheetName = ud.nama_ud.substring(0, 31);
+                // Date Summary Header (Tidy Layout)
+                allOrdersAOA.push(['']);
+                allOrdersAOA.push([formatDateShort(dateKey).toUpperCase()]);
+                allOrdersAOA.push([`Penjualan: ${formatCurrency(dateJual)}`]);
+                allOrdersAOA.push([`Modal: ${formatCurrency(dateModal)}`]);
+                allOrdersAOA.push([`Keuntungan: ${formatCurrency(dateProfit)}`]);
+
+                // Table Header
+                allOrdersAOA.push(['No', 'Nama Barang', 'Qty', 'Satuan', 'Harga Jual', 'Total Jual', 'Harga Modal', 'Total Modal', 'Keuntungan']);
+
+                const sortedUdIds = Object.keys(udGroups).sort((a, b) => udGroups[a].nama_ud.localeCompare(udGroups[b].nama_ud));
+
+                sortedUdIds.forEach(udId => {
+                    const group = udGroups[udId];
+                    allOrdersAOA.push([group.nama_ud.toUpperCase()]); // UD cluster header
+
+                    let udJual = 0;
+                    let udModal = 0;
+                    let udProfit = 0;
+
+                    group.items.forEach((item, idx) => {
+                        allOrdersAOA.push([
+                            idx + 1,
+                            item.barang_id?.nama_barang || '-',
+                            item.qty,
+                            item.barang_id?.satuan || '-',
+                            item.harga_jual,
+                            item.subtotal_jual,
+                            item.harga_modal,
+                            item.subtotal_modal,
+                            item.keuntungan
+                        ]);
+                        udJual += item.subtotal_jual;
+                        udModal += item.subtotal_modal;
+                        udProfit += item.keuntungan;
+                    });
+
+                    // UD Subtotal
+                    allOrdersAOA.push([`Subtotal ${group.nama_ud}`, '', '', '', '', udJual, '', udModal, udProfit]);
+                });
+
+                // Date Footer Total
+                allOrdersAOA.push([`TOTAL ${formatDateShort(dateKey)}`, '', '', '', '', dateJual, '', dateModal, dateProfit]);
+                allOrdersAOA.push(['----------------------------------------------------------------------------------------------------------']);
+            });
+
+            // Final Recap Block
+            allOrdersAOA.push(['']);
+            allOrdersAOA.push(['TOTAL KESELURUHAN (GRAND TOTAL)']);
+            allOrdersAOA.push(['Rekapitulasi seluruh periode yang dipilih']);
+            allOrdersAOA.push(['Total Penjualan', formatCurrency(totalJualAll)]);
+            allOrdersAOA.push(['Total Modal', formatCurrency(totalModalAll)]);
+            allOrdersAOA.push(['Total Keuntungan', formatCurrency(totalUntungAll)]);
+
+            const ws1 = XLSX.utils.aoa_to_sheet(allOrdersAOA);
+
+            // Set Column Widths for professional look
+            ws1['!cols'] = [
+                { wch: 30 }, // No / Label / UD
+                { wch: 40 }, // Nama Barang
+                { wch: 8 },  // Qty
+                { wch: 10 }, // Satuan
+                { wch: 15 }, // Harga Jual
+                { wch: 18 }, // Total Jual
+                { wch: 15 }, // Harga Modal
+                { wch: 18 }, // Total Modal
+                { wch: 15 }, // Keuntungan
+            ];
+
+            XLSX.utils.book_append_sheet(wb, ws1, 'DATA PESANAN');
+
+            // --- Sheets per UD (Lampiran) ---
+            itemsByUD.forEach((ud) => {
+                const udAOA = [
+                    [`NOTE : ${ud.nama_ud.toUpperCase()}`],
+                    [`AN. ${ud.items[0]?.ud_id?.nama_pemilik || '-'}`],
+                    [`NO REK ${ud.items[0]?.ud_id?.bank || ''} : ${ud.items[0]?.ud_id?.no_rekening || '-'}`],
+                    [''],
+                    [`KBLI MELIPUTI : ${(ud.items[0]?.ud_id?.kbli || []).join(', ')}`],
+                    [''],
+                    ['No.', 'Nama Barang', 'Qty', 'Satuan', 'Harga Jual Suplier', 'Total Harga Jual Suplier', 'Harga Modal Suplier', 'Jumlah Modal Suplier', 'Keuntungan']
+                ];
+
+                ud.items.forEach((item, idx) => {
+                    udAOA.push([
+                        idx + 1,
+                        item.barang_id?.nama_barang || '-',
+                        item.qty,
+                        item.barang_id?.satuan || '-',
+                        item.harga_jual,
+                        item.subtotal_jual,
+                        item.harga_modal,
+                        item.subtotal_modal,
+                        item.keuntungan
+                    ]);
+                });
+
+                udAOA.push([
+                    '', 'TOTAL', '', '', '', ud.totalJual, '', ud.totalModal, ud.totalKeuntungan
+                ]);
+
+                const wsUD = XLSX.utils.aoa_to_sheet(udAOA);
+                wsUD['!cols'] = [
+                    { wch: 5 }, { wch: 35 }, { wch: 8 }, { wch: 10 }, { wch: 15 }, { wch: 18 }, { wch: 15 }, { wch: 18 }, { wch: 15 }
+                ];
+
+                let sheetName = `LAP. UD. ${ud.nama_ud}`.substring(0, 31).replace(/[\[\]\*\?\/\\]/g, '');
                 XLSX.utils.book_append_sheet(wb, wsUD, sheetName);
             });
 
             // Save
-            const fileName = `Laporan_Penjualan_${formatDateShort(new Date()).replace(/\//g, '-')}.xlsx`;
+            const timestamp = new Date().toISOString().split('T')[0];
+            const fileName = `Laporan_Penjualan_${periodName.replace(/\s+/g, '_')}_${timestamp}.xlsx`;
             XLSX.writeFile(wb, fileName);
             toast.success('Laporan Excel berhasil dibuat');
         } catch (error) {
@@ -288,62 +406,20 @@ export default function LaporanPage() {
             {/* Filters */}
             <div className="bg-white rounded-xl border border-gray-200 p-6">
                 <h3 className="font-semibold text-gray-900 mb-4">Filter Data</h3>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                    {/* Periode */}
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Periode</label>
-                        <select
-                            value={filterPeriode}
-                            onChange={(e) => setFilterPeriode(e.target.value)}
-                            className="w-full px-3 py-2 border border-gray-200 rounded-lg
+                {/* Periode */}
+                <div className="col-span-full">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Periode</label>
+                    <select
+                        value={filterPeriode}
+                        onChange={(e) => setFilterPeriode(e.target.value)}
+                        className="w-full px-3 py-2 border border-gray-200 rounded-lg
                        focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 bg-white"
-                        >
-                            <option value="">Semua Periode</option>
-                            {periodeList.map((p) => (
-                                <option key={p._id} value={p._id}>{p.nama_periode}</option>
-                            ))}
-                        </select>
-                    </div>
-
-                    {/* Dapur */}
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Dapur</label>
-                        <select
-                            value={filterDapur}
-                            onChange={(e) => setFilterDapur(e.target.value)}
-                            className="w-full px-3 py-2 border border-gray-200 rounded-lg
-                       focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 bg-white"
-                        >
-                            <option value="">Semua Dapur</option>
-                            {dapurList.map((d) => (
-                                <option key={d._id} value={d._id}>{d.nama_dapur}</option>
-                            ))}
-                        </select>
-                    </div>
-
-                    {/* Start Date */}
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Dari Tanggal</label>
-                        <input
-                            type="date"
-                            value={startDate}
-                            onChange={(e) => setStartDate(e.target.value)}
-                            className="w-full px-3 py-2 border border-gray-200 rounded-lg
-                       focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
-                        />
-                    </div>
-
-                    {/* End Date */}
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Sampai Tanggal</label>
-                        <input
-                            type="date"
-                            value={endDate}
-                            onChange={(e) => setEndDate(e.target.value)}
-                            className="w-full px-3 py-2 border border-gray-200 rounded-lg
-                       focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
-                        />
-                    </div>
+                    >
+                        <option value="">Semua Periode</option>
+                        {periodeList.map((p) => (
+                            <option key={p._id} value={p._id}>{p.nama_periode}</option>
+                        ))}
+                    </select>
                 </div>
 
                 <div className="flex justify-end mt-4">
