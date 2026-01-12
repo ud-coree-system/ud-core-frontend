@@ -9,6 +9,7 @@ import {
     Building2,
     Loader2,
     X,
+    Eye,
 } from 'lucide-react';
 import { udAPI } from '@/lib/api';
 import { useToast } from '@/contexts/ToastContext';
@@ -36,6 +37,7 @@ const INITIAL_FORM = {
     bank: '',
     no_rekening: '',
     kbli: [],
+    kbliLainnya: '',
     isActive: true,
 };
 
@@ -58,6 +60,10 @@ export default function UDManagementPage() {
     const [editingItem, setEditingItem] = useState(null);
     const [formData, setFormData] = useState(INITIAL_FORM);
     const [formLoading, setFormLoading] = useState(false);
+
+    // View modal state
+    const [viewModalOpen, setViewModalOpen] = useState(false);
+    const [viewingItem, setViewingItem] = useState(null);
 
     // Delete state
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -104,13 +110,23 @@ export default function UDManagementPage() {
 
     const openEditModal = (item) => {
         setEditingItem(item);
+
+        // Extract custom KBLI (value that's not in KBLI_OPTIONS)
+        const kbliArr = item.kbli || [];
+        const kbliLainnya = kbliArr.find(k => !KBLI_OPTIONS.includes(k) && k !== 'Lainnya') || '';
+
+        // Check if "Lainnya" should be marked as checked
+        const processedKbli = kbliArr.map(k => KBLI_OPTIONS.includes(k) ? k : 'Lainnya');
+        const uniqueKbli = [...new Set(processedKbli)];
+
         setFormData({
             nama_ud: item.nama_ud || '',
             alamat: item.alamat || '',
             nama_pemilik: item.nama_pemilik || '',
             bank: item.bank || '',
             no_rekening: item.no_rekening || '',
-            kbli: item.kbli || [],
+            kbli: uniqueKbli,
+            kbliLainnya: kbliLainnya,
             isActive: item.isActive ?? true,
         });
         setModalOpen(true);
@@ -122,6 +138,16 @@ export default function UDManagementPage() {
         setFormData(INITIAL_FORM);
     };
 
+    const openViewModal = (item) => {
+        setViewingItem(item);
+        setViewModalOpen(true);
+    };
+
+    const closeViewModal = () => {
+        setViewModalOpen(false);
+        setViewingItem(null);
+    };
+
     const handleFormChange = (e) => {
         const { name, value, type, checked } = e.target;
         setFormData((prev) => ({
@@ -131,12 +157,19 @@ export default function UDManagementPage() {
     };
 
     const handleKbliChange = (kbli) => {
-        setFormData((prev) => ({
-            ...prev,
-            kbli: prev.kbli.includes(kbli)
+        setFormData((prev) => {
+            const isRemoving = prev.kbli.includes(kbli);
+            const newKbli = isRemoving
                 ? prev.kbli.filter((k) => k !== kbli)
-                : [...prev.kbli, kbli],
-        }));
+                : [...prev.kbli, kbli];
+
+            return {
+                ...prev,
+                kbli: newKbli,
+                // Clear kbliLainnya if "Lainnya" is unchecked
+                kbliLainnya: kbli === 'Lainnya' && isRemoving ? '' : prev.kbliLainnya
+            };
+        });
     };
 
     const handleSubmit = async (e) => {
@@ -150,11 +183,24 @@ export default function UDManagementPage() {
         try {
             setFormLoading(true);
 
+            // Merge kbliLainnya into kbli array if "Lainnya" is checked
+            const finalKbli = formData.kbli.map(k => {
+                if (k === 'Lainnya') return formData.kbliLainnya;
+                return k;
+            }).filter(k => k && k.trim() !== '');
+
+            const submissionData = {
+                ...formData,
+                kbli: finalKbli
+            };
+            // Remove helper field before sending to API
+            delete submissionData.kbliLainnya;
+
             if (editingItem) {
-                await udAPI.update(editingItem._id, formData);
+                await udAPI.update(editingItem._id, submissionData);
                 toast.success('UD berhasil diperbarui');
             } else {
-                await udAPI.create(formData);
+                await udAPI.create(submissionData);
                 toast.success('UD berhasil ditambahkan');
             }
 
@@ -304,6 +350,13 @@ export default function UDManagementPage() {
                                             <td className="px-6 py-4 whitespace-nowrap">
                                                 <div className="flex items-center justify-center gap-2">
                                                     <button
+                                                        onClick={() => openViewModal(item)}
+                                                        className="p-2 hover:bg-green-50 rounded-lg text-green-600 transition-colors"
+                                                        title="Lihat Detail"
+                                                    >
+                                                        <Eye className="w-4 h-4" />
+                                                    </button>
+                                                    <button
                                                         onClick={() => openEditModal(item)}
                                                         className="p-2 hover:bg-blue-50 rounded-lg text-blue-600 transition-colors"
                                                         title="Edit"
@@ -452,6 +505,26 @@ export default function UDManagementPage() {
                                 </label>
                             ))}
                         </div>
+
+                        {/* Custom KBLI Input */}
+                        {formData.kbli.includes('Lainnya') && (
+                            <div className="mt-3 animate-in fade-in slide-in-from-top-1 duration-200">
+                                <label className="block text-xs font-semibold text-blue-600 mb-1 uppercase tracking-wider">
+                                    Sebutkan KBLI Lainnya
+                                </label>
+                                <input
+                                    type="text"
+                                    name="kbliLainnya"
+                                    value={formData.kbliLainnya}
+                                    onChange={handleFormChange}
+                                    placeholder="Masukkan nama KBLI lainnya..."
+                                    className="w-full px-3 py-2 border border-blue-200 bg-blue-50/30 rounded-lg
+                                     focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500
+                                     placeholder:text-gray-400 text-sm"
+                                    autoFocus
+                                />
+                            </div>
+                        )}
                     </div>
 
                     {/* Status */}
@@ -492,6 +565,128 @@ export default function UDManagementPage() {
                         </button>
                     </div>
                 </form>
+            </Modal>
+
+            {/* View Detail Modal */}
+            <Modal
+                isOpen={viewModalOpen}
+                onClose={closeViewModal}
+                title="Detail UD"
+                size="lg"
+            >
+                {viewingItem && (
+                    <div className="space-y-6">
+                        {/* Header Section */}
+                        <div className="pb-4 border-b border-gray-200">
+                            <div className="flex items-start justify-between">
+                                <div>
+                                    <h3 className="text-xl font-bold text-gray-900">{viewingItem.nama_ud}</h3>
+                                    <div className="flex items-center gap-2 mt-2">
+                                        <span className="font-mono text-sm bg-blue-100 px-3 py-1 rounded font-medium text-blue-800">
+                                            {viewingItem.kode_ud}
+                                        </span>
+                                        <span className={`inline-block px-3 py-1 text-xs font-semibold rounded-full
+                                            ${viewingItem.isActive ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}
+                                        `}>
+                                            {viewingItem.isActive ? 'Aktif' : 'Nonaktif'}
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Basic Information */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">
+                                    Alamat
+                                </label>
+                                <p className="text-gray-900">{viewingItem.alamat || '-'}</p>
+                            </div>
+                            <div>
+                                <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">
+                                    Nama Pemilik
+                                </label>
+                                <p className="text-gray-900">{viewingItem.nama_pemilik || '-'}</p>
+                            </div>
+                        </div>
+
+                        {/* Banking Information */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
+                            <div>
+                                <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">
+                                    Bank
+                                </label>
+                                <p className="text-gray-900">{viewingItem.bank || '-'}</p>
+                            </div>
+                            <div>
+                                <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">
+                                    No. Rekening
+                                </label>
+                                <p className="text-gray-900 font-mono">{viewingItem.no_rekening || '-'}</p>
+                            </div>
+                        </div>
+
+                        {/* KBLI Categories */}
+                        <div className="pt-2">
+                            <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
+                                KBLI (Kategori Barang)
+                            </label>
+                            {viewingItem.kbli && viewingItem.kbli.length > 0 ? (
+                                <div className="flex flex-wrap gap-2">
+                                    {viewingItem.kbli.map((kbli, index) => (
+                                        <span
+                                            key={index}
+                                            className="inline-flex items-center px-3 py-1.5 rounded-lg text-sm font-medium
+                                                bg-gradient-to-r from-blue-50 to-indigo-50 text-blue-700 border border-blue-200"
+                                        >
+                                            {kbli}
+                                        </span>
+                                    ))}
+                                </div>
+                            ) : (
+                                <p className="text-gray-500 italic">Tidak ada kategori</p>
+                            )}
+                        </div>
+
+                        {/* Metadata */}
+                        {(viewingItem.createdAt || viewingItem.updatedAt) && (
+                            <div className="pt-4 border-t border-gray-200">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs text-gray-500">
+                                    {viewingItem.createdAt && (
+                                        <div>
+                                            <span className="font-semibold">Dibuat: </span>
+                                            {new Date(viewingItem.createdAt).toLocaleString('id-ID', {
+                                                dateStyle: 'medium',
+                                                timeStyle: 'short'
+                                            })}
+                                        </div>
+                                    )}
+                                    {viewingItem.updatedAt && (
+                                        <div>
+                                            <span className="font-semibold">Diperbarui: </span>
+                                            {new Date(viewingItem.updatedAt).toLocaleString('id-ID', {
+                                                dateStyle: 'medium',
+                                                timeStyle: 'short'
+                                            })}
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Close Button */}
+                        <div className="pt-4 border-t border-gray-200">
+                            <button
+                                onClick={closeViewModal}
+                                className="w-full px-4 py-2.5 bg-gray-100 text-gray-700 rounded-lg font-medium
+                                    hover:bg-gray-200 transition-colors"
+                            >
+                                Tutup
+                            </button>
+                        </div>
+                    </div>
+                )}
             </Modal>
 
             {/* Delete Confirm Dialog */}
