@@ -5,8 +5,12 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { authAPI } from '@/lib/api';
 import { useToast } from '@/contexts/ToastContext';
-import { Eye, EyeOff, UserPlus, Loader2 } from 'lucide-react';
 import { getErrorMessage } from '@/lib/utils';
+import AuthLayout from '@/componentsv2/AuthLayout';
+import GlassCard from '@/componentsv2/GlassCard';
+import InputGlass from '@/componentsv2/InputGlass';
+import GradientButton from '@/componentsv2/GradientButton';
+import Logo from '@/componentsv2/Logo';
 
 export default function RegisterPage() {
     const router = useRouter();
@@ -82,174 +86,131 @@ export default function RegisterPage() {
     };
 
     return (
-        <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-600 via-purple-600 to-indigo-700 p-4 relative overflow-hidden">
-            {/* Background Pattern */}
-            <div className="absolute inset-0 overflow-hidden pointer-events-none">
-                <div className="absolute -top-40 -right-40 w-80 h-80 bg-white/10 rounded-full blur-3xl"></div>
-                <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-white/10 rounded-full blur-3xl"></div>
-                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-white/5 rounded-full blur-3xl"></div>
-            </div>
+        <AuthLayout>
+            <GlassCard>
+                {/* Header with Logo */}
+                <div style={{
+                    marginBottom: '32px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between'
+                }}>
+                    <Logo />
+                </div>
 
-            {/* Register Card */}
-            <div className="relative z-10 w-full max-w-md">
-                <div className="bg-white/10 backdrop-blur-xl rounded-3xl shadow-2xl border border-white/20 p-6 sm:p-8 md:p-10">
-                    {/* Logo / Title */}
-                    <div className="text-center mb-8">
-                        <div className="w-16 h-16 bg-white/20 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg">
-                            <span className="text-2xl font-bold text-white">UD</span>
-                        </div>
-                        <h1 className="text-2xl font-bold text-white mb-2">
-                            Buat Akun Baru
-                        </h1>
-                        <p className="text-white/70 text-sm">
-                            Daftar untuk mengakses Sistem UD Management
-                        </p>
-                    </div>
-
-                    {/* Form */}
-                    <form onSubmit={handleSubmit} className="space-y-4">
-                        {/* Username */}
-                        <div>
-                            <label className="block text-sm font-medium text-white/90 mb-2">
-                                Username
-                            </label>
-                            <input
-                                type="text"
-                                name="username"
-                                value={formData.username}
-                                onChange={handleChange}
-                                placeholder="Masukkan username"
-                                className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl
-                         text-white placeholder-white/50 focus:outline-none focus:ring-2 
-                         focus:ring-white/30 focus:border-transparent transition-all"
-                                disabled={loading}
-                            />
-                        </div>
-
-                        {/* Email */}
-                        <div>
-                            <label className="block text-sm font-medium text-white/90 mb-2">
-                                Email
-                            </label>
-                            <input
-                                type="email"
-                                name="email"
-                                value={formData.email}
-                                onChange={handleChange}
-                                placeholder="Masukkan email"
-                                className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl
-                         text-white placeholder-white/50 focus:outline-none focus:ring-2 
-                         focus:ring-white/30 focus:border-transparent transition-all"
-                                disabled={loading}
-                            />
-                        </div>
-
-                        {/* Password */}
-                        <div>
-                            <label className="block text-sm font-medium text-white/90 mb-2">
-                                Password
-                            </label>
-                            <div className="relative">
-                                <input
-                                    type={showPassword ? 'text' : 'password'}
-                                    name="password"
-                                    value={formData.password}
-                                    onChange={handleChange}
-                                    placeholder="Minimal 6 karakter"
-                                    className="w-full px-4 py-3 pr-12 bg-white/10 border border-white/20 rounded-xl
-                           text-white placeholder-white/50 focus:outline-none focus:ring-2 
-                           focus:ring-white/30 focus:border-transparent transition-all"
-                                    disabled={loading}
-                                />
-                                <button
-                                    type="button"
-                                    onClick={() => setShowPassword(!showPassword)}
-                                    className="absolute right-4 top-1/2 -translate-y-1/2 text-white/60 hover:text-white transition-colors"
-                                    tabIndex={-1}
-                                >
-                                    {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                                </button>
-                            </div>
-                        </div>
-
-                        {/* Confirm Password */}
-                        <div>
-                            <label className="block text-sm font-medium text-white/90 mb-2">
-                                Konfirmasi Password
-                            </label>
-                            <input
-                                type={showPassword ? 'text' : 'password'}
-                                name="confirmPassword"
-                                value={formData.confirmPassword}
-                                onChange={handleChange}
-                                placeholder="Ulangi password"
-                                className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl
-                         text-white placeholder-white/50 focus:outline-none focus:ring-2 
-                         focus:ring-white/30 focus:border-transparent transition-all"
-                                disabled={loading}
-                            />
-                        </div>
-
-                        {/* Role */}
-                        <div>
-                            <label className="block text-sm font-medium text-white/90 mb-2">
-                                Role
-                            </label>
-                            <select
-                                name="role"
-                                value={formData.role}
-                                onChange={handleChange}
-                                className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl
-                         text-white focus:outline-none focus:ring-2 
-                         focus:ring-white/30 focus:border-transparent transition-all appearance-none"
-                                disabled={loading}
-                            >
-                                <option value="admin" className="text-gray-900">Admin</option>
-                                <option value="ud_operator" className="text-gray-900">UD Operator</option>
-                            </select>
-                        </div>
-
-                        {/* Submit Button */}
-                        <button
-                            type="submit"
-                            disabled={loading}
-                            className="w-full py-3 px-4 bg-white text-indigo-600 font-semibold rounded-xl
-                       hover:bg-white/90 focus:outline-none focus:ring-2 focus:ring-white/50
-                       disabled:opacity-70 disabled:cursor-not-allowed transition-all
-                       flex items-center justify-center gap-2 shadow-lg mt-6"
-                        >
-                            {loading ? (
-                                <>
-                                    <Loader2 className="w-5 h-5 animate-spin" />
-                                    Memproses...
-                                </>
-                            ) : (
-                                <>
-                                    <UserPlus className="w-5 h-5" />
-                                    Daftar
-                                </>
-                            )}
-                        </button>
-                    </form>
-
-                    {/* Login Link */}
-                    <div className="mt-6 text-center">
-                        <p className="text-white/70 text-sm">
-                            Sudah punya akun?{' '}
-                            <Link href="/auth/login" className="text-white font-medium hover:underline">
-                                Masuk di sini
-                            </Link>
-                        </p>
-                    </div>
-
-                    {/* Footer */}
-                    <div className="mt-6 text-center">
-                        <p className="text-white/50 text-xs">
-                            © 2026 Sistem UD Management
-                        </p>
+                {/* Title Text */}
+                <div style={{ marginBottom: '32px' }}>
+                    <h1 style={{
+                        fontSize: '1.875rem',
+                        fontWeight: 'bold',
+                        color: '#334155',
+                        marginBottom: '8px',
+                        margin: 0
+                    }}>Buat Akun Baru</h1>
+                    <div style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                        color: 'rgba(59, 130, 246, 0.9)',
+                        fontSize: '14px',
+                        fontWeight: '500',
+                        marginTop: '8px'
+                    }}>
+                        <span className="material-icons-round" style={{ fontSize: '14px' }}>person_add</span>
+                        <p style={{ margin: 0, letterSpacing: '0.025em' }}>Daftar Sistem UD Management</p>
                     </div>
                 </div>
-            </div>
-        </div>
+
+                {/* Form */}
+                <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                    <InputGlass
+                        label="Username"
+                        icon="person"
+                        name="username"
+                        value={formData.username}
+                        onChange={handleChange}
+                        placeholder="Masukkan username"
+                        disabled={loading}
+                    />
+
+                    <InputGlass
+                        label="Email"
+                        icon="email"
+                        type="email"
+                        name="email"
+                        value={formData.email}
+                        onChange={handleChange}
+                        placeholder="Masukkan email"
+                        disabled={loading}
+                    />
+
+                    <InputGlass
+                        label="Password"
+                        icon="lock"
+                        type={showPassword ? 'text' : 'password'}
+                        name="password"
+                        value={formData.password}
+                        onChange={handleChange}
+                        placeholder="Minimal 6 karakter"
+                        disabled={loading}
+                        showToggle
+                        showPassword={showPassword}
+                        onToggle={() => setShowPassword(!showPassword)}
+                    />
+
+                    <InputGlass
+                        label="Konfirmasi Password"
+                        icon="lock_reset"
+                        type={showPassword ? 'text' : 'password'}
+                        name="confirmPassword"
+                        value={formData.confirmPassword}
+                        onChange={handleChange}
+                        placeholder="Ulangi password"
+                        disabled={loading}
+                    />
+
+                    <InputGlass
+                        label="Role"
+                        icon="badge"
+                        name="role"
+                        value={formData.role}
+                        onChange={handleChange}
+                        disabled={loading}
+                        options={[
+                            { value: 'admin', label: 'Admin' },
+                            { value: 'ud_operator', label: 'UD Operator' }
+                        ]}
+                    />
+
+                    <GradientButton loading={loading} icon="person_add">
+                        Daftar
+                    </GradientButton>
+                </form>
+
+                {/* Footer Links */}
+                <div style={{ textAlign: 'center', display: 'flex', flexDirection: 'column', gap: '24px', marginTop: '32px' }}>
+                    <p style={{ color: '#475569', margin: 0, fontSize: '14px' }}>
+                        Sudah punya akun?{' '}
+                        <Link href="/auth/login" style={{
+                            color: '#2563eb',
+                            fontWeight: '600',
+                            textDecoration: 'none',
+                            transition: 'color 0.3s ease'
+                        }}>Masuk di sini</Link>
+                    </p>
+                    <footer style={{ paddingTop: '16px' }}>
+                        <p style={{
+                            fontSize: '10px',
+                            color: '#64748b',
+                            textTransform: 'uppercase',
+                            letterSpacing: '0.2em',
+                            margin: 0
+                        }}>
+                            © 2026 Sistem UD Management • All rights reserved
+                        </p>
+                    </footer>
+                </div>
+            </GlassCard>
+        </AuthLayout>
     );
 }
