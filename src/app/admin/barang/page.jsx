@@ -26,11 +26,13 @@ const SATUAN_OPTIONS = [
     { value: 'tray', label: 'Tray' },
     { value: 'gln', label: 'Galon (gln)' },
     { value: 'unit', label: 'Unit' },
+    { value: 'lainnya', label: 'Lainnya (Custom)' },
 ];
 
 const INITIAL_FORM = {
     nama_barang: '',
     satuan: 'pcs',
+    custom_satuan: '',
     harga_jual: '',
     harga_modal: '',
     ud_id: '',
@@ -125,9 +127,12 @@ export default function BarangManagementPage() {
 
     const openEditModal = (item) => {
         setEditingItem(item);
+        // Check if satuan is a custom value (not in predefined options)
+        const isCustomSatuan = !SATUAN_OPTIONS.some(opt => opt.value === item.satuan);
         setFormData({
             nama_barang: item.nama_barang || '',
-            satuan: item.satuan || 'pcs',
+            satuan: isCustomSatuan ? 'lainnya' : (item.satuan || 'pcs'),
+            custom_satuan: isCustomSatuan ? item.satuan : '',
             harga_jual: item.harga_jual?.toString() || '',
             harga_modal: item.harga_modal?.toString() || '',
             ud_id: item.ud_id?._id || '',
@@ -157,6 +162,10 @@ export default function BarangManagementPage() {
             toast.warning('Nama barang harus diisi');
             return;
         }
+        if (formData.satuan === 'lainnya' && !formData.custom_satuan.trim()) {
+            toast.warning('Satuan custom harus diisi');
+            return;
+        }
         if (!formData.harga_jual || parseFloat(formData.harga_jual) <= 0) {
             toast.warning('Harga jual harus diisi dan lebih dari 0');
             return;
@@ -171,9 +180,12 @@ export default function BarangManagementPage() {
 
             const payload = {
                 ...formData,
+                satuan: formData.satuan === 'lainnya' ? formData.custom_satuan.trim() : formData.satuan,
                 harga_jual: parseFloat(formData.harga_jual),
                 harga_modal: formData.harga_modal ? parseFloat(formData.harga_modal) : 0,
             };
+            // Remove custom_satuan from payload
+            delete payload.custom_satuan;
 
             if (editingItem) {
                 await barangAPI.update(editingItem._id, payload);
@@ -267,6 +279,34 @@ export default function BarangManagementPage() {
                     </div>
                 </div>
             </div>
+
+            {/* UD Filter Indicator */}
+            {filterUD && (
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                    <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                                <Filter className="w-5 h-5 text-blue-600" />
+                            </div>
+                            <div>
+                                <p className="text-sm text-blue-600 font-medium">Filter Aktif</p>
+                                <p className="text-gray-900 font-semibold">
+                                    {udList.find(ud => ud._id === filterUD)?.nama_ud || 'UD'}
+                                </p>
+                                <p className="text-xs text-gray-500">
+                                    Menampilkan barang dari UD ini saja
+                                </p>
+                            </div>
+                        </div>
+                        <button
+                            onClick={() => setFilterUD('')}
+                            className="px-4 py-2 text-sm font-medium text-blue-600 hover:bg-blue-100 rounded-lg transition-colors"
+                        >
+                            Hapus Filter
+                        </button>
+                    </div>
+                </div>
+            )}
 
             {/* Table */}
             <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
@@ -433,6 +473,24 @@ export default function BarangManagementPage() {
                         </select>
                     </div>
 
+                    {/* Custom Satuan Input - Show when 'lainnya' is selected */}
+                    {formData.satuan === 'lainnya' && (
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                                Satuan Custom <span className="text-red-500">*</span>
+                            </label>
+                            <input
+                                type="text"
+                                name="custom_satuan"
+                                value={formData.custom_satuan}
+                                onChange={handleFormChange}
+                                placeholder="Contoh: box, pak, bal, dll"
+                                className="w-full px-3 py-2 border border-gray-200 rounded-lg
+                           focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                            />
+                        </div>
+                    )}
+
                     {/* Harga Jual & Modal */}
                     <div className="grid grid-cols-2 gap-4">
                         <div>
@@ -446,7 +504,7 @@ export default function BarangManagementPage() {
                                 onChange={handleFormChange}
                                 placeholder="0"
                                 min="0"
-                                step="100"
+                                step="1"
                                 className="w-full px-3 py-2 border border-gray-200 rounded-lg
                          focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
                             />
@@ -462,7 +520,7 @@ export default function BarangManagementPage() {
                                 onChange={handleFormChange}
                                 placeholder="0"
                                 min="0"
-                                step="100"
+                                step="1"
                                 className="w-full px-3 py-2 border border-gray-200 rounded-lg
                          focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
                             />
