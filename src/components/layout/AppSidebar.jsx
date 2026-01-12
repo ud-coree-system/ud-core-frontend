@@ -60,8 +60,13 @@ const transactionItems = [
     },
     {
         icon: FileBarChart2,
-        name: 'Laporan',
+        name: 'Cetak Laporan',
         path: '/admin/laporan',
+    },
+    {
+        icon: ClipboardList,
+        name: 'Laporan Rekap',
+        path: '/admin/laporan/rekap',
     },
 ];
 

@@ -58,9 +58,14 @@ const menuItems = [
         href: '/admin/transaksi',
     },
     {
-        title: 'Laporan',
+        title: 'Cetak Laporan',
         icon: FileBarChart2,
         href: '/admin/laporan',
+    },
+    {
+        title: 'Laporan Rekap',
+        icon: ClipboardList,
+        href: '/admin/laporan/rekap',
     },
     {
         title: 'Activity Logs',
