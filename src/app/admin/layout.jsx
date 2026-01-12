@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import Sidebar from '@/components/admin/Sidebar';
@@ -10,6 +10,7 @@ export default function AdminLayout({ children }) {
     const router = useRouter();
     const pathname = usePathname();
     const { user, loading } = useAuth();
+    const [isCollapsed, setIsCollapsed] = useState(false);
 
     useEffect(() => {
         if (!loading && !user) {
@@ -33,12 +34,16 @@ export default function AdminLayout({ children }) {
     }
 
     return (
-        <div className="min-h-screen bg-gray-50 flex">
+        <div className="min-h-screen bg-gray-50 flex overflow-x-hidden">
             {/* Sidebar */}
-            <Sidebar currentPath={pathname} />
+            <Sidebar
+                currentPath={pathname}
+                isCollapsed={isCollapsed}
+                setIsCollapsed={setIsCollapsed}
+            />
 
             {/* Main Content */}
-            <div className="flex-1 flex flex-col min-h-screen lg:ml-64">
+            <div className="flex-1 flex flex-col min-h-screen min-w-0 transition-all duration-300">
                 {/* Header */}
                 <Header />
 
