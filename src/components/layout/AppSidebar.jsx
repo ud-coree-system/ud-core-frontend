@@ -84,11 +84,27 @@ const AppSidebar = () => {
     const { isAdmin } = useAuth();
     const pathname = usePathname();
 
+    // Collect all menu paths to check against
+    const allMenuPaths = [
+        ...navItems.map(item => item.path),
+        ...transactionItems.map(item => item.path),
+        ...othersItems.map(item => item.path),
+    ];
+
     const isActive = useCallback((path) => {
         if (path === '/admin') {
             return pathname === '/admin';
         }
-        return pathname.startsWith(path);
+        // Exact match
+        if (pathname === path) {
+            return true;
+        }
+        // If pathname is itself a menu item, don't activate other items
+        if (allMenuPaths.includes(pathname)) {
+            return false;
+        }
+        // Check if it's a subpath (must have a slash after the path)
+        return pathname.startsWith(path + '/');
     }, [pathname]);
 
     const renderMenuItem = (item) => {

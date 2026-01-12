@@ -50,11 +50,26 @@ export default function SidebarV2({ currentPath, isCollapsed, setIsCollapsed }) 
     const { isAdmin } = useAuth();
     const [mobileOpen, setMobileOpen] = useState(false);
 
+    // Collect all menu paths to check against
+    const allMenuPaths = [
+        ...menuGroups.flatMap(group => group.items.map(item => item.href)),
+        ...bottomItems.map(item => item.href),
+    ];
+
     const isActive = (href) => {
         if (href === '/admin') {
             return currentPath === '/admin';
         }
-        return currentPath.startsWith(href);
+        // Exact match
+        if (currentPath === href) {
+            return true;
+        }
+        // If currentPath is itself a menu item, don't activate other items
+        if (allMenuPaths.includes(currentPath)) {
+            return false;
+        }
+        // Check if it's a subpath (must have a slash after the href)
+        return currentPath.startsWith(href + '/');
     };
 
     const NavItem = ({ item, isMobile = false }) => {
