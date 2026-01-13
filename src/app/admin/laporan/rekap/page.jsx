@@ -16,6 +16,8 @@ import {
     ChevronDown,
     ChevronUp,
 } from 'lucide-react';
+import { jsPDF } from 'jspdf';
+import autoTable from 'jspdf-autotable';
 import { periodeAPI, transaksiAPI, udAPI } from '@/lib/api';
 import { useToast } from '@/contexts/ToastContext';
 import { getErrorMessage, formatCurrency, formatDateShort } from '@/lib/utils';
@@ -35,6 +37,7 @@ export default function LaporanRekapPage() {
     // Data
     const [transactions, setTransactions] = useState([]);
     const [loading, setLoading] = useState(false);
+    const [generating, setGenerating] = useState(false);
     const [groupedData, setGroupedData] = useState({});
     const [selectedUDData, setSelectedUDData] = useState(null);
 
@@ -185,6 +188,253 @@ export default function LaporanRekapPage() {
         window.print();
     };
 
+    const handleDownloadPDF = async () => {
+        if (Object.keys(groupedData).length === 0) {
+            toast.warning('Tidak ada data untuk dibuat laporan');
+            return;
+        }
+
+        setGenerating(true);
+        try {
+            const doc = new jsPDF('l', 'mm', 'a4');
+            const pageWidth = doc.internal.pageSize.getWidth();
+
+            // Period Info
+            const period = filterPeriode ? periodeList.find(p => p._id === filterPeriode) : null;
+            const periodName = period ? period.nama_periode : 'Semua Periode';
+            const periodRange = period ? `(${formatDateShort(period.tanggal_mulai)} - ${formatDateShort(period.tanggal_selesai)})` : '';
+            const periodeLabel = `${periodName.toUpperCase()} ${periodRange}`;
+            const printTimestamp = `Dicetak pada: ${new Date().toLocaleString('id-ID')}`;
+
+            // Check if it's UD specific view
+            const isUDSpecific = filterUD && selectedUDData;
+
+            if (isUDSpecific) {
+                // UD Specific Report Header
+                doc.setFontSize(18);
+                doc.setFont('helvetica', 'bold');
+                doc.text(`LAPORAN REKAP PENJUALAN UD`, pageWidth / 2, 15, { align: 'center' });
+                doc.setFontSize(14);
+                doc.text(selectedUDData.nama_ud, pageWidth / 2, 22, { align: 'center' });
+
+                doc.setFontSize(9);
+                doc.setFont('helvetica', 'normal');
+                doc.text(`Pemilik: ${selectedUDData.nama_pemilik || '-'}`, 14, 30);
+                doc.text(`Rekening: ${selectedUDData.bank || ''} - ${selectedUDData.no_rekening || '-'}`, 14, 35);
+                doc.text(`KBLI: ${(selectedUDData.kbli || []).join(', ')}`, 14, 40);
+                doc.text(`Periode: ${periodeLabel}`, 14, 45);
+                doc.text(printTimestamp, pageWidth - 14, 30, { align: 'right' });
+
+                const tableRows = [];
+                Object.keys(groupedData).forEach((dateStr) => {
+                    const dayData = groupedData[dateStr];
+                    const udData = dayData.uds[filterUD];
+                    if (!udData) return;
+
+                    // Date Row
+                    tableRows.push([
+                        { content: dateStr, colSpan: 10, styles: { fillColor: [241, 245, 249], fontStyle: 'bold' } }
+                    ]);
+
+                    udData.items.forEach((item) => {
+                        tableRows.push([
+                            item.barang_id?.nama_barang || '-',
+                            item.qty,
+                            item.barang_id?.satuan || '-',
+                            formatCurrency(item.budgetPrice),
+                            formatCurrency(item.itemBudgetTotal),
+                            formatCurrency(item.harga_jual),
+                            formatCurrency(item.subtotal_jual),
+                            formatCurrency(item.harga_modal),
+                            formatCurrency(item.subtotal_modal),
+                            formatCurrency(item.keuntungan)
+                        ]);
+                    });
+
+                    // Subtotal Row
+                    tableRows.push([
+                        { content: `Subtotal ${dateStr}`, colSpan: 3, styles: { halign: 'right', fontStyle: 'bold' } },
+                        '',
+                        { content: formatCurrency(udData.totalBudget), styles: { fontStyle: 'bold' } },
+                        '',
+                        { content: formatCurrency(udData.totalJual), styles: { fontStyle: 'bold' } },
+                        '',
+                        { content: formatCurrency(udData.totalModal), styles: { fontStyle: 'bold' } },
+                        { content: formatCurrency(udData.totalKeuntungan), styles: { fontStyle: 'bold' } }
+                    ]);
+                });
+
+                // Grand Total Row
+                tableRows.push([
+                    { content: 'GRAND TOTAL', colSpan: 3, styles: { halign: 'right', fillColor: [30, 41, 59], textColor: [255, 255, 255], fontStyle: 'bold' } },
+                    { content: '', styles: { fillColor: [30, 41, 59] } },
+                    { content: formatCurrency(grandTotalBudget), styles: { fillColor: [30, 41, 59], textColor: [255, 255, 255], fontStyle: 'bold' } },
+                    { content: '', styles: { fillColor: [30, 41, 59] } },
+                    { content: formatCurrency(grandTotalJual), styles: { fillColor: [30, 41, 59], textColor: [255, 255, 255], fontStyle: 'bold' } },
+                    { content: '', styles: { fillColor: [30, 41, 59] } },
+                    { content: formatCurrency(grandTotalModal), styles: { fillColor: [30, 41, 59], textColor: [255, 255, 255], fontStyle: 'bold' } },
+                    { content: formatCurrency(grandTotalKeuntungan), styles: { fillColor: [30, 41, 59], textColor: [255, 255, 255], fontStyle: 'bold' } }
+                ]);
+
+                autoTable(doc, {
+                    startY: 55,
+                    head: [[
+                        { content: 'Nama Barang', rowSpan: 2 },
+                        { content: 'Qty', rowSpan: 2 },
+                        { content: 'Satuan', rowSpan: 2 },
+                        { content: 'Budget Dapur', colSpan: 2, styles: { halign: 'center' } },
+                        { content: 'Jual Suplier', colSpan: 2, styles: { halign: 'center' } },
+                        { content: 'Modal Suplier', colSpan: 2, styles: { halign: 'center' } },
+                        { content: 'Untung', rowSpan: 2 }
+                    ], [
+                        'Harga', 'Total', 'Harga', 'Total', 'Harga', 'Total'
+                    ]],
+                    body: tableRows,
+                    theme: 'grid',
+                    styles: { fontSize: 7 },
+                    headStyles: { fillColor: [59, 130, 246] },
+                    columnStyles: {
+                        3: { halign: 'right' },
+                        4: { halign: 'right' },
+                        5: { halign: 'right' },
+                        6: { halign: 'right' },
+                        7: { halign: 'right' },
+                        8: { halign: 'right' },
+                        9: { halign: 'right' },
+                    }
+                });
+            } else {
+                // Global Rekap Header
+                doc.setFontSize(18);
+                doc.setFont('helvetica', 'bold');
+                doc.text(`LAPORAN REKAP PENJUALAN`, pageWidth / 2, 15, { align: 'center' });
+                doc.setFontSize(12);
+                doc.text(periodeLabel, pageWidth / 2, 22, { align: 'center' });
+
+                doc.setFontSize(8);
+                doc.setFont('helvetica', 'normal');
+                doc.text(printTimestamp, pageWidth - 14, 10, { align: 'right' });
+
+                // Summary Table
+                autoTable(doc, {
+                    startY: 30,
+                    head: [['Ringkasan Periode', 'Total Penjualan', 'Total Modal', 'Total Keuntungan']],
+                    body: [[
+                        '',
+                        formatCurrency(grandTotalJual),
+                        formatCurrency(grandTotalModal),
+                        formatCurrency(grandTotalKeuntungan)
+                    ]],
+                    theme: 'grid',
+                    styles: { fontSize: 10, fontStyle: 'bold' },
+                    headStyles: { fillColor: [71, 85, 105] },
+                });
+
+                const tableRows = [];
+                Object.keys(groupedData).forEach((dateStr) => {
+                    const dayData = groupedData[dateStr];
+
+                    // Date Header
+                    tableRows.push([
+                        { content: dateStr.toUpperCase(), colSpan: 9, styles: { fillColor: [241, 245, 249], fontStyle: 'bold' } }
+                    ]);
+
+                    Object.values(dayData.uds).forEach((ud) => {
+                        // UD Sub-header
+                        tableRows.push([
+                            { content: ud.name, colSpan: 9, styles: { fillColor: [248, 250, 252], fontStyle: 'italic', textColor: [59, 130, 246] } }
+                        ]);
+
+                        ud.items.forEach((item, idx) => {
+                            tableRows.push([
+                                idx + 1,
+                                item.barang_id?.nama_barang || '-',
+                                item.qty,
+                                item.barang_id?.satuan || '-',
+                                formatCurrency(item.harga_jual),
+                                formatCurrency(item.subtotal_jual),
+                                formatCurrency(item.harga_modal),
+                                formatCurrency(item.subtotal_modal),
+                                formatCurrency(item.keuntungan)
+                            ]);
+                        });
+
+                        // UD Subtotal
+                        tableRows.push([
+                            { content: `Subtotal ${ud.name}`, colSpan: 5, styles: { halign: 'right', fontStyle: 'bold' } },
+                            { content: formatCurrency(ud.totalJual), styles: { fontStyle: 'bold' } },
+                            '',
+                            { content: formatCurrency(ud.totalModal), styles: { fontStyle: 'bold' } },
+                            { content: formatCurrency(ud.totalKeuntungan), styles: { fontStyle: 'bold' } }
+                        ]);
+                    });
+
+                    // Day Total
+                    tableRows.push([
+                        { content: `TOTAL ${dateStr}`, colSpan: 5, styles: { halign: 'right', fillColor: [226, 232, 240], fontStyle: 'bold' } },
+                        { content: formatCurrency(dayData.subtotalJual), styles: { fillColor: [226, 232, 240], fontStyle: 'bold' } },
+                        '',
+                        { content: formatCurrency(dayData.subtotalModal), styles: { fillColor: [226, 232, 240], fontStyle: 'bold' } },
+                        { content: formatCurrency(dayData.subtotalKeuntungan), styles: { fillColor: [226, 232, 240], fontStyle: 'bold' } }
+                    ]);
+                });
+
+                autoTable(doc, {
+                    startY: doc.lastAutoTable.finalY + 10,
+                    head: [['No', 'Nama Barang', 'Qty', 'Sat', 'Harga Jual', 'Total Jual', 'Hrg Modal', 'Tot Modal', 'Untung']],
+                    body: tableRows,
+                    theme: 'grid',
+                    styles: { fontSize: 8 },
+                    headStyles: { fillColor: [59, 130, 246] },
+                    columnStyles: {
+                        0: { cellWidth: 10, halign: 'center' },
+                        2: { cellWidth: 12, halign: 'center' },
+                        3: { cellWidth: 15, halign: 'center' },
+                        4: { halign: 'right' },
+                        5: { halign: 'right' },
+                        6: { halign: 'right' },
+                        7: { halign: 'right' },
+                        8: { halign: 'right' },
+                    },
+                    margin: { top: 20 },
+                });
+
+                // Grand Total Final
+                const finalY = doc.lastAutoTable.finalY + 10;
+                doc.setFontSize(14);
+                doc.setFont('helvetica', 'bold');
+                doc.text('GRAND TOTAL KESELURUHAN', 14, finalY);
+
+                autoTable(doc, {
+                    startY: finalY + 5,
+                    body: [
+                        ['Total Penjualan', formatCurrency(grandTotalJual)],
+                        ['Total Modal', formatCurrency(grandTotalModal)],
+                        ['Total Keuntungan', formatCurrency(grandTotalKeuntungan)]
+                    ],
+                    theme: 'plain',
+                    styles: { fontSize: 12, fontStyle: 'bold' },
+                    columnStyles: {
+                        1: { halign: 'right' }
+                    }
+                });
+            }
+
+            const timestamp = new Date().toISOString().split('T')[0];
+            const fileName = isUDSpecific
+                ? `Rekap_${selectedUDData.nama_ud.replace(/\s+/g, '_')}_${periodName.replace(/\s+/g, '_')}_${timestamp}.pdf`
+                : `Laporan_Rekap_${periodName.replace(/\s+/g, '_')}_${timestamp}.pdf`;
+
+            doc.save(fileName);
+            toast.success('Laporan PDF berhasil dibuat');
+        } catch (error) {
+            console.error('PDF Generation Error:', error);
+            toast.error('Gagal membuat laporan PDF');
+        } finally {
+            setGenerating(false);
+        }
+    };
+
     return (
         <div className="space-y-6">
             {/* Page Header */}
@@ -246,13 +496,20 @@ export default function LaporanRekapPage() {
                             Cari Data
                         </button>
                         {Object.keys(groupedData).length > 0 && (
-                            <button
-                                onClick={handlePrint}
-                                className="p-2.5 bg-gray-100 text-gray-700 rounded-xl hover:bg-gray-200 transition-all border border-gray-200"
-                                title="Cetak Laporan"
-                            >
-                                <Printer className="w-5 h-5" />
-                            </button>
+                            <div className="flex gap-2">
+                                <button
+                                    onClick={handleDownloadPDF}
+                                    disabled={generating}
+                                    className="p-2.5 bg-slate-100 text-slate-700 rounded-xl hover:bg-slate-200 transition-all border border-slate-200 disabled:opacity-50"
+                                    title="Generate PDF"
+                                >
+                                    {generating ? (
+                                        <Loader2 className="w-5 h-5 animate-spin" />
+                                    ) : (
+                                        <FileText className="w-5 h-5" />
+                                    )}
+                                </button>
+                            </div>
                         )}
                     </div>
                 </div>
