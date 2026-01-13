@@ -10,7 +10,7 @@ import {
     Filter,
     Calendar,
 } from 'lucide-react';
-import { transaksiAPI, periodeAPI, dapurAPI, udAPI } from '@/lib/api';
+import { transaksiAPI, periodeAPI, dapurAPI, udAPI, barangAPI } from '@/lib/api';
 import { useToast } from '@/contexts/ToastContext';
 import { getErrorMessage, formatCurrency, formatDateShort, toDateInputValue } from '@/lib/utils';
 import { jsPDF } from 'jspdf';
@@ -25,6 +25,7 @@ export default function LaporanPage() {
     const [periodeList, setPeriodeList] = useState([]);
     const [dapurList, setDapurList] = useState([]);
     const [udList, setUdList] = useState([]);
+    const [barangList, setBarangList] = useState([]);
 
     // Filters
     const [filterPeriode, setFilterPeriode] = useState('');
@@ -40,14 +41,16 @@ export default function LaporanPage() {
 
     const fetchOptions = async () => {
         try {
-            const [periodeRes, dapurRes, udRes] = await Promise.all([
+            const [periodeRes, dapurRes, udRes, barangRes] = await Promise.all([
                 periodeAPI.getAll({ limit: 50 }),
                 dapurAPI.getAll({ limit: 100 }),
                 udAPI.getAll({ limit: 100 }),
+                barangAPI.getAll({ limit: 1000 }),
             ]);
 
             if (periodeRes.data.success) setPeriodeList(periodeRes.data.data);
             if (udRes.data.success) setUdList(udRes.data.data);
+            if (barangRes.data.success) setBarangList(barangRes.data.data);
         } catch (error) {
             console.error('Failed to fetch options:', error);
         }
@@ -80,18 +83,27 @@ export default function LaporanPage() {
         }
     };
 
-    // Group items by UD for reporting
     const getItemsByUD = () => {
-        const udMap = {};
+        const barangMap = new Map(barangList.map(b => [b._id, b]));
+        const udMap = {}; // We need a fresh map for grouping results, the udList map is for lookup
+
+        const udLookupMap = new Map(udList.map(u => [u._id, u]));
+
         transactions.forEach((trx) => {
             trx.items?.forEach((item) => {
-                const udId = item.ud_id?._id || 'unknown';
-                const udName = item.ud_id?.nama_ud || 'Unknown UD';
-                const udKode = item.ud_id?.kode_ud || '';
+                const bId = item.barang_id?._id || item.barang_id;
+                const uId = item.ud_id?._id || item.ud_id;
 
-                if (!udMap[udId]) {
-                    udMap[udId] = {
-                        _id: udId,
+                const barang = barangMap.get(bId);
+                const ud = udLookupMap.get(uId);
+
+                const udIdKey = uId || 'unknown';
+                const udName = ud?.nama_ud || item.ud_id?.nama_ud || 'Unknown UD';
+                const udKode = ud?.kode_ud || item.ud_id?.kode_ud || '';
+
+                if (!udMap[udIdKey]) {
+                    udMap[udIdKey] = {
+                        _id: udIdKey,
                         nama_ud: udName,
                         kode_ud: udKode,
                         items: [],
@@ -101,15 +113,22 @@ export default function LaporanPage() {
                     };
                 }
 
-                udMap[udId].items.push({
+                const actualJual = item.harga_jual ?? barang?.harga_jual;
+                const actualModal = item.harga_modal ?? barang?.harga_modal;
+
+                udMap[udIdKey].items.push({
                     ...item,
+                    barang_id: barang || item.barang_id,
+                    ud_id: ud || item.ud_id,
+                    harga_jual: actualJual,
+                    harga_modal: actualModal,
                     transaksi: trx.kode_transaksi,
                     dapur: trx.dapur_id?.nama_dapur,
                     tanggal: trx.tanggal,
                 });
-                udMap[udId].totalJual += (item.subtotal_jual || 0);
-                udMap[udId].totalModal += (item.subtotal_modal || 0);
-                udMap[udId].totalKeuntungan += (item.keuntungan || 0);
+                udMap[udIdKey].totalJual += (item.subtotal_jual || 0);
+                udMap[udIdKey].totalModal += (item.subtotal_modal || 0);
+                udMap[udIdKey].totalKeuntungan += (item.keuntungan || 0);
             });
         });
         return Object.values(udMap);
@@ -167,14 +186,26 @@ export default function LaporanPage() {
                 if (!groupedData[dateKey]) groupedData[dateKey] = { tanggal: dateKey, uds: {} };
 
                 trx.items?.forEach(item => {
-                    const udId = item.ud_id?._id || 'unknown';
+                    const bId = item.barang_id?._id || item.barang_id;
+                    const uId = item.ud_id?._id || item.ud_id;
+                    const barang = barangList.find(b => b._id === bId);
+                    const ud = udList.find(u => u._id === uId);
+
+                    const enrichedItem = {
+                        ...item,
+                        nama_barang: item.nama_barang || barang?.nama_barang || item.barang_id?.nama_barang,
+                        satuan: item.satuan || barang?.satuan || item.barang_id?.satuan
+                    };
+
+                    const udId = uId || 'unknown';
+                    const udName = ud?.nama_ud || item.ud_id?.nama_ud || 'Unknown UD';
                     if (!groupedData[dateKey].uds[udId]) {
                         groupedData[dateKey].uds[udId] = {
-                            nama_ud: item.ud_id?.nama_ud || 'Unknown UD',
+                            nama_ud: udName,
                             items: []
                         };
                     }
-                    groupedData[dateKey].uds[udId].items.push(item);
+                    groupedData[dateKey].uds[udId].items.push(enrichedItem);
                 });
             });
 
@@ -220,9 +251,9 @@ export default function LaporanPage() {
                     group.items.forEach((item, idx) => {
                         allOrdersAOA.push([
                             idx + 1,
-                            item.barang_id?.nama_barang || '-',
+                            item.nama_barang || item.barang_id?.nama_barang || '-',
                             item.qty,
-                            item.barang_id?.satuan || '-',
+                            item.satuan || item.barang_id?.satuan || '-',
                             item.harga_jual,
                             item.subtotal_jual,
                             item.harga_modal,
@@ -290,9 +321,9 @@ export default function LaporanPage() {
                 ud.items.forEach((item, idx) => {
                     udAOA.push([
                         idx + 1,
-                        item.barang_id?.nama_barang || '-',
+                        item.nama_barang || item.barang_id?.nama_barang || '-',
                         item.qty,
-                        item.barang_id?.satuan || '-',
+                        item.satuan || item.barang_id?.satuan || '-',
                         item.harga_jual,
                         item.subtotal_jual,
                         item.harga_modal,
@@ -386,6 +417,10 @@ export default function LaporanPage() {
                 headStyles: { fillColor: [71, 85, 105] },
             });
 
+            // Create lookup maps for enrichment
+            const barangMap = new Map(barangList.map(b => [b._id, b]));
+            const udLookupMap = new Map(udList.map(u => [u._id, u]));
+
             // Group by date THEN by UD
             const groupedData = {};
             transactions.forEach(trx => {
@@ -393,14 +428,26 @@ export default function LaporanPage() {
                 if (!groupedData[dateKey]) groupedData[dateKey] = { tanggal: dateKey, uds: {} };
 
                 trx.items?.forEach(item => {
-                    const udId = item.ud_id?._id || 'unknown';
+                    const bId = item.barang_id?._id || item.barang_id;
+                    const uId = item.ud_id?._id || item.ud_id;
+                    const barang = barangMap.get(bId);
+                    const ud = udLookupMap.get(uId);
+
+                    const enrichedItem = {
+                        ...item,
+                        nama_barang: item.nama_barang || barang?.nama_barang || item.barang_id?.nama_barang,
+                        satuan: item.satuan || barang?.satuan || item.barang_id?.satuan
+                    };
+
+                    const udId = uId || 'unknown';
+                    const udName = ud?.nama_ud || item.ud_id?.nama_ud || 'Unknown UD';
                     if (!groupedData[dateKey].uds[udId]) {
                         groupedData[dateKey].uds[udId] = {
-                            nama_ud: item.ud_id?.nama_ud || 'Unknown UD',
+                            nama_ud: udName,
                             items: []
                         };
                     }
-                    groupedData[dateKey].uds[udId].items.push(item);
+                    groupedData[dateKey].uds[udId].items.push(enrichedItem);
                 });
             });
 
@@ -442,9 +489,9 @@ export default function LaporanPage() {
                     group.items.forEach((item, idx) => {
                         tableRows.push([
                             idx + 1,
-                            item.barang_id?.nama_barang || '-',
+                            item.nama_barang || item.barang_id?.nama_barang || '-',
                             item.qty,
-                            item.barang_id?.satuan || '-',
+                            item.satuan || item.barang_id?.satuan || '-',
                             formatCurrency(item.harga_jual),
                             formatCurrency(item.subtotal_jual),
                             formatCurrency(item.harga_modal),
@@ -581,9 +628,9 @@ export default function LaporanPage() {
                         udTableRows.push([
                             idx + 1,
                             formatDateShort(item.tanggal),
-                            item.barang_id?.nama_barang || '-',
+                            item.nama_barang || item.barang_id?.nama_barang || '-',
                             item.qty,
-                            item.barang_id?.satuan || '-',
+                            item.satuan || item.barang_id?.satuan || '-',
                             formatCurrency(item.harga_jual),
                             formatCurrency(item.subtotal_jual),
                             formatCurrency(item.harga_modal),

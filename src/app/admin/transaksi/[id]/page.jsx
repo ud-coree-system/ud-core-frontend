@@ -9,9 +9,9 @@ import {
     Printer,
     CheckCircle,
 } from 'lucide-react';
-import { transaksiAPI } from '@/lib/api';
-import { useToast } from '@/contexts/ToastContext';
 import { getErrorMessage, formatCurrency, formatDate, getStatusClass } from '@/lib/utils';
+import { transaksiAPI, barangAPI, udAPI } from '@/lib/api';
+import { useToast } from '@/contexts/ToastContext';
 import NotaDapur from '@/components/print/NotaDapur';
 
 import { downloadPDF } from '@/lib/pdfGenerator';
@@ -36,9 +36,33 @@ export default function TransaksiDetailPage() {
     const fetchData = async () => {
         try {
             setLoading(true);
-            const response = await transaksiAPI.getById(params.id);
+            const [response, barangRes, udRes] = await Promise.all([
+                transaksiAPI.getById(params.id),
+                barangAPI.getAll({ limit: 1000 }),
+                udAPI.getAll({ limit: 1000 })
+            ]);
+
             if (response.data.success) {
-                setData(response.data.data);
+                let trx = response.data.data;
+
+                // Enrich items if IDs are just strings
+                if (trx.items && barangRes.data.success && udRes.data.success) {
+                    const barangMap = new Map(barangRes.data.data.map(b => [b._id, b]));
+                    const udMap = new Map(udRes.data.data.map(u => [u._id, u]));
+
+                    trx.items = trx.items.map(item => {
+                        const bId = item.barang_id?._id || item.barang_id;
+                        const uId = item.ud_id?._id || item.ud_id;
+
+                        return {
+                            ...item,
+                            barang_id: barangMap.get(bId) || item.barang_id,
+                            ud_id: udMap.get(uId) || item.ud_id
+                        };
+                    });
+                }
+
+                setData(trx);
             }
         } catch (error) {
             toast.error(getErrorMessage(error));
@@ -280,7 +304,8 @@ export default function TransaksiDetailPage() {
                                     <th className="text-left px-6 py-3 text-xs font-semibold text-gray-600 uppercase">Nama Barang</th>
                                     <th className="text-center px-6 py-3 text-xs font-semibold text-gray-600 uppercase">Satuan</th>
                                     <th className="text-center px-6 py-3 text-xs font-semibold text-gray-600 uppercase">Qty</th>
-                                    <th className="text-right px-6 py-3 text-xs font-semibold text-gray-600 uppercase">Harga</th>
+                                    <th className="text-right px-6 py-3 text-xs font-semibold text-gray-600 uppercase">Hrg Modal</th>
+                                    <th className="text-right px-6 py-3 text-xs font-semibold text-gray-600 uppercase">Hrg Jual</th>
                                     <th className="text-right px-6 py-3 text-xs font-semibold text-gray-600 uppercase">Subtotal</th>
                                 </tr>
                             </thead>
@@ -289,14 +314,17 @@ export default function TransaksiDetailPage() {
                                     <tr key={item._id} className="border-t border-gray-100">
                                         <td className="px-6 py-3 text-gray-600">{index + 1}</td>
                                         <td className="px-6 py-3 font-medium text-gray-900">
-                                            {item.barang_id?.nama_barang || '-'}
+                                            {item.nama_barang || item.barang_id?.nama_barang || '-'}
                                         </td>
                                         <td className="px-6 py-3 text-center">
                                             <span className="px-2 py-1 text-xs bg-gray-100 rounded">
-                                                {item.barang_id?.satuan || '-'}
+                                                {item.satuan || item.barang_id?.satuan || '-'}
                                             </span>
                                         </td>
                                         <td className="px-6 py-3 text-center font-medium">{item.qty}</td>
+                                        <td className="px-6 py-3 text-right text-gray-600">
+                                            {formatCurrency(item.harga_modal)}
+                                        </td>
                                         <td className="px-6 py-3 text-right text-gray-600">
                                             {formatCurrency(item.harga_jual)}
                                         </td>

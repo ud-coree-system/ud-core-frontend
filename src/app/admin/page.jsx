@@ -68,6 +68,11 @@ export default function DashboardPage() {
                 </p>
             </div>
 
+            {/* Quick Actions */}
+            <div className="col-span-12">
+                <QuickActions />
+            </div>
+
             {/* Metrics Cards */}
             <div className="col-span-12 xl:col-span-7">
                 <DashboardMetrics stats={stats} />
@@ -88,10 +93,7 @@ export default function DashboardPage() {
                 <SalesByUD salesData={salesByUD} />
             </div>
 
-            {/* Quick Actions */}
-            <div className="col-span-12">
-                <QuickActions />
-            </div>
+            
         </div>
     );
 }

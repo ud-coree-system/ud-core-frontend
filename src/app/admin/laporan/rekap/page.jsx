@@ -18,7 +18,7 @@ import {
 } from 'lucide-react';
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
-import { periodeAPI, transaksiAPI, udAPI } from '@/lib/api';
+import { periodeAPI, transaksiAPI, udAPI, barangAPI } from '@/lib/api';
 import { useToast } from '@/contexts/ToastContext';
 import { getErrorMessage, formatCurrency, formatDateShort } from '@/lib/utils';
 import { cn } from '@/lib/utils';
@@ -29,6 +29,7 @@ export default function LaporanRekapPage() {
     // Options
     const [periodeList, setPeriodeList] = useState([]);
     const [udList, setUdList] = useState([]);
+    const [barangList, setBarangList] = useState([]);
 
     // Filters
     const [filterPeriode, setFilterPeriode] = useState('');
@@ -47,9 +48,10 @@ export default function LaporanRekapPage() {
 
     const fetchOptions = async () => {
         try {
-            const [periodeRes, udRes] = await Promise.all([
+            const [periodeRes, udRes, barangRes] = await Promise.all([
                 periodeAPI.getAll({ limit: 50 }),
-                udAPI.getAll({ limit: 100, isActive: true })
+                udAPI.getAll({ limit: 100, isActive: true }),
+                barangAPI.getAll({ limit: 1000 })
             ]);
 
             if (periodeRes.data.success) {
@@ -57,6 +59,9 @@ export default function LaporanRekapPage() {
             }
             if (udRes.data.success) {
                 setUdList(udRes.data.data);
+            }
+            if (barangRes.data.success) {
+                setBarangList(barangRes.data.data);
             }
         } catch (error) {
             console.error('Failed to fetch options:', error);
@@ -118,7 +123,10 @@ export default function LaporanRekapPage() {
 
             // Filter by UD if filter is active
             const filteredItems = filterUD
-                ? trx.items?.filter(item => item.ud_id?._id === filterUD)
+                ? trx.items?.filter(item => {
+                    const itemUdId = item.ud_id?._id || item.ud_id;
+                    return itemUdId === filterUD;
+                })
                 : trx.items;
 
             if (!filteredItems || filteredItems.length === 0) return;
@@ -134,12 +142,27 @@ export default function LaporanRekapPage() {
                 };
             }
 
-            filteredItems.forEach((item) => {
-                const udName = item.ud_id?.nama_ud || 'Tanpa UD';
-                const udId = item.ud_id?._id || 'none';
+            const barangMap = new Map(barangList.map(b => [b._id, b]));
+            const udLookupMap = new Map(udList.map(u => [u._id, u]));
 
-                if (!grouped[dateStr].uds[udId]) {
-                    grouped[dateStr].uds[udId] = {
+            console.log('🔍 Enrichment Debug:', {
+                barangListCount: barangList.length,
+                udListCount: udList.length,
+                filteredItemsCount: filteredItems.length,
+                sampleItem: filteredItems[0]
+            });
+
+            filteredItems.forEach((item) => {
+                const bId = item.barang_id?._id || item.barang_id;
+                const uId = item.ud_id?._id || item.ud_id;
+
+                const barang = barangMap.get(bId);
+                const ud = udLookupMap.get(uId);
+
+                const udName = ud?.nama_ud || item.ud_id?.nama_ud || 'Tanpa UD';
+
+                if (!grouped[dateStr].uds[uId || 'none']) {
+                    grouped[dateStr].uds[uId || 'none'] = {
                         name: udName,
                         items: [],
                         totalJual: 0,
@@ -149,20 +172,30 @@ export default function LaporanRekapPage() {
                     };
                 }
 
-                // Calculate budget (Original catalog price)
-                const budgetPrice = item.barang_id?.harga_jual || item.harga_jual;
-                const itemBudgetTotal = item.qty * budgetPrice;
+                // Snapshotted prices from transaction item
+                const actualJual = item.harga_jual ?? (barang?.harga_jual || item.barang_id?.harga_jual);
+                const actualModal = item.harga_modal ?? (barang?.harga_modal || item.barang_id?.harga_modal);
 
-                grouped[dateStr].uds[udId].items.push({
+                // Catalog price from Master Data (for Budget Dapur reference)
+                const masterPrice = barang?.harga_jual || item.barang_id?.harga_jual || actualJual;
+                const itemBudgetTotal = item.qty * masterPrice;
+
+                grouped[dateStr].uds[uId || 'none'].items.push({
                     ...item,
-                    budgetPrice: budgetPrice,
+                    barang_id: barang || item.barang_id,
+                    ud_id: ud || item.ud_id,
+                    nama_barang: item.nama_barang || barang?.nama_barang || item.barang_id?.nama_barang,
+                    satuan: item.satuan || barang?.satuan || item.barang_id?.satuan,
+                    harga_jual: actualJual,
+                    harga_modal: actualModal,
+                    masterPrice: masterPrice,
                     itemBudgetTotal: itemBudgetTotal
                 });
 
-                grouped[dateStr].uds[udId].totalJual += item.subtotal_jual;
-                grouped[dateStr].uds[udId].totalModal += item.subtotal_modal;
-                grouped[dateStr].uds[udId].totalKeuntungan += item.keuntungan;
-                grouped[dateStr].uds[udId].totalBudget += itemBudgetTotal;
+                grouped[dateStr].uds[uId || 'none'].totalJual += item.subtotal_jual;
+                grouped[dateStr].uds[uId || 'none'].totalModal += item.subtotal_modal;
+                grouped[dateStr].uds[uId || 'none'].totalKeuntungan += item.keuntungan;
+                grouped[dateStr].uds[uId || 'none'].totalBudget += itemBudgetTotal;
 
                 grouped[dateStr].subtotalJual += item.subtotal_jual;
                 grouped[dateStr].subtotalModal += item.subtotal_modal;
@@ -238,10 +271,10 @@ export default function LaporanRekapPage() {
 
                     udData.items.forEach((item) => {
                         tableRows.push([
-                            item.barang_id?.nama_barang || '-',
+                            item.nama_barang || item.barang_id?.nama_barang || '-',
                             item.qty,
-                            item.barang_id?.satuan || '-',
-                            formatCurrency(item.budgetPrice),
+                            item.satuan || item.barang_id?.satuan || '-',
+                            formatCurrency(item.masterPrice),
                             formatCurrency(item.itemBudgetTotal),
                             formatCurrency(item.harga_jual),
                             formatCurrency(item.subtotal_jual),
@@ -348,9 +381,9 @@ export default function LaporanRekapPage() {
                         ud.items.forEach((item, idx) => {
                             tableRows.push([
                                 idx + 1,
-                                item.barang_id?.nama_barang || '-',
+                                item.nama_barang || item.barang_id?.nama_barang || '-',
                                 item.qty,
-                                item.barang_id?.satuan || '-',
+                                item.satuan || item.barang_id?.satuan || '-',
                                 formatCurrency(item.harga_jual),
                                 formatCurrency(item.subtotal_jual),
                                 formatCurrency(item.harga_modal),
@@ -615,11 +648,11 @@ export default function LaporanRekapPage() {
                                                 </tr>
                                                 {udData.items.map((item, idx) => (
                                                     <tr key={idx} className="hover:bg-gray-50/50 print:hover:bg-transparent transition-colors border-b last:border-b-0 print:border-black">
-                                                        <td className="px-4 py-2.5 font-medium text-gray-900 border-r print:border-black">{item.barang_id?.nama_barang || '-'}</td>
+                                                        <td className="px-4 py-2.5 font-medium text-gray-900 border-r print:border-black">{item.nama_barang || item.barang_id?.nama_barang || '-'}</td>
                                                         <td className="px-3 py-2.5 text-center text-gray-700 border-r print:border-black">{item.qty}</td>
-                                                        <td className="px-3 py-2.5 text-center text-gray-500 border-r print:border-black">{item.barang_id?.satuan || '-'}</td>
+                                                        <td className="px-3 py-2.5 text-center text-gray-500 border-r print:border-black">{item.satuan || item.barang_id?.satuan || '-'}</td>
                                                         {/* Budget */}
-                                                        <td className="px-4 py-2.5 text-right text-gray-600">{formatCurrency(item.budgetPrice)}</td>
+                                                        <td className="px-4 py-2.5 text-right text-gray-600">{formatCurrency(item.masterPrice)}</td>
                                                         <td className="px-4 py-2.5 text-right font-medium text-blue-800 border-r print:border-black print:text-black">{formatCurrency(item.itemBudgetTotal)}</td>
                                                         {/* Jual */}
                                                         <td className="px-4 py-2.5 text-right text-gray-600">{formatCurrency(item.harga_jual)}</td>
@@ -717,9 +750,9 @@ export default function LaporanRekapPage() {
                                                     {ud.items.map((item, itemIdx) => (
                                                         <tr key={`${dateStr}-${udIdx}-${itemIdx}`} className="hover:bg-gray-50/50 transition-colors print:border-black">
                                                             <td className="px-6 py-3 text-sm text-gray-500">{itemIdx + 1}</td>
-                                                            <td className="px-6 py-3 text-sm font-medium text-gray-900">{item.barang_id?.nama_barang || '-'}</td>
+                                                            <td className="px-6 py-3 text-sm font-medium text-gray-900">{item.nama_barang || item.barang_id?.nama_barang || '-'}</td>
                                                             <td className="px-6 py-3 text-sm text-center font-semibold text-blue-600 print:text-black">{item.qty}</td>
-                                                            <td className="px-6 py-3 text-sm text-center text-gray-500">{item.barang_id?.satuan || '-'}</td>
+                                                            <td className="px-6 py-3 text-sm text-center text-gray-500">{item.satuan || item.barang_id?.satuan || '-'}</td>
                                                             <td className="px-6 py-3 text-sm text-right text-gray-600">{formatCurrency(item.harga_jual)}</td>
                                                             <td className="px-6 py-3 text-sm text-right font-medium text-gray-900">{formatCurrency(item.subtotal_jual)}</td>
                                                             <td className="px-6 py-3 text-sm text-right text-gray-600">{formatCurrency(item.harga_modal)}</td>

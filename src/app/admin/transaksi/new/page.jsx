@@ -135,6 +135,20 @@ export default function NewTransaksiPage() {
         );
     };
 
+    const handleHargaJualChange = (index, harga) => {
+        const newHarga = Math.max(0, parseInt(harga) || 0);
+        setItems((prev) =>
+            prev.map((item, i) => (i === index ? { ...item, harga_jual: newHarga } : item))
+        );
+    };
+
+    const handleHargaModalChange = (index, harga) => {
+        const newHarga = Math.max(0, parseInt(harga) || 0);
+        setItems((prev) =>
+            prev.map((item, i) => (i === index ? { ...item, harga_modal: newHarga } : item))
+        );
+    };
+
     const handleRemoveItem = (index) => {
         setItems((prev) => prev.filter((_, i) => i !== index));
     };
@@ -145,6 +159,10 @@ export default function NewTransaksiPage() {
 
     const calculateTotal = () => {
         return items.reduce((sum, item) => sum + calculateSubtotal(item), 0);
+    };
+
+    const calculateTotalModal = () => {
+        return items.reduce((sum, item) => sum + (item.qty * item.harga_modal), 0);
     };
 
     const handleSubmit = async (complete = false) => {
@@ -173,6 +191,8 @@ export default function NewTransaksiPage() {
                 items: items.map((item) => ({
                     barang_id: item.barang_id,
                     qty: item.qty,
+                    harga_jual: item.harga_jual,
+                    harga_modal: item.harga_modal,
                 })),
             };
 
@@ -349,7 +369,8 @@ export default function NewTransaksiPage() {
                                     <th className="text-left px-4 py-3 text-xs font-semibold text-gray-600 uppercase hidden md:table-cell">UD</th>
                                     <th className="text-center px-4 py-3 text-xs font-semibold text-gray-600 uppercase">Satuan</th>
                                     <th className="text-center px-4 py-3 text-xs font-semibold text-gray-600 uppercase">Qty</th>
-                                    <th className="text-right px-4 py-3 text-xs font-semibold text-gray-600 uppercase">Harga</th>
+                                    <th className="text-right px-4 py-3 text-xs font-semibold text-gray-600 uppercase">Harga Modal</th>
+                                    <th className="text-right px-4 py-3 text-xs font-semibold text-gray-600 uppercase">Harga Jual</th>
                                     <th className="text-right px-4 py-3 text-xs font-semibold text-gray-600 uppercase">Subtotal</th>
                                     <th className="text-center px-4 py-3 text-xs font-semibold text-gray-600 uppercase">Aksi</th>
                                 </tr>
@@ -387,8 +408,25 @@ export default function NewTransaksiPage() {
                                                     className="w-20 px-2 py-1 border border-gray-200 rounded text-center mx-auto"
                                                 />
                                             </td>
-                                            <td className="px-4 py-3 text-right text-gray-600">
-                                                {formatCurrency(item.harga_jual)}
+                                            <td className="px-4 py-3">
+                                                <input
+                                                    type="number"
+                                                    value={item.harga_modal}
+                                                    onChange={(e) => handleHargaModalChange(index, e.target.value)}
+                                                    onFocus={(e) => e.target.select()}
+                                                    min="0"
+                                                    className="w-24 px-2 py-1 border border-gray-200 rounded text-right ml-auto block"
+                                                />
+                                            </td>
+                                            <td className="px-4 py-3">
+                                                <input
+                                                    type="number"
+                                                    value={item.harga_jual}
+                                                    onChange={(e) => handleHargaJualChange(index, e.target.value)}
+                                                    onFocus={(e) => e.target.select()}
+                                                    min="0"
+                                                    className="w-24 px-2 py-1 border border-gray-200 rounded text-right ml-auto block"
+                                                />
                                             </td>
                                             <td className="px-4 py-3 text-right font-medium text-gray-900">
                                                 {formatCurrency(calculateSubtotal(item))}
@@ -413,6 +451,24 @@ export default function NewTransaksiPage() {
                                         </td>
                                         <td className="px-4 py-4 text-right text-xl font-bold text-blue-600">
                                             {formatCurrency(calculateTotal())}
+                                        </td>
+                                        <td></td>
+                                    </tr>
+                                    <tr>
+                                        <td colSpan={6} className="px-4 py-2 text-right text-sm text-gray-500">
+                                            Total Modal
+                                        </td>
+                                        <td className="px-4 py-2 text-right text-sm text-gray-600">
+                                            {formatCurrency(calculateTotalModal())}
+                                        </td>
+                                        <td></td>
+                                    </tr>
+                                    <tr>
+                                        <td colSpan={6} className="px-4 py-2 text-right text-sm text-gray-500">
+                                            Estimasi Keuntungan
+                                        </td>
+                                        <td className="px-4 py-2 text-right text-sm font-semibold text-green-600">
+                                            {formatCurrency(calculateTotal() - calculateTotalModal())}
                                         </td>
                                         <td></td>
                                     </tr>

@@ -392,6 +392,77 @@ const TemplateBanyuMas = ({ data, udData, udId }) => (
     </div>
 );
 
+// Template 5: Generic Template (for new UDs without specific branding)
+const TemplateGeneric = ({ data, udData, udId }) => (
+    <div id={`nota-${udId}`} className="nota-container page-break font-arial text-black bg-white">
+        <div className="text-center mb-6">
+            <div className="font-bold text-xl uppercase">{udData.nama_ud}</div>
+            <div className="text-sm">LOMBOK - NTB</div>
+        </div>
+
+        <div className="border border-black p-3 mb-4">
+            <div className="grid grid-cols-2 gap-2 text-sm">
+                <div>
+                    <span className="font-bold">Tanggal:</span> {formatDate(data.tanggal)}
+                </div>
+                <div>
+                    <span className="font-bold">Kepada:</span> {data.dapur_id?.nama_dapur || 'Dapur'}
+                </div>
+                <div className="col-span-2">
+                    <span className="font-bold">Alamat:</span> {data.dapur_id?.alamat || '-'}
+                </div>
+            </div>
+        </div>
+
+        <table className="nota-table">
+            <thead>
+                <tr>
+                    <th className="w-10">No.</th>
+                    <th>Nama Barang</th>
+                    <th className="text-center w-16">Qty.</th>
+                    <th className="text-center w-16">Sat.</th>
+                    <th className="text-right w-24">Harga</th>
+                    <th className="text-right w-32">Jumlah</th>
+                </tr>
+            </thead>
+            <tbody>
+                {udData.items.map((item, idx) => (
+                    <tr key={idx}>
+                        <td className="text-center">{idx + 1}</td>
+                        <td>{item.barang_id?.nama_barang}</td>
+                        <td className="text-center">{item.qty}</td>
+                        <td className="text-center">{item.barang_id?.satuan}</td>
+                        <td className="text-right">{formatCurrency(item.harga_jual).replace('Rp', '')}</td>
+                        <td className="text-right">{formatCurrency(item.subtotal_jual).replace('Rp', '')}</td>
+                    </tr>
+                ))}
+                {[...Array(Math.max(0, 15 - udData.items.length))].map((_, idx) => (
+                    <tr key={`empty-${idx}`}>
+                        <td className="h-6">&nbsp;</td><td></td><td></td><td></td><td></td><td></td>
+                    </tr>
+                ))}
+            </tbody>
+            <tfoot>
+                <tr>
+                    <td colSpan="5" className="text-right font-bold border-t-2">TOTAL (Rp.)</td>
+                    <td className="text-right font-bold border-t-2">{formatCurrency(udData.total).replace('Rp', '')}</td>
+                </tr>
+            </tfoot>
+        </table>
+
+        <div className="flex justify-between mt-12 px-12">
+            <div className="text-center">
+                <div>Penerima,</div>
+                <div className="mt-16 border-t border-black w-40"></div>
+            </div>
+            <div className="text-center">
+                <div>Pengirim,</div>
+                <div className="mt-16 border-t border-black w-40"></div>
+            </div>
+        </div>
+    </div>
+);
+
 export default function NotaDapur({ data, itemsByUD, udIdFilter = null }) {
     if (!data || !itemsByUD) return null;
 
@@ -399,15 +470,15 @@ export default function NotaDapur({ data, itemsByUD, udIdFilter = null }) {
         const name = udName.toUpperCase();
         if (name.includes('SAUDARA') || name.includes('ESC')) {
             return <TemplateESC key={udName} data={data} udData={udData} udId={udId} />;
-        } else if (name.includes('PILAR') || name.includes('BMJ') || name.includes('MAHABBAH JAYA')) {
+        } else if (name.includes('UD PILAR PANGAN MANDIRI')) {
             return <TemplatePilarPangan key={udName} data={data} udData={udData} udId={udId} />;
         } else if (name.includes('AMANAH') || name.includes('ASM')) {
             return <TemplateASM key={udName} data={data} udData={udData} udId={udId} />;
         } else if (name.includes('BANYU MAS') || name.includes('BANYUMAS')) {
             return <TemplateBanyuMas key={udName} data={data} udData={udData} udId={udId} />;
         }
-        // Default to TemplateESC if no match
-        return <TemplateESC key={udName} data={data} udData={udData} udId={udId} />;
+        // Default to TemplateGeneric for any new UD without specific branding
+        return <TemplateGeneric key={udName} data={data} udData={udData} udId={udId} />;
     };
 
     const filteredEntries = udIdFilter

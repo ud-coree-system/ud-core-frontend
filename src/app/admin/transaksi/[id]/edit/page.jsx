@@ -12,7 +12,7 @@ import {
     CheckCircle,
     ArrowLeft,
 } from 'lucide-react';
-import { transaksiAPI, periodeAPI, dapurAPI, barangAPI } from '@/lib/api';
+import { transaksiAPI, periodeAPI, dapurAPI, barangAPI, udAPI } from '@/lib/api';
 import DatePicker from '@/components/ui/DatePicker';
 import { useToast } from '@/contexts/ToastContext';
 import { getErrorMessage, formatCurrency, debounce } from '@/lib/utils';
@@ -73,9 +73,33 @@ export default function EditTransaksiPage() {
     const fetchTransaksiDetail = async () => {
         try {
             setFetchingData(true);
-            const response = await transaksiAPI.getById(params.id);
+            const [response, barangRes, udRes] = await Promise.all([
+                transaksiAPI.getById(params.id),
+                barangAPI.getAll({ limit: 1000 }),
+                udAPI.getAll({ limit: 1000 })
+            ]);
+
             if (response.data.success) {
-                const trx = response.data.data;
+                let trx = response.data.data;
+
+                // Enrich items if IDs are just strings
+                if (trx.items && barangRes.data.success && udRes.data.success) {
+                    const barangMap = new Map(barangRes.data.data.map(b => [b._id, b]));
+                    const udMap = new Map(udRes.data.data.map(u => [u._id, u]));
+
+                    trx.items = trx.items.map(item => {
+                        const bId = item.barang_id?._id || item.barang_id;
+                        const uId = item.ud_id?._id || item.ud_id;
+                        const barang = barangMap.get(bId);
+                        const ud = udMap.get(uId);
+
+                        return {
+                            ...item,
+                            barang_id: barang || item.barang_id,
+                            ud_id: ud || item.ud_id
+                        };
+                    });
+                }
 
                 // Only draft transactions can be edited per API docs
                 if (trx.status !== 'draft') {
@@ -91,12 +115,12 @@ export default function EditTransaksiPage() {
 
                 // Format items for the UI
                 const formattedItems = trx.items.map(item => ({
-                    barang_id: item.barang_id?._id,
-                    nama_barang: item.barang_id?.nama_barang,
-                    satuan: item.barang_id?.satuan,
+                    barang_id: item.barang_id?._id || item.barang_id,
+                    nama_barang: item.nama_barang || item.barang_id?.nama_barang,
+                    satuan: item.satuan || item.barang_id?.satuan,
                     harga_jual: item.harga_jual,
                     harga_modal: item.harga_modal,
-                    ud_id: item.ud_id?._id,
+                    ud_id: item.ud_id?._id || item.ud_id,
                     ud_nama: item.ud_id?.nama_ud,
                     ud_kode: item.ud_id?.kode_ud,
                     qty: item.qty,
@@ -177,6 +201,20 @@ export default function EditTransaksiPage() {
         );
     };
 
+    const handleHargaJualChange = (index, harga) => {
+        const newHarga = Math.max(0, parseInt(harga) || 0);
+        setItems((prev) =>
+            prev.map((item, i) => (i === index ? { ...item, harga_jual: newHarga } : item))
+        );
+    };
+
+    const handleHargaModalChange = (index, harga) => {
+        const newHarga = Math.max(0, parseInt(harga) || 0);
+        setItems((prev) =>
+            prev.map((item, i) => (i === index ? { ...item, harga_modal: newHarga } : item))
+        );
+    };
+
     const handleRemoveItem = (index) => {
         setItems((prev) => prev.filter((_, i) => i !== index));
     };
@@ -187,6 +225,10 @@ export default function EditTransaksiPage() {
 
     const calculateTotal = () => {
         return items.reduce((sum, item) => sum + calculateSubtotal(item), 0);
+    };
+
+    const calculateTotalModal = () => {
+        return items.reduce((sum, item) => sum + (item.qty * item.harga_modal), 0);
     };
 
     const handleSubmit = async (complete = false) => {
@@ -213,6 +255,8 @@ export default function EditTransaksiPage() {
                 items: items.map((item) => ({
                     barang_id: item.barang_id,
                     qty: item.qty,
+                    harga_jual: item.harga_jual,
+                    harga_modal: item.harga_modal,
                 })),
             };
 
@@ -388,7 +432,8 @@ export default function EditTransaksiPage() {
                                     <th className="text-left px-4 py-3 text-xs font-semibold text-gray-600 uppercase hidden md:table-cell">UD</th>
                                     <th className="text-center px-4 py-3 text-xs font-semibold text-gray-600 uppercase">Satuan</th>
                                     <th className="text-center px-4 py-3 text-xs font-semibold text-gray-600 uppercase">Qty</th>
-                                    <th className="text-right px-4 py-3 text-xs font-semibold text-gray-600 uppercase">Harga</th>
+                                    <th className="text-right px-4 py-3 text-xs font-semibold text-gray-600 uppercase">Harga Modal</th>
+                                    <th className="text-right px-4 py-3 text-xs font-semibold text-gray-600 uppercase">Harga Jual</th>
                                     <th className="text-right px-4 py-3 text-xs font-semibold text-gray-600 uppercase">Subtotal</th>
                                     <th className="text-center px-4 py-3 text-xs font-semibold text-gray-600 uppercase">Aksi</th>
                                 </tr>
@@ -407,14 +452,14 @@ export default function EditTransaksiPage() {
                                         <tr key={item.barang_id} className="border-t border-gray-100">
                                             <td className="px-4 py-3 text-gray-600">{index + 1}</td>
                                             <td className="px-4 py-3">
-                                                <p className="font-medium text-gray-900">{item.nama_barang}</p>
+                                                <p className="font-medium text-gray-900">{item.nama_barang || '-'}</p>
                                             </td>
                                             <td className="px-4 py-3 hidden md:table-cell">
                                                 <p className="text-sm text-gray-600">{item.ud_nama}</p>
                                                 <p className="text-xs text-gray-400">{item.ud_kode}</p>
                                             </td>
                                             <td className="px-4 py-3 text-center">
-                                                <span className="px-2 py-1 text-xs bg-gray-100 rounded">{item.satuan}</span>
+                                                <span className="px-2 py-1 text-xs bg-gray-100 rounded">{item.satuan || '-'}</span>
                                             </td>
                                             <td className="px-4 py-3">
                                                 <input
@@ -426,8 +471,25 @@ export default function EditTransaksiPage() {
                                                     className="w-20 px-2 py-1 border border-gray-200 rounded text-center mx-auto"
                                                 />
                                             </td>
-                                            <td className="px-4 py-3 text-right text-gray-600">
-                                                {formatCurrency(item.harga_jual)}
+                                            <td className="px-4 py-3">
+                                                <input
+                                                    type="number"
+                                                    value={item.harga_modal}
+                                                    onChange={(e) => handleHargaModalChange(index, e.target.value)}
+                                                    onFocus={(e) => e.target.select()}
+                                                    min="0"
+                                                    className="w-24 px-2 py-1 border border-gray-200 rounded text-right ml-auto block"
+                                                />
+                                            </td>
+                                            <td className="px-4 py-3">
+                                                <input
+                                                    type="number"
+                                                    value={item.harga_jual}
+                                                    onChange={(e) => handleHargaJualChange(index, e.target.value)}
+                                                    onFocus={(e) => e.target.select()}
+                                                    min="0"
+                                                    className="w-24 px-2 py-1 border border-gray-200 rounded text-right ml-auto block"
+                                                />
                                             </td>
                                             <td className="px-4 py-3 text-right font-medium text-gray-900">
                                                 {formatCurrency(calculateSubtotal(item))}
@@ -452,6 +514,24 @@ export default function EditTransaksiPage() {
                                         </td>
                                         <td className="px-4 py-4 text-right text-xl font-bold text-blue-600">
                                             {formatCurrency(calculateTotal())}
+                                        </td>
+                                        <td></td>
+                                    </tr>
+                                    <tr>
+                                        <td colSpan={6} className="px-4 py-2 text-right text-sm text-gray-500">
+                                            Total Modal
+                                        </td>
+                                        <td className="px-4 py-2 text-right text-sm text-gray-600">
+                                            {formatCurrency(calculateTotalModal())}
+                                        </td>
+                                        <td></td>
+                                    </tr>
+                                    <tr>
+                                        <td colSpan={6} className="px-4 py-2 text-right text-sm text-gray-500">
+                                            Estimasi Keuntungan
+                                        </td>
+                                        <td className="px-4 py-2 text-right text-sm font-semibold text-green-600">
+                                            {formatCurrency(calculateTotal() - calculateTotalModal())}
                                         </td>
                                         <td></td>
                                     </tr>
