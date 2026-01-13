@@ -1,6 +1,6 @@
 # API Management UD - Endpoint Specification
 
-**Base URL:** `http://localhost:5000/api/v1/ud-management`
+**Base URL:** `http://localhost:3000/api/v1/ud-management`
 
 **Authentication:** JWT Token via header `bearer: <token>`
 
@@ -987,3 +987,155 @@ Role: admin
 - `DAPUR`
 - `PERIODE`
 - `TRANSAKSI`
+
+---
+
+## 👤 User Management
+
+### List All Users
+```http
+GET /user
+Authorization: bearer <token>
+Role: admin
+```
+
+**Query Parameters:**
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `page` | number | Page number |
+| `limit` | number | Items per page |
+| `search` | string | Search by username or email |
+| `role` | string | Filter by role |
+| `isActive` | boolean | Filter by active status |
+
+**Response (200):**
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "_id": "ObjectId",
+      "username": "string",
+      "email": "string",
+      "role": "admin | ud_operator",
+      "ud_id": { ... },
+      "isActive": true,
+      "createdAt": "ISO Date"
+    }
+  ],
+  "pagination": { ... }
+}
+```
+
+---
+
+### Get User Detail
+```http
+GET /user/:id
+Authorization: bearer <token>
+Role: admin
+```
+
+---
+
+### Create User
+```http
+POST /user
+Authorization: bearer <token>
+Role: admin
+```
+
+**Request Body:**
+```json
+{
+  "username": "string (required, unique)",
+  "email": "string (required, unique)",
+  "password": "string (required)",
+  "role": "admin | ud_operator (default: ud_operator)",
+  "ud_id": "ObjectId (optional)"
+}
+```
+
+---
+
+### Update User
+```http
+PUT /user/:id
+Authorization: bearer <token>
+Role: admin
+```
+
+**Request Body:**
+```json
+{
+  "username": "string (optional)",
+  "email": "string (optional)",
+  "password": "string (optional)",
+  "role": "string (optional)",
+  "ud_id": "ObjectId (optional)",
+  "isActive": "boolean (optional)"
+}
+```
+
+---
+
+### Delete User
+```http
+DELETE /user/:id
+Authorization: bearer <token>
+Role: admin
+```
+
+---
+
+### Settings
+Manage global application settings.
+
+#### 1. Get Settings
+```http
+GET /setting
+```
+
+- **Auth Required**: No (Public)
+- **Description**: Fetch all global application settings (e.g., registration status).
+- **Response**:
+```json
+{
+  "success": true,
+  "data": {
+    "_id": "651f...",
+    "isRegistrationAllowed": true,
+    "createdAt": "...",
+    "updatedAt": "..."
+  }
+}
+```
+
+#### 2. Update Settings
+```http
+PATCH /setting
+Authorization: bearer <token>
+Role: superuser
+```
+
+- **Auth Required**: Yes (SuperUser Only)
+- **Description**: Update application settings.
+- **Request Body**:
+```json
+{
+  "isRegistrationAllowed": false
+}
+```
+- **Response**:
+```json
+{
+  "success": true,
+  "message": "Settings updated successfully",
+  "data": { ... }
+}
+```
+
+### Authentication Notes
+- **Register**: `POST /auth/register` will return `403 Forbidden` if `isRegistrationAllowed` is set to `false`.
+- **SuperUser Role**: A special role `superuser` has been added. It has the same privileges as `admin` plus the unique ability to manage global settings.
+- **Auto-Seeding**: On backend startup, the system automatically checks for the existence of the superuser account (`suport.udrembiga@gmail.com`) and default settings, creating them if they don't exist.

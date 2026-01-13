@@ -52,6 +52,10 @@ export default function UserManagementPage() {
     const [formLoading, setFormLoading] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
 
+    // Detail state
+    const [detailModalOpen, setDetailModalOpen] = useState(false);
+    const [viewingItem, setViewingItem] = useState(null);
+
     // Delete state
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
     const [deletingItem, setDeletingItem] = useState(null);
@@ -137,6 +141,16 @@ export default function UserManagementPage() {
         setEditingItem(null);
         setFormData(INITIAL_FORM);
         setShowPassword(false);
+    };
+
+    const openDetailModal = (item) => {
+        setViewingItem(item);
+        setDetailModalOpen(true);
+    };
+
+    const closeDetailModal = () => {
+        setDetailModalOpen(false);
+        setViewingItem(null);
     };
 
     const handleFormChange = (e) => {
@@ -289,53 +303,68 @@ export default function UserManagementPage() {
                     <>
                         <div className="overflow-x-auto">
                             <table className="w-full">
-                                <thead className="bg-gray-50">
+                                <thead className="bg-gray-50/50">
                                     <tr>
-                                        <th className="text-left">Username</th>
-                                        <th className="text-left hidden md:table-cell">Email</th>
-                                        <th className="text-center">Role</th>
-                                        <th className="text-left hidden lg:table-cell">UD</th>
-                                        <th className="text-center">Status</th>
-                                        <th className="text-center">Aksi</th>
+                                        <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Username</th>
+                                        <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider hidden md:table-cell">Email</th>
+                                        <th className="px-6 py-4 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider">Role</th>
+                                        <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider hidden lg:table-cell">UD</th>
+                                        <th className="px-6 py-4 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider">Status</th>
+                                        <th className="px-6 py-4 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider">Aksi</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     {data.map((item) => (
-                                        <tr key={item._id}>
-                                            <td>
+                                        <tr key={item._id} className="hover:bg-gray-50/50 transition-colors">
+                                            <td className="px-6 py-4 whitespace-nowrap">
                                                 <div className="flex items-center gap-3">
-                                                    <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white text-sm font-semibold">
+                                                    <div className="w-9 h-9 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full flex items-center justify-center text-white text-sm font-semibold shadow-sm">
                                                         {item.username?.[0]?.toUpperCase()}
                                                     </div>
                                                     <span className="font-medium text-gray-900">{item.username}</span>
                                                 </div>
                                             </td>
-                                            <td className="hidden md:table-cell text-gray-600">{item.email}</td>
-                                            <td className="text-center">
-                                                <span className={`inline-block px-2 py-1 text-xs font-medium rounded-full capitalize
-                          ${item.role === 'admin' ? 'bg-purple-100 text-purple-800' : 'bg-blue-100 text-blue-800'}
-                        `}>
+                                            <td className="px-6 py-4 whitespace-nowrap hidden md:table-cell text-gray-600 font-medium">
+                                                {item.email}
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap text-center">
+                                                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium capitalize
+                                                    ${item.role === 'admin'
+                                                        ? 'bg-purple-100 text-purple-700 ring-1 ring-inset ring-purple-600/10'
+                                                        : 'bg-blue-100 text-blue-700 ring-1 ring-inset ring-blue-600/10'}
+                                                `}>
                                                     {item.role?.replace('_', ' ')}
                                                 </span>
                                             </td>
-                                            <td className="hidden lg:table-cell">
-                                                <span className="text-gray-600">{item.ud_id?.nama_ud || '-'}</span>
+                                            <td className="px-6 py-4 whitespace-nowrap hidden lg:table-cell">
+                                                <span className="text-gray-600 font-medium">
+                                                    {item.ud_id?.nama_ud || <span className="text-gray-400 italic">Umum</span>}
+                                                </span>
                                             </td>
-                                            <td className="text-center">
-                                                <span className={`inline-block px-2 py-1 text-xs font-medium rounded-full
-                          ${item.isActive ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}
-                        `}>
+                                            <td className="px-6 py-4 whitespace-nowrap text-center">
+                                                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
+                                                    ${item.isActive
+                                                        ? 'bg-emerald-100 text-emerald-700 ring-1 ring-inset ring-emerald-600/20'
+                                                        : 'bg-gray-100 text-gray-700 ring-1 ring-inset ring-gray-600/10'}
+                                                `}>
                                                     {item.isActive ? 'Aktif' : 'Nonaktif'}
                                                 </span>
                                             </td>
-                                            <td>
-                                                <div className="flex items-center justify-center gap-2">
+                                            <td className="px-6 py-4 whitespace-nowrap">
+                                                <div className="flex items-center justify-center gap-1.5">
+                                                    <button
+                                                        onClick={() => openDetailModal(item)}
+                                                        className="p-2 hover:bg-gray-100 rounded-lg text-gray-600 transition-colors"
+                                                        title="Detail"
+                                                    >
+                                                        <Search className="w-4.5 h-4.5" />
+                                                    </button>
                                                     <button
                                                         onClick={() => openEditModal(item)}
                                                         className="p-2 hover:bg-blue-50 rounded-lg text-blue-600 transition-colors"
                                                         title="Edit"
                                                     >
-                                                        <Edit className="w-4 h-4" />
+                                                        <Edit className="w-4.5 h-4.5" />
                                                     </button>
                                                     <button
                                                         onClick={() => openDeleteDialog(item)}
@@ -343,7 +372,7 @@ export default function UserManagementPage() {
                                                         className="p-2 hover:bg-red-50 rounded-lg text-red-600 transition-colors disabled:opacity-30"
                                                         title="Hapus"
                                                     >
-                                                        <Trash2 className="w-4 h-4" />
+                                                        <Trash2 className="w-4.5 h-4.5" />
                                                     </button>
                                                 </div>
                                             </td>
@@ -513,6 +542,74 @@ export default function UserManagementPage() {
                         </button>
                     </div>
                 </form>
+            </Modal>
+
+            {/* Detail Modal */}
+            <Modal
+                isOpen={detailModalOpen}
+                onClose={closeDetailModal}
+                title="Detail User"
+                size="md"
+            >
+                {viewingItem && (
+                    <div className="space-y-6 py-2">
+                        <div className="flex items-center gap-4 p-4 bg-gray-50 rounded-xl border border-gray-100">
+                            <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full flex items-center justify-center text-white text-2xl font-bold shadow-md">
+                                {viewingItem.username?.[0]?.toUpperCase()}
+                            </div>
+                            <div>
+                                <h3 className="text-xl font-bold text-gray-900">{viewingItem.username}</h3>
+                                <p className="text-gray-500 font-medium">{viewingItem.email}</p>
+                            </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className="p-4 bg-white border border-gray-100 rounded-xl shadow-sm">
+                                <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">Role</p>
+                                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-sm font-medium capitalize
+                                    ${viewingItem.role === 'admin'
+                                        ? 'bg-purple-100 text-purple-700'
+                                        : 'bg-blue-100 text-blue-700'}
+                                `}>
+                                    {viewingItem.role?.replace('_', ' ')}
+                                </span>
+                            </div>
+                            <div className="p-4 bg-white border border-gray-100 rounded-xl shadow-sm">
+                                <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">Status Akun</p>
+                                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-sm font-medium
+                                    ${viewingItem.isActive
+                                        ? 'bg-emerald-100 text-emerald-700'
+                                        : 'bg-gray-100 text-gray-700'}
+                                `}>
+                                    {viewingItem.isActive ? 'Aktif' : 'Nonaktif'}
+                                </span>
+                            </div>
+                            <div className="p-4 bg-white border border-gray-100 rounded-xl shadow-sm md:col-span-2">
+                                <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">Unit Dagang (UD)</p>
+                                <p className="text-gray-900 font-semibold text-lg">
+                                    {viewingItem.ud_id?.nama_ud || <span className="text-gray-400 italic font-normal text-base">Umum / Tidak Terikat UD</span>}
+                                </p>
+                            </div>
+                            <div className="p-4 bg-white border border-gray-100 rounded-xl shadow-sm">
+                                <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">Dibuat Pada</p>
+                                <p className="text-gray-900 font-medium">{formatDateTime(viewingItem.createdAt)}</p>
+                            </div>
+                            <div className="p-4 bg-white border border-gray-100 rounded-xl shadow-sm">
+                                <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">Terakhir Diupdate</p>
+                                <p className="text-gray-900 font-medium">{formatDateTime(viewingItem.updatedAt)}</p>
+                            </div>
+                        </div>
+
+                        <div className="pt-2">
+                            <button
+                                onClick={closeDetailModal}
+                                className="w-full px-4 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold rounded-xl transition-colors"
+                            >
+                                Tutup
+                            </button>
+                        </div>
+                    </div>
+                )}
             </Modal>
 
             {/* Delete Confirm Dialog */}

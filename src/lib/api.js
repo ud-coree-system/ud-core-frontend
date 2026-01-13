@@ -111,11 +111,11 @@ export const activityAPI = {
 
 // ============ User API ============
 export const userAPI = {
-    getAll: (params) => api.get('/users', { params }),
-    getById: (id) => api.get(`/users/${id}`),
-    create: (data) => api.post('/users', data),
-    update: (id, data) => api.put(`/users/${id}`, data),
-    delete: (id) => api.delete(`/users/${id}`),
+    getAll: (params) => api.get('/user', { params }),
+    getById: (id) => api.get(`/user/${id}`),
+    create: (data) => api.post('/user', data),
+    update: (id, data) => api.put(`/user/${id}`, data),
+    delete: (id) => api.delete(`/user/${id}`),
 };
 
 export default api;
