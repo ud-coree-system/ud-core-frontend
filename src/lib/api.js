@@ -118,4 +118,10 @@ export const userAPI = {
     delete: (id) => api.delete(`/user/${id}`),
 };
 
+// ============ Setting API ============
+export const settingAPI = {
+    getAll: () => api.get('/setting'),
+    update: (data) => api.patch('/setting', data),
+};
+
 export default api;

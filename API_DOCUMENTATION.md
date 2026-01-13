@@ -1120,12 +1120,14 @@ Role: superuser
 
 - **Auth Required**: Yes (SuperUser Only)
 - **Description**: Update application settings.
-- **Request Body**:
-```json
-{
-  "isRegistrationAllowed": false
-}
-```
+- **Request Body**: Can be a boolean or a JSON object.
+  - **Boolean Format**: `true` or `false`
+  - **JSON Format**:
+  ```json
+  {
+    "isRegistrationAllowed": false
+  }
+  ```
 - **Response**:
 ```json
 {

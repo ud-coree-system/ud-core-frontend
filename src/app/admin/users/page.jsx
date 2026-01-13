@@ -185,8 +185,8 @@ export default function UserManagementPage() {
             if (editingItem && !payload.password) {
                 delete payload.password;
             }
-            // Don't send ud_id if admin
-            if (payload.role === 'admin') {
+            // Don't send ud_id if admin or superuser
+            if (payload.role === 'admin' || payload.role === 'superuser') {
                 delete payload.ud_id;
             }
 
@@ -329,9 +329,11 @@ export default function UserManagementPage() {
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap text-center">
                                                 <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium capitalize
-                                                    ${item.role === 'admin'
-                                                        ? 'bg-purple-100 text-purple-700 ring-1 ring-inset ring-purple-600/10'
-                                                        : 'bg-blue-100 text-blue-700 ring-1 ring-inset ring-blue-600/10'}
+                                                    ${item.role === 'superuser'
+                                                        ? 'bg-red-100 text-red-700 ring-1 ring-inset ring-red-600/10'
+                                                        : item.role === 'admin'
+                                                            ? 'bg-purple-100 text-purple-700 ring-1 ring-inset ring-purple-600/10'
+                                                            : 'bg-blue-100 text-blue-700 ring-1 ring-inset ring-blue-600/10'}
                                                 `}>
                                                     {item.role?.replace('_', ' ')}
                                                 </span>
@@ -478,6 +480,9 @@ export default function UserManagementPage() {
                         >
                             <option value="ud_operator">UD Operator</option>
                             <option value="admin">Admin</option>
+                            {currentUser?.role === 'superuser' && (
+                                <option value="superuser">Super User</option>
+                            )}
                         </select>
                     </div>
 
@@ -567,9 +572,11 @@ export default function UserManagementPage() {
                             <div className="p-4 bg-white border border-gray-100 rounded-xl shadow-sm">
                                 <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">Role</p>
                                 <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-sm font-medium capitalize
-                                    ${viewingItem.role === 'admin'
-                                        ? 'bg-purple-100 text-purple-700'
-                                        : 'bg-blue-100 text-blue-700'}
+                                    ${viewingItem.role === 'superuser'
+                                        ? 'bg-red-100 text-red-700'
+                                        : viewingItem.role === 'admin'
+                                            ? 'bg-purple-100 text-purple-700'
+                                            : 'bg-blue-100 text-blue-700'}
                                 `}>
                                     {viewingItem.role?.replace('_', ' ')}
                                 </span>

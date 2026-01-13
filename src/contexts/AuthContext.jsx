@@ -58,7 +58,11 @@ export function AuthProvider({ children }) {
     };
 
     const isAdmin = () => {
-        return user?.role === 'admin';
+        return user?.role === 'admin' || user?.role === 'superuser';
+    };
+
+    const isSuperUser = () => {
+        return user?.role === 'superuser';
     };
 
     const value = {
@@ -67,6 +71,7 @@ export function AuthProvider({ children }) {
         login,
         logout,
         isAdmin,
+        isSuperUser,
         checkAuth,
     };
 

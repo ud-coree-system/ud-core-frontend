@@ -1,9 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { authAPI } from '@/lib/api';
+import { authAPI, settingAPI } from '@/lib/api';
 import { useToast } from '@/contexts/ToastContext';
 import { getErrorMessage } from '@/lib/utils';
 import AuthLayout from '@/componentsv2/AuthLayout';
@@ -25,6 +25,37 @@ export default function RegisterPage() {
     });
     const [showPassword, setShowPassword] = useState(false);
     const [loading, setLoading] = useState(false);
+    const [isRegAllowed, setIsRegAllowed] = useState(true);
+    const [checkingStatus, setCheckingStatus] = useState(true);
+
+    useEffect(() => {
+        checkRegStatus();
+    }, []);
+
+    const checkRegStatus = async () => {
+        try {
+            setCheckingStatus(true);
+            const response = await settingAPI.getAll();
+            if (response.data.success) {
+                const data = response.data.data;
+                // Use isRegistrationAllowed directly as per documentation
+                const allowed = data?.isRegistrationAllowed;
+                const isAllowed = allowed !== false && allowed !== 'false' && allowed !== 0;
+
+                setIsRegAllowed(isAllowed);
+
+                if (!isAllowed) {
+                    toast.error('Registrasi ditutup oleh administrator.');
+                    router.push('/auth/login');
+                }
+            }
+        } catch (error) {
+            console.error('Error checking registration status:', error);
+            // Default to allowed if check fails
+        } finally {
+            setCheckingStatus(false);
+        }
+    };
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -84,6 +115,72 @@ export default function RegisterPage() {
             setLoading(false);
         }
     };
+
+    if (checkingStatus) {
+        return (
+            <AuthLayout>
+                <GlassCard>
+                    <div style={{ display: 'flex', flexDirection: 'column', itemsCenter: 'center', justifyContent: 'center', padding: '40px 0', gap: '16px', textAlign: 'center' }}>
+                        <div className="animate-spin" style={{ fontSize: '32px', color: '#3b82f6' }}>
+                            <span className="material-icons-round">sync</span>
+                        </div>
+                        <p style={{ color: '#64748b', fontSize: '14px' }}>Memeriksa status sistem...</p>
+                    </div>
+                </GlassCard>
+            </AuthLayout>
+        );
+    }
+
+    if (!isRegAllowed) {
+        return (
+            <AuthLayout>
+                <GlassCard>
+                    <div style={{
+                        marginBottom: '32px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between'
+                    }}>
+                        <Logo />
+                    </div>
+                    <div style={{ textAlign: 'center', padding: '20px 0' }}>
+                        <div style={{
+                            width: '64px',
+                            height: '64px',
+                            backgroundColor: '#fee2e2',
+                            borderRadius: '50%',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            margin: '0 auto 20px',
+                            color: '#ef4444'
+                        }}>
+                            <span className="material-icons-round" style={{ fontSize: '32px' }}>no_accounts</span>
+                        </div>
+                        <h1 style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#1e293b', marginBottom: '12px' }}>
+                            Registrasi Ditutup
+                        </h1>
+                        <p style={{ color: '#64748b', lineHeight: '1.6', fontSize: '14px', marginBottom: '24px' }}>
+                            Maaf, pendaftaran akun baru saat ini sedang dinonaktifkan oleh administrator.
+                            Silakan hubungi tim IT atau administrator sistem untuk pembuatan akun internal.
+                        </p>
+                        <Link href="/auth/login" style={{
+                            display: 'inline-block',
+                            padding: '10px 24px',
+                            backgroundColor: '#3b82f6',
+                            color: 'white',
+                            borderRadius: '8px',
+                            fontWeight: '600',
+                            textDecoration: 'none',
+                            fontSize: '14px'
+                        }}>
+                            Kembali ke Login
+                        </Link>
+                    </div>
+                </GlassCard>
+            </AuthLayout>
+        );
+    }
 
     return (
         <AuthLayout>
