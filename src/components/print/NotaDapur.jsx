@@ -120,9 +120,9 @@ const TemplateESC = ({ data, udData, udId }) => (
                 {udData.items.map((item, idx) => (
                     <tr key={idx}>
                         <td className="text-center">{idx + 1}</td>
-                        <td>{item.barang_id?.nama_barang}</td>
+                        <td>{item.nama_barang || item.barang_id?.nama_barang}</td>
                         <td className="text-center">{item.qty}</td>
-                        <td className="text-center">{item.barang_id?.satuan}</td>
+                        <td className="text-center">{item.satuan || item.barang_id?.satuan}</td>
                         <td className="text-right">{formatCurrency(item.harga_jual).replace('Rp', '')}</td>
                         <td className="text-right">{formatCurrency(item.subtotal_jual).replace('Rp', '')}</td>
                     </tr>
@@ -199,8 +199,8 @@ const TemplatePilarPangan = ({ data, udData, udId }) => (
                 {udData.items.map((item, idx) => (
                     <tr key={idx}>
                         <td className="text-center">{item.qty}</td>
-                        <td className="text-center">{item.barang_id?.satuan}</td>
-                        <td>{item.barang_id?.nama_barang}</td>
+                        <td className="text-center">{item.satuan || item.barang_id?.satuan}</td>
+                        <td>{item.nama_barang || item.barang_id?.nama_barang}</td>
                         <td className="text-right">{formatCurrency(item.harga_jual).replace('Rp', '')}</td>
                         <td className="text-right">{formatCurrency(item.subtotal_jual).replace('Rp', '')}</td>
                     </tr>
@@ -278,9 +278,9 @@ const TemplateASM = ({ data, udData, udId }) => (
                 {udData.items.map((item, idx) => (
                     <tr key={idx}>
                         <td className="text-center">{idx + 1}</td>
-                        <td>{item.barang_id?.nama_barang}</td>
+                        <td>{item.nama_barang || item.barang_id?.nama_barang}</td>
                         <td className="text-center">{item.qty}</td>
-                        <td className="text-center">{item.barang_id?.satuan}</td>
+                        <td className="text-center">{item.satuan || item.barang_id?.satuan}</td>
                         <td className="text-right">{formatCurrency(item.harga_jual).replace('Rp', '')}</td>
                         <td className="text-right">{formatCurrency(item.subtotal_jual).replace('Rp', '')}</td>
                     </tr>
@@ -358,9 +358,9 @@ const TemplateBanyuMas = ({ data, udData, udId }) => (
                 {udData.items.map((item, idx) => (
                     <tr key={idx}>
                         <td className="text-center">{idx + 1}</td>
-                        <td>{item.barang_id?.nama_barang}</td>
+                        <td>{item.nama_barang || item.barang_id?.nama_barang}</td>
                         <td className="text-center">{item.qty}</td>
-                        <td className="text-center">{item.barang_id?.satuan}</td>
+                        <td className="text-center">{item.satuan || item.barang_id?.satuan}</td>
                         <td className="text-right">{formatCurrency(item.harga_jual).replace('Rp', '')}</td>
                         <td className="text-right">{formatCurrency(item.subtotal_jual).replace('Rp', '')}</td>
                     </tr>
@@ -429,9 +429,9 @@ const TemplateGeneric = ({ data, udData, udId }) => (
                 {udData.items.map((item, idx) => (
                     <tr key={idx}>
                         <td className="text-center">{idx + 1}</td>
-                        <td>{item.barang_id?.nama_barang}</td>
+                        <td>{item.nama_barang || item.barang_id?.nama_barang}</td>
                         <td className="text-center">{item.qty}</td>
-                        <td className="text-center">{item.barang_id?.satuan}</td>
+                        <td className="text-center">{item.satuan || item.barang_id?.satuan}</td>
                         <td className="text-right">{formatCurrency(item.harga_jual).replace('Rp', '')}</td>
                         <td className="text-right">{formatCurrency(item.subtotal_jual).replace('Rp', '')}</td>
                     </tr>
