@@ -15,7 +15,7 @@ import {
 import { transaksiAPI, periodeAPI, dapurAPI, barangAPI } from '@/lib/api';
 import DatePicker from '@/components/ui/DatePicker';
 import { useToast } from '@/contexts/ToastContext';
-import { getErrorMessage, formatCurrency, toDateInputValue, debounce } from '@/lib/utils';
+import { getErrorMessage, formatCurrency, formatDateShort, toDateInputValue, debounce } from '@/lib/utils';
 
 export default function NewTransaksiPage() {
     const router = useRouter();
@@ -129,7 +129,7 @@ export default function NewTransaksiPage() {
     };
 
     const handleQtyChange = (index, qty) => {
-        const newQty = Math.max(1, parseInt(qty) || 1);
+        const newQty = Math.max(0.01, parseFloat(qty) || 0);
         setItems((prev) =>
             prev.map((item, i) => (i === index ? { ...item, qty: newQty } : item))
         );
@@ -258,14 +258,28 @@ export default function NewTransaksiPage() {
                         </label>
                         <select
                             value={periodeId}
-                            onChange={(e) => setPeriodeId(e.target.value)}
+                            onChange={(e) => {
+                                const newPeriodeId = e.target.value;
+                                setPeriodeId(newPeriodeId);
+
+                                // Adjust date if outside range
+                                if (newPeriodeId) {
+                                    const selectedP = periodeList.find(p => p._id === newPeriodeId);
+                                    if (selectedP) {
+                                        const start = new Date(selectedP.tanggal_mulai);
+                                        const end = new Date(selectedP.tanggal_selesai);
+                                        if (tanggal < start) setTanggal(start);
+                                        else if (tanggal > end) setTanggal(end);
+                                    }
+                                }
+                            }}
                             className="w-full px-3 py-2.5 border border-gray-200 rounded-lg
                        focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 bg-white text-gray-900"
                         >
                             <option value="">Pilih Periode</option>
                             {periodeList.map((p) => (
                                 <option key={p._id} value={p._id}>
-                                    {p.nama_periode}
+                                    {p.nama_periode} ({formatDateShort(p.tanggal_mulai)} - {formatDateShort(p.tanggal_selesai)})
                                 </option>
                             ))}
                         </select>
@@ -300,6 +314,8 @@ export default function NewTransaksiPage() {
                             selected={tanggal}
                             onChange={(date) => setTanggal(date)}
                             placeholder="Pilih tanggal"
+                            minDate={periodeId ? new Date(periodeList.find(p => p._id === periodeId)?.tanggal_mulai) : null}
+                            maxDate={periodeId ? new Date(periodeList.find(p => p._id === periodeId)?.tanggal_selesai) : null}
                         />
                     </div>
                 </div>
@@ -405,7 +421,8 @@ export default function NewTransaksiPage() {
                                                     value={item.qty}
                                                     onChange={(e) => handleQtyChange(index, e.target.value)}
                                                     onFocus={(e) => e.target.select()}
-                                                    min="1"
+                                                    min="0.01"
+                                                    step="any"
                                                     className="w-20 px-2 py-1.5 border border-gray-200 rounded-md text-center focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none"
                                                 />
                                             </td>
@@ -483,6 +500,8 @@ export default function NewTransaksiPage() {
                                                     value={item.qty}
                                                     onChange={(e) => handleQtyChange(index, e.target.value)}
                                                     onFocus={(e) => e.target.select()}
+                                                    min="0.01"
+                                                    step="any"
                                                     className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500/20 outline-none"
                                                 />
                                             </div>
