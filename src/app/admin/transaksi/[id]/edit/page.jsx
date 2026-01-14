@@ -44,6 +44,7 @@ export default function EditTransaksiPage() {
     const [loading, setLoading] = useState(true);
     const [submitting, setSubmitting] = useState(false);
     const [fetchingData, setFetchingData] = useState(true);
+    const [tableSearch, setTableSearch] = useState('');
 
     useEffect(() => {
         fetchOptions();
@@ -215,6 +216,12 @@ export default function EditTransaksiPage() {
         );
     };
 
+    const handleSatuanChange = (index, value) => {
+        setItems((prev) =>
+            prev.map((item, i) => (i === index ? { ...item, satuan: value } : item))
+        );
+    };
+
     const handleRemoveItem = (index) => {
         setItems((prev) => prev.filter((_, i) => i !== index));
     };
@@ -257,6 +264,7 @@ export default function EditTransaksiPage() {
                     qty: item.qty,
                     harga_jual: item.harga_jual,
                     harga_modal: item.harga_modal,
+                    satuan: item.satuan,
                 })),
             };
 
@@ -282,6 +290,11 @@ export default function EditTransaksiPage() {
             setSubmitting(false);
         }
     };
+
+    const filteredItems = items.filter((item) =>
+        item.nama_barang.toLowerCase().includes(tableSearch.toLowerCase()) ||
+        item.ud_nama?.toLowerCase().includes(tableSearch.toLowerCase())
+    );
 
     if (loading || fetchingData) {
         return (
@@ -422,251 +435,296 @@ export default function EditTransaksiPage() {
                 </div>
 
                 {/* Items List */}
-                <div className="border border-gray-200 rounded-lg overflow-hidden mb-6">
-                    {/* Desktop Table View */}
-                    <div className="hidden md:block overflow-x-auto">
-                        <table className="w-full">
-                            <thead className="bg-gray-50">
-                                <tr>
-                                    <th className="text-left px-4 py-3 text-xs font-semibold text-gray-600 uppercase">No</th>
-                                    <th className="text-left px-4 py-3 text-xs font-semibold text-gray-600 uppercase">Nama Barang</th>
-                                    <th className="text-left px-4 py-3 text-xs font-semibold text-gray-600 uppercase">UD</th>
-                                    <th className="text-center px-4 py-3 text-xs font-semibold text-gray-600 uppercase">Satuan</th>
-                                    <th className="text-center px-4 py-3 text-xs font-semibold text-gray-600 uppercase">Qty</th>
-                                    <th className="text-right px-4 py-3 text-xs font-semibold text-gray-600 uppercase">Harga Modal</th>
-                                    <th className="text-right px-4 py-3 text-xs font-semibold text-gray-600 uppercase">Harga Jual</th>
-                                    <th className="text-right px-4 py-3 text-xs font-semibold text-gray-600 uppercase">Subtotal</th>
-                                    <th className="text-center px-4 py-3 text-xs font-semibold text-gray-600 uppercase">Aksi</th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-gray-100">
-                                {items.length === 0 ? (
+                <div className="space-y-4 mb-6">
+                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                        <h2 className="text-lg font-bold text-gray-900">Daftar Barang</h2>
+                        <div className="relative w-full md:w-64">
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                            <input
+                                type="text"
+                                value={tableSearch}
+                                onChange={(e) => setTableSearch(e.target.value)}
+                                placeholder="Filter barang di tabel..."
+                                className="w-full pl-9 pr-4 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                            />
+                        </div>
+                    </div>
+
+                    <div className="border border-gray-200 rounded-lg overflow-hidden">
+                        {/* Desktop Table View */}
+                        <div className="hidden md:block overflow-x-auto">
+                            <table className="w-full">
+                                <thead className="bg-gray-50">
                                     <tr>
-                                        <td colSpan={9} className="text-center py-12 text-gray-500">
-                                            <ShoppingCart className="w-12 h-12 mx-auto mb-3 text-gray-300" />
-                                            <p className="text-lg font-medium">Belum ada barang ditambahkan</p>
-                                            <p className="text-sm">Cari dan pilih barang dari kolom pencarian di atas</p>
-                                        </td>
+                                        <th className="text-left px-4 py-3 text-xs font-semibold text-gray-600 uppercase">No</th>
+                                        <th className="text-left px-4 py-3 text-xs font-semibold text-gray-600 uppercase">Nama Barang</th>
+                                        <th className="text-left px-4 py-3 text-xs font-semibold text-gray-600 uppercase">UD</th>
+                                        <th className="text-center px-4 py-3 text-xs font-semibold text-gray-600 uppercase">Satuan</th>
+                                        <th className="text-center px-4 py-3 text-xs font-semibold text-gray-600 uppercase">Qty</th>
+                                        <th className="text-right px-4 py-3 text-xs font-semibold text-gray-600 uppercase">Harga Modal</th>
+                                        <th className="text-right px-4 py-3 text-xs font-semibold text-gray-600 uppercase">Harga Jual</th>
+                                        <th className="text-right px-4 py-3 text-xs font-semibold text-gray-600 uppercase">Subtotal</th>
+                                        <th className="text-center px-4 py-3 text-xs font-semibold text-gray-600 uppercase">Aksi</th>
                                     </tr>
-                                ) : (
-                                    items.map((item, index) => (
-                                        <tr key={item.barang_id} className="hover:bg-gray-50 transition-colors">
-                                            <td className="px-4 py-4 text-gray-600">{index + 1}</td>
-                                            <td className="px-4 py-4">
-                                                <p className="font-medium text-gray-900">{item.nama_barang}</p>
-                                            </td>
-                                            <td className="px-4 py-4">
-                                                <p className="text-sm text-gray-600">{item.ud_nama}</p>
-                                                <p className="text-xs text-gray-400">{item.ud_kode}</p>
-                                            </td>
-                                            <td className="px-4 py-4 text-center">
-                                                <span className="px-2 py-1 text-xs bg-gray-100 text-gray-700 rounded-md font-medium">{item.satuan}</span>
-                                            </td>
-                                            <td className="px-4 py-4">
-                                                <input
-                                                    type="number"
-                                                    value={item.qty}
-                                                    onChange={(e) => handleQtyChange(index, e.target.value)}
-                                                    onFocus={(e) => e.target.select()}
-                                                    min="0.01"
-                                                    step="any"
-                                                    className="w-20 px-2 py-1.5 border border-gray-200 rounded-md text-center focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none"
-                                                />
-                                            </td>
-                                            <td className="px-4 py-4">
-                                                <input
-                                                    type="number"
-                                                    value={item.harga_modal}
-                                                    onChange={(e) => handleHargaModalChange(index, e.target.value)}
-                                                    onFocus={(e) => e.target.select()}
-                                                    min="0"
-                                                    className="w-24 px-2 py-1.5 border border-gray-200 rounded-md text-right focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none"
-                                                />
-                                            </td>
-                                            <td className="px-4 py-4">
-                                                <input
-                                                    type="number"
-                                                    value={item.harga_jual}
-                                                    onChange={(e) => handleHargaJualChange(index, e.target.value)}
-                                                    onFocus={(e) => e.target.select()}
-                                                    min="0"
-                                                    className="w-24 px-2 py-1.5 border border-gray-200 rounded-md text-right focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none"
-                                                />
-                                            </td>
-                                            <td className="px-4 py-4 text-right font-semibold text-gray-900">
-                                                {formatCurrency(calculateSubtotal(item))}
-                                            </td>
-                                            <td className="px-4 py-4 text-center">
-                                                <button
-                                                    onClick={() => handleRemoveItem(index)}
-                                                    className="p-2 hover:bg-red-50 rounded-lg text-red-600 transition-colors"
-                                                    title="Hapus Barang"
-                                                >
-                                                    <Trash2 className="w-4 h-4" />
-                                                </button>
+                                </thead>
+                                <tbody className="divide-y divide-gray-100">
+                                    {filteredItems.length === 0 ? (
+                                        <tr>
+                                            <td colSpan={9} className="text-center py-12 text-gray-500">
+                                                <ShoppingCart className="w-12 h-12 mx-auto mb-3 text-gray-300" />
+                                                {tableSearch ? (
+                                                    <>
+                                                        <p className="text-lg font-medium">Barang tidak ditemukan</p>
+                                                        <p className="text-sm">Tidak ada barang yang cocok dengan "{tableSearch}"</p>
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        <p className="text-lg font-medium">Belum ada barang ditambahkan</p>
+                                                        <p className="text-sm">Cari dan pilih barang dari kolom pencarian di atas</p>
+                                                    </>
+                                                )}
                                             </td>
                                         </tr>
-                                    ))
-                                )}
-                            </tbody>
-                        </table>
-                    </div>
-
-                    {/* Mobile Card View */}
-                    <div className="md:hidden">
-                        {items.length === 0 ? (
-                            <div className="text-center py-12 px-4 text-gray-500">
-                                <ShoppingCart className="w-12 h-12 mx-auto mb-3 text-gray-300" />
-                                <p className="text-lg font-medium">Belum ada barang</p>
-                                <p className="text-sm">Cari dan pilih barang di atas</p>
-                            </div>
-                        ) : (
-                            <div className="divide-y divide-gray-100">
-                                {items.map((item, index) => (
-                                    <div key={item.barang_id} className="p-4 space-y-4">
-                                        <div className="flex justify-between items-start">
-                                            <div className="space-y-1">
-                                                <p className="font-bold text-gray-900 leading-tight">{item.nama_barang}</p>
-                                                <p className="text-xs text-gray-500">
-                                                    {item.ud_nama} • <span className="font-medium text-gray-700">{item.satuan}</span>
-                                                </p>
-                                            </div>
-                                            <button
-                                                onClick={() => handleRemoveItem(index)}
-                                                className="p-2 text-red-500 hover:bg-red-50 rounded-lg"
-                                            >
-                                                <Trash2 className="w-5 h-5" />
-                                            </button>
-                                        </div>
-
-                                        <div className="grid grid-cols-2 gap-3">
-                                            <div className="space-y-1">
-                                                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Qty</label>
-                                                <input
-                                                    type="number"
-                                                    value={item.qty}
-                                                    onChange={(e) => handleQtyChange(index, e.target.value)}
-                                                    onFocus={(e) => e.target.select()}
-                                                    min="0.01"
-                                                    step="any"
-                                                    className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500/20 outline-none"
-                                                />
-                                            </div>
-                                            <div className="space-y-1 text-right">
-                                                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Subtotal</label>
-                                                <p className="py-2 font-bold text-blue-600">
+                                    ) : (
+                                        filteredItems.map((item, index) => (
+                                            <tr key={item.barang_id} className="hover:bg-gray-50 transition-colors">
+                                                <td className="px-4 py-4 text-gray-600">{index + 1}</td>
+                                                <td className="px-4 py-4">
+                                                    <p className="font-medium text-gray-900">{item.nama_barang}</p>
+                                                </td>
+                                                <td className="px-4 py-4">
+                                                    <p className="text-sm text-gray-600">{item.ud_nama}</p>
+                                                    <p className="text-xs text-gray-400">{item.ud_kode}</p>
+                                                </td>
+                                                <td className="px-4 py-4 text-center">
+                                                    <input
+                                                        type="text"
+                                                        value={item.satuan}
+                                                        onChange={(e) => handleSatuanChange(index, e.target.value)}
+                                                        className="w-20 px-2 py-1.5 border border-gray-200 rounded-md text-center focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none text-xs font-medium"
+                                                    />
+                                                </td>
+                                                <td className="px-4 py-4">
+                                                    <input
+                                                        type="number"
+                                                        value={item.qty}
+                                                        onChange={(e) => handleQtyChange(index, e.target.value)}
+                                                        onFocus={(e) => e.target.select()}
+                                                        min="0.01"
+                                                        step="any"
+                                                        className="w-20 px-2 py-1.5 border border-gray-200 rounded-md text-center focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none"
+                                                    />
+                                                </td>
+                                                <td className="px-4 py-4">
+                                                    <input
+                                                        type="number"
+                                                        value={item.harga_modal}
+                                                        onChange={(e) => handleHargaModalChange(index, e.target.value)}
+                                                        onFocus={(e) => e.target.select()}
+                                                        min="0"
+                                                        className="w-24 px-2 py-1.5 border border-gray-200 rounded-md text-right focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none"
+                                                    />
+                                                </td>
+                                                <td className="px-4 py-4">
+                                                    <input
+                                                        type="number"
+                                                        value={item.harga_jual}
+                                                        onChange={(e) => handleHargaJualChange(index, e.target.value)}
+                                                        onFocus={(e) => e.target.select()}
+                                                        min="0"
+                                                        className="w-24 px-2 py-1.5 border border-gray-200 rounded-md text-right focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none"
+                                                    />
+                                                </td>
+                                                <td className="px-4 py-4 text-right font-semibold text-gray-900">
                                                     {formatCurrency(calculateSubtotal(item))}
-                                                </p>
-                                            </div>
-                                        </div>
+                                                </td>
+                                                <td className="px-4 py-4 text-center">
+                                                    <button
+                                                        onClick={() => handleRemoveItem(index)}
+                                                        className="p-2 hover:bg-red-50 rounded-lg text-red-600 transition-colors"
+                                                        title="Hapus Barang"
+                                                    >
+                                                        <Trash2 className="w-4 h-4" />
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        ))
+                                    )}
+                                </tbody>
+                            </table>
+                        </div>
 
-                                        <div className="grid grid-cols-2 gap-3">
-                                            <div className="space-y-1">
-                                                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Harga Modal</label>
-                                                <input
-                                                    type="number"
-                                                    value={item.harga_modal}
-                                                    onChange={(e) => handleHargaModalChange(index, e.target.value)}
-                                                    onFocus={(e) => e.target.select()}
-                                                    className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500/20 outline-none text-sm"
-                                                />
+                        {/* Mobile Card View */}
+                        <div className="md:hidden">
+                            {filteredItems.length === 0 ? (
+                                <div className="text-center py-12 px-4 text-gray-500">
+                                    <ShoppingCart className="w-12 h-12 mx-auto mb-3 text-gray-300" />
+                                    {tableSearch ? (
+                                        <>
+                                            <p className="text-lg font-medium">Barang tidak ditemukan</p>
+                                            <p className="text-sm">Tidak ada yang cocok dengan "{tableSearch}"</p>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <p className="text-lg font-medium">Belum ada barang</p>
+                                            <p className="text-sm">Cari dan pilih barang di atas</p>
+                                        </>
+                                    )}
+                                </div>
+                            ) : (
+                                <div className="divide-y divide-gray-100">
+                                    {filteredItems.map((item, index) => (
+                                        <div key={item.barang_id} className="p-4 space-y-4">
+                                            <div className="flex justify-between items-start">
+                                                <div className="space-y-1">
+                                                    <p className="font-bold text-gray-900 leading-tight">{item.nama_barang}</p>
+                                                    <div className="flex items-center gap-2">
+                                                        <p className="text-xs text-gray-500">{item.ud_nama} •</p>
+                                                        <input
+                                                            type="text"
+                                                            value={item.satuan}
+                                                            onChange={(e) => handleSatuanChange(index, e.target.value)}
+                                                            className="w-16 px-1.5 py-0.5 border border-gray-200 rounded text-[10px] font-medium focus:ring-1 focus:ring-blue-500/20 outline-none"
+                                                        />
+                                                    </div>
+                                                </div>
+                                                <button
+                                                    onClick={() => handleRemoveItem(index)}
+                                                    className="p-2 text-red-500 hover:bg-red-50 rounded-lg"
+                                                >
+                                                    <Trash2 className="w-5 h-5" />
+                                                </button>
                                             </div>
-                                            <div className="space-y-1">
-                                                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Harga Jual</label>
-                                                <input
-                                                    type="number"
-                                                    value={item.harga_jual}
-                                                    onChange={(e) => handleHargaJualChange(index, e.target.value)}
-                                                    onFocus={(e) => e.target.select()}
-                                                    className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500/20 outline-none text-sm"
-                                                />
+
+                                            <div className="grid grid-cols-2 gap-3">
+                                                <div className="space-y-1">
+                                                    <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Qty</label>
+                                                    <input
+                                                        type="number"
+                                                        value={item.qty}
+                                                        onChange={(e) => handleQtyChange(index, e.target.value)}
+                                                        onFocus={(e) => e.target.select()}
+                                                        min="0.01"
+                                                        step="any"
+                                                        className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500/20 outline-none"
+                                                    />
+                                                </div>
+                                                <div className="space-y-1 text-right">
+                                                    <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Subtotal</label>
+                                                    <p className="py-2 font-bold text-blue-600">
+                                                        {formatCurrency(calculateSubtotal(item))}
+                                                    </p>
+                                                </div>
+                                            </div>
+
+                                            <div className="grid grid-cols-2 gap-3">
+                                                <div className="space-y-1">
+                                                    <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Harga Modal</label>
+                                                    <input
+                                                        type="number"
+                                                        value={item.harga_modal}
+                                                        onChange={(e) => handleHargaModalChange(index, e.target.value)}
+                                                        onFocus={(e) => e.target.select()}
+                                                        className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500/20 outline-none text-sm"
+                                                    />
+                                                </div>
+                                                <div className="space-y-1">
+                                                    <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Harga Jual</label>
+                                                    <input
+                                                        type="number"
+                                                        value={item.harga_jual}
+                                                        onChange={(e) => handleHargaJualChange(index, e.target.value)}
+                                                        onFocus={(e) => e.target.select()}
+                                                        className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500/20 outline-none text-sm"
+                                                    />
+                                                </div>
                                             </div>
                                         </div>
-                                    </div>
-                                ))}
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+                    </div>
+
+                    {/* Summary Section (Mobile Optimized) */}
+                    {items.length > 0 && (
+                        <div className="bg-gray-50 rounded-lg p-4 space-y-3">
+                            <div className="flex justify-between items-center text-sm">
+                                <span className="text-gray-500">Total Modal</span>
+                                <span className="text-gray-900 font-medium">{formatCurrency(calculateTotalModal())}</span>
                             </div>
-                        )}
-                    </div>
-                </div>
+                            <div className="flex justify-between items-center text-sm">
+                                <span className="text-gray-500">Estimasi Keuntungan</span>
+                                <span className="text-green-600 font-bold">{formatCurrency(calculateTotal() - calculateTotalModal())}</span>
+                            </div>
+                            <div className="pt-2 border-t border-gray-200 flex justify-between items-center">
+                                <span className="text-base font-bold text-gray-700">TOTAL</span>
+                                <span className="text-2xl font-black text-blue-600 tracking-tight">
+                                    {formatCurrency(calculateTotal())}
+                                </span>
+                            </div>
+                        </div>
+                    )}
 
-                {/* Summary Section (Mobile Optimized) */}
-                {items.length > 0 && (
-                    <div className="bg-gray-50 rounded-lg p-4 space-y-3">
-                        <div className="flex justify-between items-center text-sm">
-                            <span className="text-gray-500">Total Modal</span>
-                            <span className="text-gray-900 font-medium">{formatCurrency(calculateTotalModal())}</span>
-                        </div>
-                        <div className="flex justify-between items-center text-sm">
-                            <span className="text-gray-500">Estimasi Keuntungan</span>
-                            <span className="text-green-600 font-bold">{formatCurrency(calculateTotal() - calculateTotalModal())}</span>
-                        </div>
-                        <div className="pt-2 border-t border-gray-200 flex justify-between items-center">
-                            <span className="text-base font-bold text-gray-700">TOTAL</span>
-                            <span className="text-2xl font-black text-blue-600 tracking-tight">
-                                {formatCurrency(calculateTotal())}
-                            </span>
-                        </div>
-                    </div>
-                )}
-
-                {/* Actions - Desktop */}
-                <div className="hidden md:flex justify-end gap-3 mt-8">
-                    <button
-                        onClick={() => router.back()}
-                        disabled={submitting}
-                        className="px-6 py-2.5 border border-gray-300 rounded-lg text-gray-700 font-medium
+                    {/* Actions - Desktop */}
+                    <div className="hidden md:flex justify-end gap-3 mt-8">
+                        <button
+                            onClick={() => router.back()}
+                            disabled={submitting}
+                            className="px-6 py-2.5 border border-gray-300 rounded-lg text-gray-700 font-medium
                      hover:bg-gray-50 transition-colors disabled:opacity-50"
-                    >
-                        Batal
-                    </button>
-                    <button
-                        onClick={() => handleSubmit(false)}
-                        disabled={submitting || items.length === 0}
-                        className="inline-flex items-center gap-2 px-6 py-2.5 bg-gray-600 text-white rounded-lg font-medium
+                        >
+                            Batal
+                        </button>
+                        <button
+                            onClick={() => handleSubmit(false)}
+                            disabled={submitting || items.length === 0}
+                            className="inline-flex items-center gap-2 px-6 py-2.5 bg-gray-600 text-white rounded-lg font-medium
                      hover:bg-gray-700 transition-colors disabled:opacity-50"
-                    >
-                        <Save className="w-5 h-5" />
-                        Update Draft
-                    </button>
-                    <button
-                        onClick={() => handleSubmit(true)}
-                        disabled={submitting || items.length === 0}
-                        className="inline-flex items-center gap-2 px-6 py-2.5 bg-green-600 text-white rounded-lg font-medium
+                        >
+                            <Save className="w-5 h-5" />
+                            Update Draft
+                        </button>
+                        <button
+                            onClick={() => handleSubmit(true)}
+                            disabled={submitting || items.length === 0}
+                            className="inline-flex items-center gap-2 px-6 py-2.5 bg-green-600 text-white rounded-lg font-medium
                      hover:bg-green-700 transition-colors disabled:opacity-50 shadow-lg shadow-green-500/20"
-                    >
-                        {submitting ? (
-                            <Loader2 className="w-5 h-5 animate-spin" />
-                        ) : (
-                            <CheckCircle className="w-5 h-5" />
-                        )}
-                        Update & Selesai
-                    </button>
+                        >
+                            {submitting ? (
+                                <Loader2 className="w-5 h-5 animate-spin" />
+                            ) : (
+                                <CheckCircle className="w-5 h-5" />
+                            )}
+                            Update & Selesai
+                        </button>
+                    </div>
                 </div>
-            </div>
 
-            {/* Mobile Bottom Action Bar */}
-            <div className="md:hidden fixed bottom-16 left-0 right-0 p-4 bg-white border-t border-gray-200 shadow-[0_-4px_12px_rgba(0,0,0,0.05)] z-40">
-                <div className="flex gap-2">
-                    <button
-                        onClick={() => handleSubmit(false)}
-                        disabled={submitting || items.length === 0}
-                        className="flex-1 flex flex-col items-center justify-center gap-1 py-2 bg-gray-50 text-gray-700 rounded-xl border border-gray-200 disabled:opacity-50"
-                    >
-                        <Save className="w-5 h-5" />
-                        <span className="text-[10px] font-bold uppercase">Draft</span>
-                    </button>
-                    <button
-                        onClick={() => handleSubmit(true)}
-                        disabled={submitting || items.length === 0}
-                        className="flex-[2.5] flex items-center justify-center gap-2 py-3.5 bg-green-600 text-white rounded-xl font-bold shadow-lg shadow-green-500/20 active:scale-[0.98] transition-transform disabled:opacity-50"
-                    >
-                        {submitting ? (
-                            <Loader2 className="w-5 h-5 animate-spin" />
-                        ) : (
-                            <CheckCircle className="w-5 h-5" />
-                        )}
-                        Update & Selesai
-                    </button>
+                {/* Mobile Bottom Action Bar */}
+                <div className="md:hidden fixed bottom-16 left-0 right-0 p-4 bg-white border-t border-gray-200 shadow-[0_-4px_12px_rgba(0,0,0,0.05)] z-40">
+                    <div className="flex gap-2">
+                        <button
+                            onClick={() => handleSubmit(false)}
+                            disabled={submitting || items.length === 0}
+                            className="flex-1 flex flex-col items-center justify-center gap-1 py-2 bg-gray-50 text-gray-700 rounded-xl border border-gray-200 disabled:opacity-50"
+                        >
+                            <Save className="w-5 h-5" />
+                            <span className="text-[10px] font-bold uppercase">Draft</span>
+                        </button>
+                        <button
+                            onClick={() => handleSubmit(true)}
+                            disabled={submitting || items.length === 0}
+                            className="flex-[2.5] flex items-center justify-center gap-2 py-3.5 bg-green-600 text-white rounded-xl font-bold shadow-lg shadow-green-500/20 active:scale-[0.98] transition-transform disabled:opacity-50"
+                        >
+                            {submitting ? (
+                                <Loader2 className="w-5 h-5 animate-spin" />
+                            ) : (
+                                <CheckCircle className="w-5 h-5" />
+                            )}
+                            Update & Selesai
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>

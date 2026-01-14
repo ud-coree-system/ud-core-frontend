@@ -143,6 +143,12 @@ export default function NewTransaksiPage() {
         );
     };
 
+    const handleSatuanChange = (index, value) => {
+        setItems((prev) =>
+            prev.map((item, i) => (i === index ? { ...item, satuan: value } : item))
+        );
+    };
+
     const handleHargaModalChange = (index, harga) => {
         const newHarga = Math.max(0, parseInt(harga) || 0);
         setItems((prev) =>
@@ -194,6 +200,7 @@ export default function NewTransaksiPage() {
                     qty: item.qty,
                     harga_jual: item.harga_jual,
                     harga_modal: item.harga_modal,
+                    satuan: item.satuan,
                 })),
             };
 
@@ -443,7 +450,12 @@ export default function NewTransaksiPage() {
                                                     <p className="text-xs text-gray-400">{item.ud_kode}</p>
                                                 </td>
                                                 <td className="px-4 py-4 text-center">
-                                                    <span className="px-2 py-1 text-xs bg-gray-100 text-gray-700 rounded-md font-medium">{item.satuan}</span>
+                                                    <input
+                                                        type="text"
+                                                        value={item.satuan}
+                                                        onChange={(e) => handleSatuanChange(index, e.target.value)}
+                                                        className="w-20 px-2 py-1.5 border border-gray-200 rounded-md text-center focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none text-xs font-medium"
+                                                    />
                                                 </td>
                                                 <td className="px-4 py-4">
                                                     <input
@@ -519,9 +531,15 @@ export default function NewTransaksiPage() {
                                             <div className="flex justify-between items-start">
                                                 <div className="space-y-1">
                                                     <p className="font-bold text-gray-900 leading-tight">{item.nama_barang}</p>
-                                                    <p className="text-xs text-gray-500">
-                                                        {item.ud_nama} • <span className="font-medium text-gray-700">{item.satuan}</span>
-                                                    </p>
+                                                    <div className="flex items-center gap-2">
+                                                        <p className="text-xs text-gray-500">{item.ud_nama} •</p>
+                                                        <input
+                                                            type="text"
+                                                            value={item.satuan}
+                                                            onChange={(e) => handleSatuanChange(index, e.target.value)}
+                                                            className="w-16 px-1.5 py-0.5 border border-gray-200 rounded text-[10px] font-medium focus:ring-1 focus:ring-blue-500/20 outline-none"
+                                                        />
+                                                    </div>
                                                 </div>
                                                 <button
                                                     onClick={() => handleRemoveItem(index)}
