@@ -112,55 +112,34 @@ export default function LaporanDapurPage() {
         }
     };
 
-    const getItemsByUD = () => {
+    const getItemsByDate = () => {
         const barangMap = new Map(barangList.map(b => [b._id, b]));
-        const udMap = {};
-
-        const udLookupMap = new Map(udList.map(u => [u._id, u]));
+        const grouped = {};
 
         transactions.forEach((trx) => {
+            const dateKey = toLocalDate(trx.tanggal);
+            if (!grouped[dateKey]) {
+                grouped[dateKey] = {
+                    tanggal: dateKey,
+                    items: []
+                };
+            }
+
             trx.items?.forEach((item) => {
                 const bId = item.barang_id?._id || item.barang_id;
-                const uId = item.ud_id?._id || item.ud_id;
-
                 const barang = barangMap.get(bId);
-                const ud = udLookupMap.get(uId);
 
-                const udIdKey = uId || 'unknown';
-                const udName = ud?.nama_ud || item.ud_id?.nama_ud || 'Unknown UD';
-                const udKode = ud?.kode_ud || item.ud_id?.kode_ud || '';
-
-                if (!udMap[udIdKey]) {
-                    udMap[udIdKey] = {
-                        _id: udIdKey,
-                        nama_ud: udName,
-                        kode_ud: udKode,
-                        items: [],
-                        totalJual: 0,
-                        totalModal: 0,
-                        totalKeuntungan: 0,
-                    };
-                }
-
-                const actualJual = item.harga_jual ?? barang?.harga_jual;
-                const actualModal = item.harga_modal ?? barang?.harga_modal;
-
-                udMap[udIdKey].items.push({
+                grouped[dateKey].items.push({
                     ...item,
                     barang_id: barang || item.barang_id,
-                    ud_id: ud || item.ud_id,
-                    harga_jual: actualJual,
-                    harga_modal: actualModal,
+                    nama_barang: item.nama_barang || barang?.nama_barang || item.barang_id?.nama_barang || '-',
+                    satuan: item.satuan || barang?.satuan || item.barang_id?.satuan || '-',
                     transaksi: trx.kode_transaksi,
-                    dapur: trx.dapur_id?.nama_dapur,
-                    tanggal: trx.tanggal,
                 });
-                udMap[udIdKey].totalJual += (item.subtotal_jual || 0);
-                udMap[udIdKey].totalModal += (item.subtotal_modal || 0);
-                udMap[udIdKey].totalKeuntungan += (item.keuntungan || 0);
             });
         });
-        return Object.values(udMap);
+
+        return Object.values(grouped).sort((a, b) => new Date(b.tanggal) - new Date(a.tanggal));
     };
 
     const formatIndoDate = (date) => {
@@ -178,7 +157,7 @@ export default function LaporanDapurPage() {
             return;
         }
 
-        const itemsByUD = getItemsByUD();
+        const itemsByDate = getItemsByDate();
         const period = filterPeriode ? periodeList.find(p => p._id === filterPeriode) : null;
         const periodName = period ? period.nama_periode : 'Semua Periode';
         const periodRange = period ? `(${formatDateShort(period.tanggal_mulai)} - ${formatDateShort(period.tanggal_selesai)})` : '';
@@ -186,10 +165,6 @@ export default function LaporanDapurPage() {
         const dapurLabel = selectedDapur ? `DAPUR: ${selectedDapur.nama_dapur.toUpperCase()}` : '';
         const tanggalLabel = filterTanggal ? `TANGGAL: ${formatDateShort(filterTanggal)}` : '';
         const periodeLabel = `${periodName.toUpperCase()} ${periodRange} ${dapurLabel} ${tanggalLabel}`;
-
-        const totalJualAll = transactions.reduce((sum, trx) => sum + (trx.items?.reduce((s, i) => s + i.subtotal_jual, 0) || 0), 0);
-        const totalModalAll = transactions.reduce((sum, trx) => sum + (trx.items?.reduce((s, i) => s + i.subtotal_modal, 0) || 0), 0);
-        const totalUntungAll = transactions.reduce((sum, trx) => sum + (trx.items?.reduce((s, i) => s + i.keuntungan, 0) || 0), 0);
 
         setGenerating(true);
         try {
@@ -199,16 +174,13 @@ export default function LaporanDapurPage() {
 
             await exportLaporanExcel({
                 transactions,
-                itemsByUD,
+                itemsByDate,
                 dapurName: selectedDapur?.nama_dapur,
                 periodName: periodName,
                 periodRange: periodRange,
                 selectedDate: filterTanggal ? formatDateShort(filterTanggal) : null,
-                totalJualAll,
-                totalModalAll,
-                totalUntungAll,
-                barangList,
                 udList,
+                barangList,
                 fileName
             });
 
@@ -222,261 +194,122 @@ export default function LaporanDapurPage() {
     };
 
     const generateRekapPDF = () => {
-        if (transactions.length === 0) {
-            toast.warning('Tidak ada data untuk dibuat laporan');
-            return;
-        }
-
+        if (transactions.length === 0) return;
         setGenerating(true);
         try {
-            const doc = new jsPDF('l', 'mm', 'a4');
-            const pageWidth = doc.internal.pageSize.getWidth();
-
-            const period = filterPeriode ? periodeList.find(p => p._id === filterPeriode) : null;
-            const periodName = period ? period.nama_periode : 'Semua Periode';
-            const periodRange = period ? `(${formatDateShort(period.tanggal_mulai)} - ${formatDateShort(period.tanggal_selesai)})` : '';
+            const doc = new jsPDF();
             const selectedDapur = dapurList.find(d => d._id === filterDapur);
-            const dateLabel = filterTanggal ? `TANGGAL: ${formatDateShort(filterTanggal).toUpperCase()}` : '';
-            const periodeLabel = `${periodName.toUpperCase()} ${periodRange}`;
-            const dapurLabel = `DAPUR: ${selectedDapur?.nama_dapur.toUpperCase()} ${dateLabel}`;
-            const printTimestamp = `Dicetak pada: ${new Date().toLocaleString('id-ID')}`;
+            const selectedPeriode = filterPeriode ? periodeList.find(p => p._id === filterPeriode) : null;
 
+            // Report Header
             doc.setFontSize(18);
-            doc.setFont('helvetica', 'bold');
-            doc.text(`LAPORAN REKAP DAPUR`, pageWidth / 2, 15, { align: 'center' });
-            doc.setFontSize(12);
-            doc.text(dapurLabel, pageWidth / 2, 22, { align: 'center' });
-            doc.text(periodeLabel, pageWidth / 2, 28, { align: 'center' });
+            doc.text('LAPORAN PESANAN DAPUR', 105, 15, { align: 'center' });
 
-            doc.setFontSize(8);
-            doc.setFont('helvetica', 'normal');
-            doc.text(printTimestamp, pageWidth - 14, 10, { align: 'right' });
+            doc.setFontSize(11);
+            doc.text(`Dapur: ${selectedDapur?.nama_dapur || 'Semua Dapur'}`, 14, 25);
+            doc.text(`Periode: ${selectedPeriode?.nama_periode || 'Semua Periode'} (${selectedPeriode ? `${formatDateShort(selectedPeriode.tanggal_mulai)} - ${formatDateShort(selectedPeriode.tanggal_selesai)}` : '-'})`, 14, 30);
+            if (filterTanggal) {
+                doc.text(`Tanggal: ${formatDateShort(filterTanggal)}`, 14, 35);
+            }
 
-            const totalJualAll = transactions.reduce((sum, trx) => sum + (trx.items?.reduce((s, i) => s + i.subtotal_jual, 0) || 0), 0);
-            const totalModalAll = transactions.reduce((sum, trx) => sum + (trx.items?.reduce((s, i) => s + i.subtotal_modal, 0) || 0), 0);
-            const totalUntungAll = transactions.reduce((sum, trx) => sum + (trx.items?.reduce((s, i) => s + i.keuntungan, 0) || 0), 0);
+            const tableData = [];
+            const itemsByDate = getItemsByDate();
 
-            autoTable(doc, {
-                startY: 35,
-                head: [['Ringkasan Periode', 'Total Penjualan', 'Total Modal', 'Total Keuntungan']],
-                body: [[
-                    '',
-                    formatCurrency(totalJualAll),
-                    formatCurrency(totalModalAll),
-                    formatCurrency(totalUntungAll)
-                ]],
-                theme: 'grid',
-                styles: { fontSize: 10, fontStyle: 'bold' },
-                headStyles: { fillColor: [71, 85, 105] },
-            });
-
-            const barangMap = new Map(barangList.map(b => [b._id, b]));
-            const udLookupMap = new Map(udList.map(u => [u._id, u]));
-
-            const groupedData = {};
-            transactions.forEach(trx => {
-                const dateKey = toLocalDate(trx.tanggal);
-                if (!groupedData[dateKey]) groupedData[dateKey] = { tanggal: dateKey, uds: {} };
-
-                trx.items?.forEach(item => {
-                    const bId = item.barang_id?._id || item.barang_id;
-                    const uId = item.ud_id?._id || item.ud_id;
-                    const barang = barangMap.get(bId);
-                    const ud = udLookupMap.get(uId);
-
-                    const enrichedItem = {
-                        ...item,
-                        nama_barang: item.nama_barang || barang?.nama_barang || item.barang_id?.nama_barang,
-                        satuan: item.satuan || barang?.satuan || item.barang_id?.satuan
-                    };
-
-                    const udId = uId || 'unknown';
-                    const udName = ud?.nama_ud || item.ud_id?.nama_ud || 'Unknown UD';
-                    if (!groupedData[dateKey].uds[udId]) {
-                        groupedData[dateKey].uds[udId] = {
-                            nama_ud: udName,
-                            items: []
-                        };
-                    }
-                    groupedData[dateKey].uds[udId].items.push(enrichedItem);
-                });
-            });
-
-            const sortedDates = Object.keys(groupedData).sort((a, b) => new Date(b) - new Date(a));
-            let currentY = doc.lastAutoTable.finalY + 10;
-
-            sortedDates.forEach((dateKey, dateIdx) => {
-                const dayData = groupedData[dateKey];
-                const udGroups = dayData.uds;
-
-                doc.setFontSize(11);
-                doc.setFont('helvetica', 'bold');
-                if (currentY > 180) {
-                    doc.addPage();
-                    currentY = 20;
-                }
-                doc.text(formatIndoDate(dateKey).toUpperCase(), 14, currentY);
-                currentY += 5;
-
-                const tableRows = [];
-                const sortedUdIds = Object.keys(udGroups).sort((a, b) => udGroups[a].nama_ud.localeCompare(udGroups[b].nama_ud));
-
-                let dateJual = 0;
-                let dateModal = 0;
-                let dateProfit = 0;
-
-                sortedUdIds.forEach(udId => {
-                    const group = udGroups[udId];
-                    tableRows.push([
-                        { content: group.nama_ud.toUpperCase(), colSpan: 9, styles: { fillColor: [241, 245, 249], fontStyle: 'bold' } }
-                    ]);
-
-                    let udJual = 0;
-                    let udModal = 0;
-                    let udProfit = 0;
-
-                    group.items.forEach((item, idx) => {
-                        tableRows.push([
-                            idx + 1,
-                            item.nama_barang || item.barang_id?.nama_barang || '-',
-                            item.qty,
-                            item.satuan || item.barang_id?.satuan || '-',
-                            formatCurrency(item.harga_jual),
-                            formatCurrency(item.subtotal_jual),
-                            formatCurrency(item.harga_modal),
-                            formatCurrency(item.subtotal_modal),
-                            formatCurrency(item.keuntungan)
-                        ]);
-                        udJual += item.subtotal_jual;
-                        udModal += item.subtotal_modal;
-                        udProfit += item.keuntungan;
-                    });
-
-                    tableRows.push([
-                        { content: `Subtotal ${group.nama_ud}`, colSpan: 5, styles: { halign: 'right', fontStyle: 'bold' } },
-                        { content: formatCurrency(udJual), styles: { fontStyle: 'bold' } },
-                        '',
-                        { content: formatCurrency(udModal), styles: { fontStyle: 'bold' } },
-                        { content: formatCurrency(udProfit), styles: { fontStyle: 'bold' } }
-                    ]);
-
-                    dateJual += udJual;
-                    dateModal += udModal;
-                    dateProfit += udProfit;
-                });
-
-                tableRows.push([
-                    { content: `TOTAL ${formatDateShort(dateKey)}`, colSpan: 5, styles: { halign: 'right', fillColor: [226, 232, 240], fontStyle: 'bold' } },
-                    { content: formatCurrency(dateJual), styles: { fillColor: [226, 232, 240], fontStyle: 'bold' } },
-                    { content: '', styles: { fillColor: [226, 232, 240] } },
-                    { content: formatCurrency(dateModal), styles: { fillColor: [226, 232, 240], fontStyle: 'bold' } },
-                    { content: formatCurrency(dateProfit), styles: { fillColor: [226, 232, 240], fontStyle: 'bold' } }
+            itemsByDate.forEach((group) => {
+                // Date Header Row
+                tableData.push([
+                    { content: formatIndoDate(group.tanggal).toUpperCase(), colSpan: 6, styles: { fillColor: [71, 85, 105], textColor: [255, 255, 255], fontStyle: 'bold' } }
                 ]);
 
-                autoTable(doc, {
-                    startY: currentY,
-                    head: [['No', 'Nama Barang', 'Qty', 'Sat', 'Harga Jual', 'Total Jual', 'Hrg Modal', 'Tot Modal', 'Untung']],
-                    body: tableRows,
-                    theme: 'grid',
-                    styles: { fontSize: 8 },
-                    headStyles: { fillColor: [59, 130, 246] },
-                    columnStyles: {
-                        0: { cellWidth: 10, halign: 'center' },
-                        2: { cellWidth: 12, halign: 'center' },
-                        3: { cellWidth: 15, halign: 'center' },
-                        4: { halign: 'right' },
-                        5: { halign: 'right' },
-                        6: { halign: 'right' },
-                        7: { halign: 'right' },
-                        8: { halign: 'right' },
-                    },
-                    margin: { top: 20 },
-                    didDrawPage: (data) => {
-                        doc.setFontSize(8);
-                        doc.setFont('helvetica', 'normal');
-                        doc.text(`Halaman ${doc.internal.getNumberOfPages()}`, pageWidth - 14, doc.internal.pageSize.getHeight() - 10, { align: 'right' });
-                        doc.text(printTimestamp, 14, doc.internal.pageSize.getHeight() - 10);
-                    }
+                group.items.forEach((item, idx) => {
+                    tableData.push([
+                        idx + 1,
+                        item.nama_barang,
+                        item.qty,
+                        item.satuan,
+                        formatCurrency(item.harga_jual),
+                        formatCurrency(item.subtotal_jual)
+                    ]);
                 });
-
-                currentY = doc.lastAutoTable.finalY + 10;
+                const dailyTotal = group.items.reduce((sum, i) => sum + i.subtotal_jual, 0);
+                tableData.push([
+                    { content: `TOTAL ${formatDateShort(group.tanggal).toUpperCase()}`, colSpan: 5, styles: { halign: 'right', fontStyle: 'bold', fillColor: [241, 245, 249] } },
+                    { content: formatCurrency(dailyTotal), styles: { fontStyle: 'bold', fillColor: [241, 245, 249] } }
+                ]);
             });
 
-            if (currentY > 200) {
-                doc.addPage();
-                currentY = 20;
-            }
-            doc.setFontSize(14);
-            doc.setFont('helvetica', 'bold');
-            doc.text('GRAND TOTAL KESELURUHAN', 14, currentY);
-            currentY += 8;
-
             autoTable(doc, {
-                startY: currentY,
-                body: [
-                    ['Total Penjualan', formatCurrency(totalJualAll)],
-                    ['Total Modal', formatCurrency(totalModalAll)],
-                    ['Total Keuntungan', formatCurrency(totalUntungAll)]
-                ],
-                theme: 'plain',
-                styles: { fontSize: 12, fontStyle: 'bold' },
+                startY: filterTanggal ? 40 : 35,
+                head: [['No', 'Nama Barang', 'Qty', 'Satuan', 'Harga Jual', 'Total Harga']],
+                body: tableData,
+                theme: 'grid',
+                headStyles: { fillColor: [71, 85, 105] },
                 columnStyles: {
-                    1: { halign: 'right' }
+                    0: { cellWidth: 10 },
+                    2: { cellWidth: 15 },
+                    3: { cellWidth: 20 },
+                    4: { cellWidth: 35, halign: 'right' },
+                    5: { cellWidth: 35, halign: 'right' },
                 }
             });
 
-            const timestamp = new Date().toISOString().split('T')[0];
-            doc.save(`Laporan_Dapur_${selectedDapur?.nama_dapur.replace(/\s+/g, '_')}_${periodName.replace(/\s+/g, '_')}_${timestamp}.pdf`);
-            toast.success('Laporan PDF Rekap berhasil dibuat');
+            const fileName = `laporan-dapur-${selectedDapur?.nama_dapur || 'all'}-${new Date().getTime()}.pdf`;
+            doc.save(fileName);
+            toast.success('PDF berhasil dibuat');
         } catch (error) {
-            toast.error('Gagal membuat laporan PDF');
-            console.error(error);
+            console.error('PDF Error:', error);
+            toast.error('Gagal membuat PDF');
         } finally {
             setGenerating(false);
         }
     };
 
-    const itemsByUD = getItemsByUD();
+    const itemsByDate = getItemsByDate();
     const totalJual = transactions.reduce((sum, trx) => sum + (trx.items?.reduce((s, i) => s + i.subtotal_jual, 0) || 0), 0);
-    const totalKeuntungan = transactions.reduce((sum, trx) => sum + (trx.items?.reduce((s, i) => s + i.keuntungan, 0) || 0), 0);
 
     return (
         <div className="space-y-6">
-            <div>
-                <h1 className="text-2xl font-bold text-gray-900">Laporan Dapur</h1>
-                <p className="text-gray-500 mt-1">Generate laporan berdasarkan dapur dan periode</p>
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div>
+                    <h1 className="text-2xl font-black text-gray-900 tracking-tight flex items-center gap-3">
+                        <div className="p-2 bg-blue-600 rounded-xl shadow-lg shadow-blue-500/20">
+                            <ChefHat className="w-6 h-6 text-white" />
+                        </div>
+                        LAPORAN DAPUR
+                    </h1>
+                    <p className="text-sm font-medium text-gray-500 mt-2 uppercase tracking-widest pl-12">Monitor Pesanan & Distribusi Barang</p>
+                </div>
             </div>
 
-            <div className="bg-white/80 backdrop-blur-sm rounded-2xl border border-gray-200 p-4 md:p-6 shadow-sm">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:items-end">
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1.5 flex items-center gap-2">
-                            <ChefHat className="w-4 h-4 text-gray-400" />
-                            Pilih Dapur
+            {/* Filter Section */}
+            <div className="bg-white rounded-3xl border border-gray-200 p-5 md:p-8 shadow-sm">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 items-end">
+                    <div className="space-y-2">
+                        <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest flex items-center gap-2 mb-1">
+                            <ChefHat className="w-3 h-3" />
+                            Target Dapur
                         </label>
                         <select
                             value={filterDapur}
                             onChange={(e) => setFilterDapur(e.target.value)}
-                            className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500/10 focus:border-blue-500 transition-all appearance-none cursor-pointer text-sm"
+                            className="w-full bg-gray-50 border-gray-100 rounded-2xl px-4 py-3 text-sm font-bold focus:ring-4 focus:ring-blue-500/5 transition-all outline-none"
                         >
                             <option value="">Pilih Dapur</option>
                             {dapurList.map((d) => (
-                                <option key={d._id} value={d._id}>
-                                    {d.nama_dapur}
-                                </option>
+                                <option key={d._id} value={d._id}>{d.nama_dapur}</option>
                             ))}
                         </select>
                     </div>
 
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1.5 flex items-center gap-2">
-                            <Calendar className="w-4 h-4 text-gray-400" />
+                    <div className="space-y-2">
+                        <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest flex items-center gap-2 mb-1">
+                            <Calendar className="w-3 h-3" />
                             Pilih Periode
                         </label>
                         <select
                             value={filterPeriode}
                             onChange={(e) => setFilterPeriode(e.target.value)}
-                            className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500/10 focus:border-blue-500 transition-all appearance-none cursor-pointer text-sm"
+                            className="w-full bg-gray-50 border-gray-100 rounded-2xl px-4 py-3 text-sm font-bold focus:ring-4 focus:ring-blue-500/5 transition-all outline-none"
                         >
                             <option value="">Semua Periode</option>
                             {periodeList.map((p) => (
@@ -487,169 +320,137 @@ export default function LaporanDapurPage() {
                         </select>
                     </div>
 
-                    {filterPeriode && (
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1.5 flex items-center gap-2">
-                                <Calendar className="w-4 h-4 text-gray-400" />
-                                Pilih Tanggal (Opsional)
-                            </label>
-                            <DatePicker
-                                selected={filterTanggal}
-                                onChange={(date) => setFilterTanggal(date)}
-                                placeholder="Pilih tanggal & waktu"
-                                showTimeSelect
-                                dateFormat="Pp"
-                                minDate={filterPeriode ? new Date(periodeList.find(p => p._id === filterPeriode)?.tanggal_mulai) : null}
-                                maxDate={filterPeriode ? new Date(periodeList.find(p => p._id === filterPeriode)?.tanggal_selesai) : null}
-                            />
-                        </div>
-                    )}
+                    <div className="space-y-2">
+                        <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest flex items-center gap-2 mb-1">
+                            <Calendar className="w-3 h-3" />
+                            Pilih Tanggal & Waktu
+                        </label>
+                        <DatePicker
+                            selected={filterTanggal}
+                            onChange={(date) => setFilterTanggal(date)}
+                            placeholder="Pilih Tanggal (Opsional)"
+                            showTimeSelect
+                            dateFormat="Pp"
+                            className="w-full bg-gray-50 border-gray-100 rounded-2xl px-4 py-3 text-sm font-bold focus:ring-4 focus:ring-blue-500/5 transition-all outline-none"
+                            minDate={filterPeriode ? new Date(periodeList.find(p => p._id === filterPeriode)?.tanggal_mulai) : null}
+                            maxDate={filterPeriode ? new Date(periodeList.find(p => p._id === filterPeriode)?.tanggal_selesai) : null}
+                        />
+                    </div>
 
                     <button
                         onClick={fetchTransactions}
                         disabled={loading}
-                        className="w-full px-6 py-2.5 bg-blue-600 text-white rounded-xl font-medium shadow-lg shadow-blue-500/20 hover:bg-blue-700 transition-all disabled:opacity-50 flex items-center justify-center gap-2 text-sm"
+                        className="bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white rounded-2xl h-[48px] px-8 font-black text-sm transition-all shadow-lg shadow-blue-500/20 flex items-center justify-center gap-3 uppercase tracking-widest"
                     >
-                        {loading ? (
-                            <Loader2 className="w-5 h-5 animate-spin" />
-                        ) : (
-                            <Filter className="w-5 h-5" />
-                        )}
+                        {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Filter className="w-5 h-5" />}
                         Cari Data
                     </button>
                 </div>
             </div>
 
-            {transactions.length > 0 && (
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                    <div className="bg-white rounded-2xl border border-gray-200 p-5 shadow-sm">
-                        <p className="text-[10px] md:text-sm font-medium text-gray-500 uppercase tracking-widest">Total Transaksi</p>
-                        <p className="text-xl md:text-2xl font-black text-gray-900 mt-1">{transactions.length}</p>
-                    </div>
-                    <div className="bg-white rounded-2xl border border-gray-200 p-5 shadow-sm">
-                        <p className="text-[10px] md:text-sm font-medium text-gray-500 uppercase tracking-widest">Total Penjualan</p>
-                        <p className="text-xl md:text-2xl font-black text-blue-600 mt-1">{formatCurrency(totalJual)}</p>
-                    </div>
-                    <div className="bg-white rounded-2xl border border-gray-200 p-5 shadow-sm">
-                        <p className="text-[10px] md:text-sm font-medium text-gray-500 uppercase tracking-widest">Total Keuntungan</p>
-                        <p className="text-xl md:text-2xl font-black text-green-600 mt-1">{formatCurrency(totalKeuntungan)}</p>
-                    </div>
+            {loading ? (
+                <div className="flex flex-col items-center justify-center py-20 animate-pulse">
+                    <Loader2 className="w-12 h-12 text-blue-500 animate-spin mb-4" />
+                    <p className="font-bold text-gray-400 uppercase tracking-widest">Sedang Memuat Data...</p>
                 </div>
-            )}
-
-            {itemsByUD.length > 0 && (
-                <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-sm">
-                    <div className="p-4 md:p-5 border-b border-gray-100 flex items-center justify-between">
-                        <h3 className="font-bold text-gray-900">Data per UD</h3>
-                        <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{itemsByUD.length} Unit</span>
+            ) : transactions.length > 0 ? (
+                <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                    {/* Summary Row */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm">
+                            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Total Transaksi</p>
+                            <p className="text-3xl font-black text-gray-900">{transactions.length}</p>
+                        </div>
+                        <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm">
+                            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Total Penjualan</p>
+                            <p className="text-3xl font-black text-blue-600">{formatCurrency(totalJual)}</p>
+                        </div>
                     </div>
 
-                    <div className="hidden lg:block overflow-x-auto">
-                        <table className="w-full">
-                            <thead className="bg-gray-50/50">
-                                <tr>
-                                    <th className="text-left px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">UD</th>
-                                    <th className="text-right px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Jumlah Item</th>
-                                    <th className="text-right px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Total Jual</th>
-                                    <th className="text-right px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Total Modal</th>
-                                    <th className="text-right px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Total Untung</th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-gray-100">
-                                {itemsByUD.map((ud) => (
-                                    <tr key={ud._id} className="hover:bg-gray-50/50 transition-colors">
-                                        <td className="px-6 py-4">
-                                            <p className="font-bold text-gray-900">{ud.nama_ud}</p>
-                                            <p className="text-xs text-gray-500 font-medium">{ud.kode_ud}</p>
-                                        </td>
-                                        <td className="px-6 py-4 text-right font-medium text-gray-600">{ud.items.length}</td>
-                                        <td className="px-6 py-4 text-right font-bold text-gray-900">{formatCurrency(ud.totalJual)}</td>
-                                        <td className="px-6 py-4 text-right font-bold text-gray-900">{formatCurrency(ud.totalModal)}</td>
-                                        <td className="px-6 py-4 text-right font-bold text-green-600">{formatCurrency(ud.totalKeuntungan)}</td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                            <tfoot className="bg-gray-50/80 font-black">
-                                <tr>
-                                    <td className="px-6 py-4 text-right uppercase text-sm" colSpan={4}>TOTAL KEUNTUNGAN DAPUR</td>
-                                    <td className="px-6 py-4 text-right text-lg text-green-700">{formatCurrency(totalKeuntungan)}</td>
-                                </tr>
-                            </tfoot>
-                        </table>
-                    </div>
-
-                    <div className="lg:hidden p-4 space-y-4 divide-y divide-gray-100 print:hidden">
-                        {itemsByUD.map((ud) => (
-                            <div key={`mobile-ud-${ud._id}`} className="pt-4 first:pt-0 space-y-4">
-                                <div className="flex justify-between items-start">
-                                    <div>
-                                        <h4 className="font-black text-gray-900 uppercase tracking-tight">{ud.nama_ud}</h4>
-                                        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{ud.kode_ud}</p>
-                                    </div>
-                                    <span className="px-2 py-1 bg-gray-100 text-gray-600 text-[10px] font-bold rounded-lg">{ud.items.length} Item</span>
-                                </div>
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div className="bg-gray-50 rounded-xl p-3 border border-gray-100">
-                                        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Total Jual</p>
-                                        <p className="text-sm font-black text-gray-900">{formatCurrency(ud.totalJual)}</p>
-                                    </div>
-                                    <div className="bg-green-50 rounded-xl p-3 border border-green-100">
-                                        <p className="text-[10px] font-bold text-green-600/60 uppercase tracking-widest mb-1">Untung</p>
-                                        <p className="text-sm font-black text-green-700">{formatCurrency(ud.totalKeuntungan)}</p>
-                                    </div>
-                                </div>
-                                <div className="flex justify-between items-center text-[10px] px-2">
-                                    <span className="font-bold text-gray-400 uppercase">Total Modal</span>
-                                    <span className="font-bold text-gray-600">{formatCurrency(ud.totalModal)}</span>
-                                </div>
+                    {/* Report Content */}
+                    {itemsByDate.map((group) => (
+                        <div key={group.tanggal} className="bg-white rounded-3xl border border-gray-200 overflow-hidden shadow-sm">
+                            <div className="bg-gray-50/50 px-6 py-4 border-b border-gray-100 flex items-center justify-between">
+                                <h3 className="font-black text-gray-900 flex items-center gap-3 uppercase tracking-tight">
+                                    <Calendar className="w-4 h-4 text-blue-600" />
+                                    {formatIndoDate(group.tanggal)}
+                                </h3>
+                                <span className="bg-white px-3 py-1 rounded-full border border-gray-200 text-[10px] font-black text-gray-400 tracking-widest">
+                                    {group.items.length} ITEMS
+                                </span>
                             </div>
-                        ))}
+                            <div className="overflow-x-auto">
+                                <table className="w-full text-sm">
+                                    <thead className="bg-gray-50/30 text-gray-500 font-bold uppercase tracking-wider">
+                                        <tr>
+                                            <th className="px-6 py-4 text-left w-16">No</th>
+                                            <th className="px-6 py-4 text-left">Nama Barang</th>
+                                            <th className="px-6 py-4 text-center">Qty</th>
+                                            <th className="px-6 py-4 text-center">Satuan</th>
+                                            <th className="px-6 py-4 text-right">Harga Jual</th>
+                                            <th className="px-6 py-4 text-right">Total Harga</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-gray-50">
+                                        {group.items.map((item, idx) => (
+                                            <tr key={idx} className="hover:bg-gray-50/50 transition-colors">
+                                                <td className="px-6 py-4 text-gray-400 font-bold">{idx + 1}</td>
+                                                <td className="px-6 py-4 font-black text-gray-900">{item.nama_barang}</td>
+                                                <td className="px-6 py-4 text-center font-bold text-gray-700">{item.qty}</td>
+                                                <td className="px-6 py-4 text-center font-bold text-gray-500 uppercase text-[10px] tracking-widest">{item.satuan}</td>
+                                                <td className="px-6 py-4 text-right font-medium text-gray-600">{formatCurrency(item.harga_jual)}</td>
+                                                <td className="px-6 py-4 text-right font-black text-blue-600">{formatCurrency(item.subtotal_jual)}</td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                    <tfoot className="bg-blue-50/30 border-t border-blue-100">
+                                        <tr>
+                                            <td colSpan="5" className="px-6 py-4 text-right font-black text-gray-500 uppercase tracking-widest text-xs">Total {formatDateShort(group.tanggal)}</td>
+                                            <td className="px-6 py-4 text-right font-black text-blue-700 text-lg">
+                                                {formatCurrency(group.items.reduce((sum, i) => sum + i.subtotal_jual, 0))}
+                                            </td>
+                                        </tr>
+                                    </tfoot>
+                                </table>
+                            </div>
+                        </div>
+                    ))}
+
+                    {/* Export Actions */}
+                    <div className="bg-gray-900 rounded-3xl p-6 md:p-10 shadow-2xl shadow-gray-900/20">
+                        <div className="flex flex-col md:flex-row md:items-center justify-between gap-8">
+                            <div>
+                                <h3 className="text-xl font-black text-white tracking-tight uppercase">Simpan Laporan</h3>
+                                <p className="text-gray-400 text-sm font-medium mt-1">Ekspor data ke format PDF atau Excel untuk dokumentasi</p>
+                            </div>
+                            <div className="flex flex-col sm:flex-row gap-4">
+                                <button
+                                    onClick={generateExcel}
+                                    disabled={generating}
+                                    className="inline-flex items-center justify-center gap-3 px-8 py-4 bg-green-500 hover:bg-green-600 text-white rounded-2xl font-black shadow-lg shadow-green-500/20 transition-all disabled:opacity-50 text-xs uppercase tracking-widest"
+                                >
+                                    {generating ? <Loader2 className="w-5 h-5 animate-spin" /> : <FileSpreadsheet className="w-5 h-5" />}
+                                    Excel Report
+                                </button>
+                                <button
+                                    onClick={generateRekapPDF}
+                                    disabled={generating}
+                                    className="inline-flex items-center justify-center gap-3 px-8 py-4 bg-white/10 hover:bg-white/20 text-white border border-white/10 rounded-2xl font-black transition-all disabled:opacity-50 text-xs uppercase tracking-widest"
+                                >
+                                    {generating ? <Loader2 className="w-5 h-5 animate-spin" /> : <FileText className="w-5 h-5" />}
+                                    PDF Report
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 </div>
-            )}
-
-            {transactions.length > 0 && (
-                <div className="bg-white rounded-2xl border border-gray-200 p-5 md:p-6 shadow-sm">
-                    <h3 className="text-sm font-bold text-gray-900 mb-4 flex items-center gap-2">
-                        <Download className="w-4 h-4 text-gray-400" />
-                        Generate Laporan
-                    </h3>
-                    <div className="flex flex-col sm:flex-row gap-4">
-                        <button
-                            onClick={generateExcel}
-                            disabled={generating}
-                            className="flex-1 inline-flex items-center justify-center gap-2 px-6 py-3 bg-green-600 text-white rounded-xl font-medium shadow-lg shadow-green-500/20
-                       hover:bg-green-700 transition-all disabled:opacity-50 text-sm"
-                        >
-                            {generating ? (
-                                <Loader2 className="w-5 h-5 animate-spin" />
-                            ) : (
-                                <FileSpreadsheet className="w-5 h-5" />
-                            )}
-                            Excel Report
-                        </button>
-                        <button
-                            onClick={generateRekapPDF}
-                            disabled={generating}
-                            className="flex-1 inline-flex items-center justify-center gap-2 px-6 py-3 bg-slate-700 text-white rounded-xl font-medium shadow-lg shadow-slate-500/20
-                       hover:bg-slate-800 transition-all disabled:opacity-50 text-sm"
-                        >
-                            {generating ? (
-                                <Loader2 className="w-5 h-5 animate-spin" />
-                            ) : (
-                                <FileText className="w-5 h-5" />
-                            )}
-                            Rekap PDF
-                        </button>
+            ) : (
+                <div className="bg-gray-50 rounded-3xl border-2 border-dashed border-gray-200 py-24 text-center flex flex-col items-center">
+                    <div className="p-4 bg-white rounded-2xl shadow-sm mb-4">
+                        <FileBarChart2 className="w-12 h-12 text-gray-300" />
                     </div>
-                </div>
-            )}
-
-            {!loading && transactions.length === 0 && (
-                <div className="bg-white rounded-xl border border-gray-200 p-12 text-center">
-                    <FileBarChart2 className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                    <h3 className="text-lg font-medium text-gray-900 mb-2">Tidak Ada Data</h3>
-                    <p className="text-gray-500">Pilih dapur and filter periode, kemudian klik "Cari Data"</p>
+                    <h3 className="text-lg font-black text-gray-900 uppercase tracking-tight">Tidak Ada Data</h3>
+                    <p className="text-gray-400 font-medium text-sm mt-1 max-w-xs mx-auto text-center px-6">Pilih dapur dan filter periode yang diinginkan, kemudian klik tombol Cari Data.</p>
                 </div>
             )}
         </div>
