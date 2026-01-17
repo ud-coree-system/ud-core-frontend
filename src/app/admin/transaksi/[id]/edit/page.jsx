@@ -11,11 +11,23 @@ import {
     Save,
     CheckCircle,
     ArrowLeft,
+    X,
 } from 'lucide-react';
 import { transaksiAPI, periodeAPI, dapurAPI, barangAPI, udAPI } from '@/lib/api';
 import DatePicker from '@/components/ui/DatePicker';
 import { useToast } from '@/contexts/ToastContext';
 import { getErrorMessage, formatCurrency, debounce } from '@/lib/utils';
+
+const SATUAN_OPTIONS = [
+    { value: 'pcs', label: 'Pieces (pcs)' },
+    { value: 'kg', label: 'Kilogram (kg)' },
+    { value: 'ltr', label: 'Liter (ltr)' },
+    { value: 'dus', label: 'Dus' },
+    { value: 'tray', label: 'Tray' },
+    { value: 'gln', label: 'Galon (gln)' },
+    { value: 'unit', label: 'Unit' },
+    { value: 'lainnya', label: 'Lainnya (Custom)' },
+];
 
 export default function EditTransaksiPage() {
     const router = useRouter();
@@ -47,6 +59,18 @@ export default function EditTransaksiPage() {
     const [submitting, setSubmitting] = useState(false);
     const [fetchingData, setFetchingData] = useState(true);
     const [tableSearch, setTableSearch] = useState('');
+
+    // Create Barang Modal state
+    const [showCreateModal, setShowCreateModal] = useState(false);
+    const [newBarang, setNewBarang] = useState({
+        nama_barang: '',
+        satuan: 'pcs',
+        custom_satuan: '',
+        harga_jual: '',
+        harga_modal: '',
+        ud_id: ''
+    });
+    const [creatingBarang, setCreatingBarang] = useState(false);
 
     useEffect(() => {
         fetchOptions();
@@ -203,6 +227,67 @@ export default function EditTransaksiPage() {
         setSearchResults([]);
         setShowDropdown(false);
         searchInputRef.current?.focus();
+    };
+
+    const handleCreateBarang = async (e) => {
+        e.preventDefault();
+        try {
+            if (!newBarang.nama_barang || !newBarang.satuan || !newBarang.ud_id) {
+                toast.warning('Mohon isi semua field yang wajib');
+                return;
+            }
+
+            setCreatingBarang(true);
+
+            const payload = {
+                ...newBarang,
+                satuan: newBarang.satuan === 'lainnya' ? newBarang.custom_satuan.trim() : newBarang.satuan,
+                harga_jual: parseInt(newBarang.harga_jual) || 0,
+                harga_modal: parseInt(newBarang.harga_modal) || 0,
+            };
+            delete payload.custom_satuan;
+
+            const response = await barangAPI.create(payload);
+
+            if (response.data.success) {
+                const createdBarang = response.data.data;
+                toast.success('Barang berhasil dibuat');
+
+                // Add to items
+                setItems((prev) => [
+                    ...prev,
+                    {
+                        barang_id: createdBarang._id,
+                        nama_barang: createdBarang.nama_barang,
+                        satuan: createdBarang.satuan,
+                        harga_jual: createdBarang.harga_jual,
+                        harga_modal: createdBarang.harga_modal || 0,
+                        ud_id: createdBarang.ud_id?._id || createdBarang.ud_id,
+                        ud_nama: udList.find(ud => ud._id === (createdBarang.ud_id?._id || createdBarang.ud_id))?.nama_ud,
+                        ud_kode: udList.find(ud => ud._id === (createdBarang.ud_id?._id || createdBarang.ud_id))?.kode_ud,
+                        qty: 1,
+                    },
+                ]);
+
+                // Reset modal and clear search
+                setShowCreateModal(false);
+                setNewBarang({
+                    nama_barang: '',
+                    satuan: 'pcs',
+                    custom_satuan: '',
+                    harga_jual: '',
+                    harga_modal: '',
+                    ud_id: ''
+                });
+                setSearchQuery('');
+                setSearchResults([]);
+                setShowDropdown(false);
+            }
+        } catch (error) {
+            toast.error(getErrorMessage(error));
+        } finally {
+            setCreatingBarang(false);
+        }
     };
 
     const handleQtyChange = (index, qty) => {
@@ -464,8 +549,18 @@ export default function EditTransaksiPage() {
                     )}
 
                     {showDropdown && searchQuery.length >= 2 && searchResults.length === 0 && !searchLoading && (
-                        <div className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg p-4 text-center text-gray-500">
-                            Tidak ada barang ditemukan
+                        <div className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg p-4 text-center">
+                            <p className="text-gray-500 mb-3">Tidak ada barang ditemukan</p>
+                            <button
+                                onClick={() => {
+                                    setNewBarang(prev => ({ ...prev, nama_barang: searchQuery, ud_id: selectedUdId }));
+                                    setShowCreateModal(true);
+                                }}
+                                className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors"
+                            >
+                                <Plus className="w-4 h-4" />
+                                Tambah "{searchQuery}" Baru
+                            </button>
                         </div>
                     )}
                 </div>
@@ -764,6 +859,146 @@ export default function EditTransaksiPage() {
                     </div>
                 </div>
             </div>
+
+            {/* Create Barang Modal */}
+            {showCreateModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+                    <div className="bg-white rounded-2xl w-full max-w-md shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-200">
+                        <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between bg-blue-50/50">
+                            <h3 className="text-lg font-bold text-gray-900">Tambah Barang Baru</h3>
+                            <button
+                                onClick={() => setShowCreateModal(false)}
+                                className="p-2 hover:bg-white rounded-full transition-colors"
+                            >
+                                <X className="w-5 h-5 text-gray-400" />
+                            </button>
+                        </div>
+
+                        <form onSubmit={handleCreateBarang} className="p-6 space-y-4">
+                            <div>
+                                <label className="block text-sm font-semibold text-gray-700 mb-1.5">
+                                    Nama Barang <span className="text-red-500">*</span>
+                                </label>
+                                <input
+                                    type="text"
+                                    required
+                                    value={newBarang.nama_barang}
+                                    onChange={(e) => setNewBarang({ ...newBarang, nama_barang: e.target.value })}
+                                    className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all"
+                                    placeholder="Masukkan nama barang"
+                                />
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-sm font-semibold text-gray-700 mb-1.5">
+                                        Satuan <span className="text-red-500">*</span>
+                                    </label>
+                                    <select
+                                        required
+                                        value={newBarang.satuan}
+                                        onChange={(e) => setNewBarang({ ...newBarang, satuan: e.target.value })}
+                                        className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all bg-white"
+                                    >
+                                        {SATUAN_OPTIONS.map((opt) => (
+                                            <option key={opt.value} value={opt.value}>
+                                                {opt.label}
+                                            </option>
+                                        ))}
+                                    </select>
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-semibold text-gray-700 mb-1.5">
+                                        Unit Dagang (UD) <span className="text-red-500">*</span>
+                                    </label>
+                                    <select
+                                        required
+                                        value={newBarang.ud_id}
+                                        onChange={(e) => setNewBarang({ ...newBarang, ud_id: e.target.value })}
+                                        className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all bg-white"
+                                    >
+                                        <option value="">Pilih UD</option>
+                                        {udList.map((ud) => (
+                                            <option key={ud._id} value={ud._id}>
+                                                {ud.nama_ud}
+                                            </option>
+                                        ))}
+                                    </select>
+                                </div>
+                            </div>
+
+                            {newBarang.satuan === 'lainnya' && (
+                                <div>
+                                    <label className="block text-sm font-semibold text-gray-700 mb-1.5">
+                                        Satuan Custom <span className="text-red-500">*</span>
+                                    </label>
+                                    <input
+                                        type="text"
+                                        required
+                                        value={newBarang.custom_satuan}
+                                        onChange={(e) => setNewBarang({ ...newBarang, custom_satuan: e.target.value })}
+                                        className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all"
+                                        placeholder="Contoh: box, pak, bal, dll"
+                                    />
+                                </div>
+                            )}
+
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-sm font-semibold text-gray-700 mb-1.5">
+                                        Harga Modal
+                                    </label>
+                                    <input
+                                        type="number"
+                                        value={newBarang.harga_modal}
+                                        onChange={(e) => setNewBarang({ ...newBarang, harga_modal: e.target.value })}
+                                        className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all"
+                                        min="0"
+                                        placeholder="0"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-semibold text-gray-700 mb-1.5">
+                                        Harga Jual
+                                    </label>
+                                    <input
+                                        type="number"
+                                        value={newBarang.harga_jual}
+                                        onChange={(e) => setNewBarang({ ...newBarang, harga_jual: e.target.value })}
+                                        className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all"
+                                        min="0"
+                                        placeholder="0"
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="pt-4 flex gap-3">
+                                <button
+                                    type="button"
+                                    onClick={() => setShowCreateModal(false)}
+                                    className="flex-1 py-3 px-4 border border-gray-200 text-gray-600 font-bold rounded-xl hover:bg-gray-50 transition-all active:scale-[0.98]"
+                                >
+                                    Batal
+                                </button>
+                                <button
+                                    type="submit"
+                                    disabled={creatingBarang}
+                                    className="flex-1 py-3 px-4 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-700 shadow-lg shadow-blue-500/30 transition-all active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                                >
+                                    {creatingBarang ? (
+                                        <Loader2 className="w-5 h-5 animate-spin" />
+                                    ) : (
+                                        <>
+                                            <Plus className="w-5 h-5" />
+                                            Simpan
+                                        </>
+                                    )}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
