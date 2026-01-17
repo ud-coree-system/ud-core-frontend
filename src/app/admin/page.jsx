@@ -123,8 +123,8 @@ export default function DashboardPage() {
             if (summaryRes.data.success) {
                 let statsData = summaryRes.data.data;
 
-                // For UD filtering, we need to calculate totals from transactions if the backend doesn't provide it
-                if (filterUD && trxRes.data.success) {
+                // For UD or Periode filtering, we need to calculate totals from transactions if the backend doesn't provide it
+                if ((filterUD || filterPeriode) && trxRes.data.success) {
                     // Fetch details for filtering items by UD if they're not in the main list
                     // Using a limit to avoid overloading, but enough for a dashboard view
                     const detailedTransactions = await Promise.all(
@@ -146,7 +146,9 @@ export default function DashboardPage() {
                     detailedTransactions.forEach(trx => {
                         trx.items?.forEach(item => {
                             const uId = item.ud_id?._id || item.ud_id;
-                            if (uId === filterUD) {
+                            // If filterUD is set, only sum items for that UD
+                            // If filterUD is NOT set, sum all items (already filtered by period by backend)
+                            if (!filterUD || uId === filterUD) {
                                 totalPenjualan += (item.subtotal_jual || 0);
                                 totalModal += (item.subtotal_modal || 0);
                                 totalKeuntungan += (item.keuntungan || 0);
