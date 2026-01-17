@@ -271,22 +271,22 @@ export default function DapurManagementPage() {
                                 <table className="w-full">
                                     <thead className="bg-gray-50 border-b border-gray-200">
                                         <tr>
-                                            <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider w-16">
+                                            <th className="px-3 md:px-4 lg:px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider w-16">
                                                 No
                                             </th>
-                                            <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">
+                                            <th className="hidden lg:table-cell px-3 md:px-4 lg:px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">
                                                 Kode Dapur
                                             </th>
-                                            <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">
+                                            <th className="px-3 md:px-4 lg:px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">
                                                 Nama Dapur
                                             </th>
-                                            <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">
+                                            <th className="px-3 md:px-4 lg:px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">
                                                 Alamat
                                             </th>
-                                            <th className="px-6 py-4 text-center text-xs font-bold text-gray-500 uppercase tracking-wider">
+                                            <th className="hidden lg:table-cell px-3 md:px-4 lg:px-6 py-4 text-center text-xs font-bold text-gray-500 uppercase tracking-wider">
                                                 Status
                                             </th>
-                                            <th className="px-6 py-4 text-center text-xs font-bold text-gray-500 uppercase tracking-wider">
+                                            <th className="px-3 md:px-4 lg:px-6 py-4 text-center text-xs font-bold text-gray-500 uppercase tracking-wider">
                                                 Aksi
                                             </th>
                                         </tr>
@@ -294,41 +294,41 @@ export default function DapurManagementPage() {
                                     <tbody className="divide-y divide-gray-200">
                                         {data.map((item, index) => (
                                             <tr key={item._id} className="hover:bg-gray-50/50 transition-colors">
-                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                                <td className="px-3 md:px-4 lg:px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                                     {(pagination.page - 1) * pagination.limit + index + 1}
                                                 </td>
-                                                <td className="px-6 py-4 whitespace-nowrap">
+                                                <td className="hidden lg:table-cell px-3 md:px-4 lg:px-6 py-4 whitespace-nowrap">
                                                     <span className="font-mono text-sm bg-gray-100 text-gray-600 px-2 py-1 rounded border border-gray-200">
                                                         {item.kode_dapur}
                                                     </span>
                                                 </td>
-                                                <td className="px-6 py-4">
-                                                    <p className="font-semibold text-gray-900">{item.nama_dapur}</p>
+                                                <td className="px-3 md:px-4 lg:px-6 py-4">
+                                                    <p className="font-semibold text-gray-900 line-clamp-2 md:line-clamp-1">{item.nama_dapur}</p>
                                                 </td>
-                                                <td className="px-6 py-4">
-                                                    <p className="text-gray-500 truncate max-w-[250px]">
+                                                <td className="px-3 md:px-4 lg:px-6 py-4">
+                                                    <p className="text-gray-500 truncate max-w-[150px] md:max-w-[200px] lg:max-w-[250px]">
                                                         {item.alamat || '-'}
                                                     </p>
                                                 </td>
-                                                <td className="px-6 py-4 text-center">
+                                                <td className="hidden lg:table-cell px-3 md:px-4 lg:px-6 py-4 text-center">
                                                     <span className={`inline-flex px-3 py-1 text-xs font-bold rounded-full uppercase tracking-wider
-                               ${item.isActive ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'}
-                             `}>
+                                ${item.isActive ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'}
+                              `}>
                                                         {item.isActive ? 'Aktif' : 'Nonaktif'}
                                                     </span>
                                                 </td>
-                                                <td className="px-6 py-4">
+                                                <td className="px-3 md:px-4 lg:px-6 py-4">
                                                     <div className="flex items-center justify-center gap-1">
                                                         <button
                                                             onClick={() => openEditModal(item)}
-                                                            className="p-2 hover:bg-blue-50 rounded-lg text-blue-600 transition-all hover:scale-110"
+                                                            className="p-1.5 md:p-2 hover:bg-blue-50 rounded-lg text-blue-600 transition-all hover:scale-110"
                                                             title="Edit"
                                                         >
                                                             <Edit className="w-4 h-4" />
                                                         </button>
                                                         <button
                                                             onClick={() => openDeleteDialog(item)}
-                                                            className="p-2 hover:bg-red-50 rounded-lg text-red-600 transition-all hover:scale-110"
+                                                            className="p-1.5 md:p-2 hover:bg-red-50 rounded-lg text-red-600 transition-all hover:scale-110"
                                                             title="Hapus"
                                                         >
                                                             <Trash2 className="w-4 h-4" />

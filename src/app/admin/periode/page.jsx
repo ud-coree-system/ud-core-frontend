@@ -332,22 +332,22 @@ export default function PeriodeManagementPage() {
                                 <table className="w-full">
                                     <thead className="bg-gray-50 border-b border-gray-200">
                                         <tr>
-                                            <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider w-16">
+                                            <th className="px-3 md:px-4 lg:px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider w-16">
                                                 No
                                             </th>
-                                            <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">
+                                            <th className="px-3 md:px-4 lg:px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">
                                                 Nama Periode
                                             </th>
-                                            <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">
+                                            <th className="hidden lg:table-cell px-3 md:px-4 lg:px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">
                                                 Tanggal Mulai
                                             </th>
-                                            <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">
+                                            <th className="hidden lg:table-cell px-3 md:px-4 lg:px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">
                                                 Tanggal Selesai
                                             </th>
-                                            <th className="px-6 py-4 text-center text-xs font-bold text-gray-500 uppercase tracking-wider">
+                                            <th className="hidden lg:table-cell px-3 md:px-4 lg:px-6 py-4 text-center text-xs font-bold text-gray-500 uppercase tracking-wider">
                                                 Status
                                             </th>
-                                            <th className="px-6 py-4 text-center text-xs font-bold text-gray-500 uppercase tracking-wider">
+                                            <th className="px-3 md:px-4 lg:px-6 py-4 text-center text-xs font-bold text-gray-500 uppercase tracking-wider">
                                                 Aksi
                                             </th>
                                         </tr>
@@ -355,23 +355,23 @@ export default function PeriodeManagementPage() {
                                     <tbody className="divide-y divide-gray-200">
                                         {data.map((item, index) => (
                                             <tr key={item._id} className="hover:bg-gray-50/50 transition-colors">
-                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                                <td className="px-3 md:px-4 lg:px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                                     {(pagination.page - 1) * pagination.limit + index + 1}
                                                 </td>
-                                                <td className="px-6 py-4 whitespace-nowrap">
-                                                    <p className="font-semibold text-gray-900">{item.nama_periode}</p>
+                                                <td className="px-3 md:px-4 lg:px-6 py-4 whitespace-nowrap">
+                                                    <p className="font-semibold text-gray-900 line-clamp-2 md:line-clamp-1">{item.nama_periode}</p>
                                                 </td>
-                                                <td className="px-6 py-4 whitespace-nowrap">
+                                                <td className="hidden lg:table-cell px-3 md:px-4 lg:px-6 py-4 whitespace-nowrap">
                                                     <p className="text-sm text-gray-700">{formatDate(item.tanggal_mulai)}</p>
                                                 </td>
-                                                <td className="px-6 py-4 whitespace-nowrap">
+                                                <td className="hidden lg:table-cell px-3 md:px-4 lg:px-6 py-4 whitespace-nowrap">
                                                     <p className="text-sm text-gray-700">{formatDate(item.tanggal_selesai)}</p>
                                                 </td>
-                                                <td className="px-6 py-4 whitespace-nowrap">
+                                                <td className="hidden lg:table-cell px-3 md:px-4 lg:px-6 py-4 whitespace-nowrap">
                                                     <div className="flex items-center justify-center gap-2">
                                                         <span className={`inline-flex px-3 py-1 text-xs font-bold rounded-full uppercase tracking-wider
-                                  ${item.isActive ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'}
-                                `}>
+                                   ${item.isActive ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'}
+                                 `}>
                                                             {item.isActive ? 'Aktif' : 'Nonaktif'}
                                                         </span>
                                                         {item.isClosed && (
@@ -382,27 +382,27 @@ export default function PeriodeManagementPage() {
                                                         )}
                                                     </div>
                                                 </td>
-                                                <td className="px-6 py-4 whitespace-nowrap">
+                                                <td className="px-3 md:px-4 lg:px-6 py-4 whitespace-nowrap">
                                                     <div className="flex items-center justify-center gap-1">
                                                         {!item.isClosed ? (
                                                             <>
                                                                 <button
                                                                     onClick={() => openEditModal(item)}
-                                                                    className="p-2 hover:bg-blue-50 rounded-lg text-blue-600 transition-all hover:scale-110"
+                                                                    className="p-1.5 md:p-2 hover:bg-blue-50 rounded-lg text-blue-600 transition-all hover:scale-110"
                                                                     title="Edit"
                                                                 >
                                                                     <Edit className="w-4 h-4" />
                                                                 </button>
                                                                 <button
                                                                     onClick={() => openCloseDialog(item)}
-                                                                    className="p-2 hover:bg-purple-50 rounded-lg text-purple-600 transition-all hover:scale-110"
+                                                                    className="p-1.5 md:p-2 hover:bg-purple-50 rounded-lg text-purple-600 transition-all hover:scale-110"
                                                                     title="Tutup Periode"
                                                                 >
                                                                     <Lock className="w-4 h-4" />
                                                                 </button>
                                                                 <button
                                                                     onClick={() => openDeleteDialog(item)}
-                                                                    className="p-2 hover:bg-red-50 rounded-lg text-red-600 transition-all hover:scale-110"
+                                                                    className="p-1.5 md:p-2 hover:bg-red-50 rounded-lg text-red-600 transition-all hover:scale-110"
                                                                     title="Hapus"
                                                                 >
                                                                     <Trash2 className="w-4 h-4" />

@@ -379,34 +379,76 @@ export default function LaporanDapurPage() {
                                     {group.items.length} ITEMS
                                 </span>
                             </div>
-                            <div className="overflow-x-auto">
+
+                            {/* Mobile Item Cards (Hidden on md and above) */}
+                            <div className="grid grid-cols-1 divide-y divide-gray-100 md:hidden">
+                                {group.items.map((item, idx) => (
+                                    <div key={idx} className="p-4 space-y-3">
+                                        <div className="flex justify-between items-start gap-3">
+                                            <div className="flex gap-3">
+                                                <span className="text-xs font-bold text-gray-400 mt-1">#{(idx + 1).toString().padStart(2, '0')}</span>
+                                                <div>
+                                                    <p className="font-black text-gray-900 leading-tight mb-1">{item.nama_barang}</p>
+                                                    <div className="flex items-center gap-2">
+                                                        <span className="px-2 py-0.5 bg-gray-100 text-gray-500 rounded text-[10px] uppercase font-bold tracking-widest">
+                                                            {item.satuan}
+                                                        </span>
+                                                        <span className="text-xs text-gray-400 font-medium">@ {formatCurrency(item.harga_jual)}</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div className="text-right">
+                                                <p className="text-xs text-gray-400 font-bold uppercase tracking-widest mb-0.5">Subtotal</p>
+                                                <p className="font-black text-blue-600 text-sm">{formatCurrency(item.subtotal_jual)}</p>
+                                            </div>
+                                        </div>
+                                        <div className="flex items-center justify-between pt-1">
+                                            <span className="text-xs font-bold text-gray-400 uppercase tracking-widest italic opacity-60">
+                                                Qty: {item.qty}
+                                            </span>
+                                        </div>
+                                    </div>
+                                ))}
+                                <div className="p-4 bg-blue-50/30 flex justify-between items-center">
+                                    <span className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Total Harian</span>
+                                    <span className="font-black text-blue-700 text-base">
+                                        {formatCurrency(group.items.reduce((sum, i) => sum + i.subtotal_jual, 0))}
+                                    </span>
+                                </div>
+                            </div>
+
+                            {/* Desktop/Tablet Table View (Hidden on mobile) */}
+                            <div className="hidden md:block overflow-x-auto">
                                 <table className="w-full text-sm">
                                     <thead className="bg-gray-50/30 text-gray-500 font-bold uppercase tracking-wider">
                                         <tr>
-                                            <th className="px-6 py-4 text-left w-16">No</th>
-                                            <th className="px-6 py-4 text-left">Nama Barang</th>
-                                            <th className="px-6 py-4 text-center">Qty</th>
-                                            <th className="px-6 py-4 text-center">Satuan</th>
-                                            <th className="px-6 py-4 text-right">Harga Jual</th>
-                                            <th className="px-6 py-4 text-right">Total Harga</th>
+                                            <th className="px-4 lg:px-6 py-4 text-left w-16">No</th>
+                                            <th className="px-4 lg:px-6 py-4 text-left">Nama Barang</th>
+                                            <th className="px-4 lg:px-6 py-4 text-center">Qty</th>
+                                            <th className="hidden lg:table-cell px-6 py-4 text-center">Satuan</th>
+                                            <th className="hidden xl:table-cell px-6 py-4 text-right">Harga Jual</th>
+                                            <th className="px-4 lg:px-6 py-4 text-right">Total Harga</th>
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-gray-50">
                                         {group.items.map((item, idx) => (
                                             <tr key={idx} className="hover:bg-gray-50/50 transition-colors">
-                                                <td className="px-6 py-4 text-gray-400 font-bold">{idx + 1}</td>
-                                                <td className="px-6 py-4 font-black text-gray-900">{item.nama_barang}</td>
-                                                <td className="px-6 py-4 text-center font-bold text-gray-700">{item.qty}</td>
-                                                <td className="px-6 py-4 text-center font-bold text-gray-500 uppercase text-[10px] tracking-widest">{item.satuan}</td>
-                                                <td className="px-6 py-4 text-right font-medium text-gray-600">{formatCurrency(item.harga_jual)}</td>
-                                                <td className="px-6 py-4 text-right font-black text-blue-600">{formatCurrency(item.subtotal_jual)}</td>
+                                                <td className="px-4 lg:px-6 py-4 text-gray-400 font-bold">{idx + 1}</td>
+                                                <td className="px-4 lg:px-6 py-4 font-black text-gray-900">
+                                                    <p className="line-clamp-2 md:line-clamp-1">{item.nama_barang}</p>
+                                                </td>
+                                                <td className="px-4 lg:px-6 py-4 text-center font-bold text-gray-700">{item.qty}</td>
+                                                <td className="hidden lg:table-cell px-6 py-4 text-center font-bold text-gray-500 uppercase text-[10px] tracking-widest">{item.satuan}</td>
+                                                <td className="hidden xl:table-cell px-6 py-4 text-right font-medium text-gray-600">{formatCurrency(item.harga_jual)}</td>
+                                                <td className="px-4 lg:px-6 py-4 text-right font-black text-blue-600">{formatCurrency(item.subtotal_jual)}</td>
                                             </tr>
                                         ))}
                                     </tbody>
                                     <tfoot className="bg-blue-50/30 border-t border-blue-100">
                                         <tr>
-                                            <td colSpan="5" className="px-6 py-4 text-right font-black text-gray-500 uppercase tracking-widest text-xs">Total {formatDateShort(group.tanggal)}</td>
-                                            <td className="px-6 py-4 text-right font-black text-blue-700 text-lg">
+                                            <td colSpan="2" className="hidden lg:table-cell lg:col-span-3 xl:col-span-5 px-6 py-4 text-right font-black text-gray-500 uppercase tracking-widest text-xs">Total {formatDateShort(group.tanggal)}</td>
+                                            <td colSpan="3" className="lg:hidden px-4 py-4 text-right font-black text-gray-500 uppercase tracking-widest text-[10px]">Total {formatDateShort(group.tanggal)}</td>
+                                            <td className="px-4 lg:px-6 py-4 text-right font-black text-blue-700 text-lg whitespace-nowrap">
                                                 {formatCurrency(group.items.reduce((sum, i) => sum + i.subtotal_jual, 0))}
                                             </td>
                                         </tr>

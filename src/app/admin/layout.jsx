@@ -56,8 +56,12 @@ function AdminLayoutContent({ children }) {
                 <AppHeader />
 
                 {/* Page Content */}
-                <div className="p-4 mx-auto max-w-screen-2xl md:p-6 pb-20 lg:pb-6">
+                <div className="px-4 pt-4 mx-auto max-w-screen-2xl md:px-6 md:pt-6">
                     {children}
+                    {/* Extra spacing for bottom navigation bar on mobile/tablet */}
+                    <div className="h-32 md:h-40 lg:hidden" aria-hidden="true" />
+                    {/* Consistent bottom spacing for desktop */}
+                    <div className="h-8 hidden lg:block" aria-hidden="true" />
                 </div>
 
                 {/* Mobile Bottom Bar */}

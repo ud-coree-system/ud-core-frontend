@@ -341,28 +341,28 @@ export default function BarangManagementPage() {
                             <table className="w-full">
                                 <thead className="bg-gray-50 border-b border-gray-200">
                                     <tr>
-                                        <th className="px-6 py-3 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider w-16">
+                                        <th className="px-3 md:px-4 py-3 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider w-16">
                                             No
                                         </th>
-                                        <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                                        <th className="px-3 md:px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
                                             Nama Barang
                                         </th>
-                                        <th className="px-6 py-3 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                                        <th className="px-3 md:px-4 py-3 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">
                                             Satuan
                                         </th>
-                                        <th className="px-6 py-3 text-right text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                                        <th className="px-3 md:px-4 py-3 text-right text-xs font-semibold text-gray-600 uppercase tracking-wider">
                                             Harga Jual
                                         </th>
-                                        <th className="px-6 py-3 text-right text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                                        <th className="hidden xl:table-cell px-3 md:px-4 py-3 text-right text-xs font-semibold text-gray-600 uppercase tracking-wider">
                                             Harga Modal
                                         </th>
-                                        <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider lg:table-cell">
+                                        <th className="hidden lg:table-cell px-3 md:px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
                                             UD
                                         </th>
-                                        <th className="px-6 py-3 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                                        <th className="hidden lg:table-cell px-3 md:px-4 py-3 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">
                                             Status
                                         </th>
-                                        <th className="px-6 py-3 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                                        <th className="px-3 md:px-4 py-3 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">
                                             Aksi
                                         </th>
                                     </tr>
@@ -372,48 +372,48 @@ export default function BarangManagementPage() {
                                         if (filterUD) {
                                             return data.map((item, index) => (
                                                 <tr key={item._id} className="hover:bg-gray-50 transition-colors">
-                                                    <td className="px-6 py-4 text-center text-gray-500 font-medium">
+                                                    <td className="px-3 md:px-4 py-4 text-center text-gray-500 font-medium">
                                                         {(pagination.page - 1) * pagination.limit + index + 1}
                                                     </td>
-                                                    <td className="px-6 py-4">
-                                                        <p className="font-medium text-gray-900">{item.nama_barang}</p>
+                                                    <td className="px-3 md:px-4 py-4 min-w-[150px]">
+                                                        <p className="font-medium text-gray-900 line-clamp-2 md:line-clamp-1">{item.nama_barang}</p>
                                                     </td>
-                                                    <td className="px-6 py-4 text-center">
-                                                        <span className="px-2 py-1 text-xs font-medium bg-gray-100 text-gray-700 rounded uppercase">
+                                                    <td className="px-3 md:px-4 py-4 text-center">
+                                                        <span className="px-2 py-1 text-[10px] md:text-xs font-medium bg-gray-100 text-gray-700 rounded uppercase">
                                                             {item.satuan}
                                                         </span>
                                                     </td>
-                                                    <td className="px-6 py-4 text-right font-medium text-gray-900">
+                                                    <td className="px-3 md:px-4 py-4 text-right font-medium text-gray-900 text-sm md:text-base">
                                                         {formatCurrency(item.harga_jual)}
                                                     </td>
-                                                    <td className="px-6 py-4 text-right text-gray-500">
+                                                    <td className="hidden xl:table-cell px-3 md:px-4 py-4 text-right text-gray-500">
                                                         {formatCurrency(item.harga_modal || 0)}
                                                     </td>
-                                                    <td className="px-6 py-4 lg:table-cell">
+                                                    <td className="hidden lg:table-cell px-3 md:px-4 py-4">
                                                         <div>
                                                             <p className="text-sm font-medium text-gray-900">{item.ud_id?.nama_ud || '-'}</p>
                                                             <p className="text-xs text-gray-500">{item.ud_id?.kode_ud || ''}</p>
                                                         </div>
                                                     </td>
-                                                    <td className="px-6 py-4 text-center">
+                                                    <td className="hidden lg:table-cell px-3 md:px-4 py-4 text-center">
                                                         <span className={`inline-block px-2.5 py-1 text-xs font-medium rounded-full
-                                                  ${item.isActive ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}
-                                                `}>
+                                                   ${item.isActive ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}
+                                                 `}>
                                                             {item.isActive ? 'Aktif' : 'Nonaktif'}
                                                         </span>
                                                     </td>
-                                                    <td className="px-6 py-4">
-                                                        <div className="flex items-center justify-center gap-2">
+                                                    <td className="px-3 md:px-4 py-4">
+                                                        <div className="flex items-center justify-center gap-1 md:gap-2">
                                                             <button
                                                                 onClick={() => openEditModal(item)}
-                                                                className="p-2 hover:bg-blue-50 rounded-lg text-blue-600 transition-colors"
+                                                                className="p-1.5 md:p-2 hover:bg-blue-50 rounded-lg text-blue-600 transition-colors"
                                                                 title="Edit"
                                                             >
                                                                 <Edit className="w-4 h-4" />
                                                             </button>
                                                             <button
                                                                 onClick={() => openDeleteDialog(item)}
-                                                                className="p-2 hover:bg-red-50 rounded-lg text-red-600 transition-colors"
+                                                                className="p-1.5 md:p-2 hover:bg-red-50 rounded-lg text-red-600 transition-colors"
                                                                 title="Hapus"
                                                             >
                                                                 <Trash2 className="w-4 h-4" />
@@ -452,48 +452,48 @@ export default function BarangManagementPage() {
                                                     globalIndex++;
                                                     return (
                                                         <tr key={item._id} className="hover:bg-gray-50 transition-colors">
-                                                            <td className="px-6 py-4 text-center text-gray-500 font-medium">
+                                                            <td className="px-3 md:px-4 py-4 text-center text-gray-500 font-medium">
                                                                 {globalIndex}
                                                             </td>
-                                                            <td className="px-6 py-4">
-                                                                <p className="font-medium text-gray-900">{item.nama_barang}</p>
+                                                            <td className="px-3 md:px-4 py-4 min-w-[150px]">
+                                                                <p className="font-medium text-gray-900 line-clamp-2 md:line-clamp-1">{item.nama_barang}</p>
                                                             </td>
-                                                            <td className="px-6 py-4 text-center">
-                                                                <span className="px-2 py-1 text-xs font-medium bg-gray-100 text-gray-700 rounded uppercase">
+                                                            <td className="px-3 md:px-4 py-4 text-center">
+                                                                <span className="px-2 py-1 text-[10px] md:text-xs font-medium bg-gray-100 text-gray-700 rounded uppercase">
                                                                     {item.satuan}
                                                                 </span>
                                                             </td>
-                                                            <td className="px-6 py-4 text-right font-medium text-gray-900">
+                                                            <td className="px-3 md:px-4 py-4 text-right font-medium text-gray-900 text-sm md:text-base">
                                                                 {formatCurrency(item.harga_jual)}
                                                             </td>
-                                                            <td className="px-6 py-4 text-right text-gray-500">
+                                                            <td className="hidden xl:table-cell px-3 md:px-4 py-4 text-right text-gray-500">
                                                                 {formatCurrency(item.harga_modal || 0)}
                                                             </td>
-                                                            <td className="px-6 py-4 lg:table-cell">
+                                                            <td className="hidden lg:table-cell px-3 md:px-4 py-4">
                                                                 <div>
                                                                     <p className="text-sm font-medium text-gray-900">{item.ud_id?.nama_ud || '-'}</p>
                                                                     <p className="text-xs text-gray-500">{item.ud_id?.kode_ud || ''}</p>
                                                                 </div>
                                                             </td>
-                                                            <td className="px-6 py-4 text-center">
+                                                            <td className="hidden lg:table-cell px-3 md:px-4 py-4 text-center">
                                                                 <span className={`inline-block px-2.5 py-1 text-xs font-medium rounded-full
-                                                          ${item.isActive ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}
-                                                        `}>
+                                                           ${item.isActive ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}
+                                                         `}>
                                                                     {item.isActive ? 'Aktif' : 'Nonaktif'}
                                                                 </span>
                                                             </td>
-                                                            <td className="px-6 py-4">
-                                                                <div className="flex items-center justify-center gap-2">
+                                                            <td className="px-3 md:px-4 py-4">
+                                                                <div className="flex items-center justify-center gap-1 md:gap-2">
                                                                     <button
                                                                         onClick={() => openEditModal(item)}
-                                                                        className="p-2 hover:bg-blue-50 rounded-lg text-blue-600 transition-colors"
+                                                                        className="p-1.5 md:p-2 hover:bg-blue-50 rounded-lg text-blue-600 transition-colors"
                                                                         title="Edit"
                                                                     >
                                                                         <Edit className="w-4 h-4" />
                                                                     </button>
                                                                     <button
                                                                         onClick={() => openDeleteDialog(item)}
-                                                                        className="p-2 hover:bg-red-50 rounded-lg text-red-600 transition-colors"
+                                                                        className="p-1.5 md:p-2 hover:bg-red-50 rounded-lg text-red-600 transition-colors"
                                                                         title="Hapus"
                                                                     >
                                                                         <Trash2 className="w-4 h-4" />
