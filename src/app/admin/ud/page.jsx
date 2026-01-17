@@ -20,13 +20,10 @@ import Pagination from '@/components/ui/Pagination';
 import EmptyState from '@/components/ui/EmptyState';
 
 const KBLI_OPTIONS = [
-    'Sayur',
-    'Buah',
-    'Roti, Kue Kering dan Basah',
-    'Makanan Minuman Supermarket Tradisional (Susu)',
-    'Air Galon',
-    'Bumbu',
-    'Lauk Pauk',
+    'protein hewani dan beras',
+    'barang toko',
+    'non makanan',
+    'barang pasar (sayur, buah, dan roti rotian)',
     'Lainnya',
 ];
 
@@ -305,12 +302,6 @@ export default function UDManagementPage() {
                                         <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
                                             Nama UD
                                         </th>
-                                        <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider hidden lg:table-cell">
-                                            Pemilik
-                                        </th>
-                                        <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider hidden xl:table-cell">
-                                            Bank
-                                        </th>
                                         <th className="px-6 py-3 text-center text-xs font-semibold text-gray-700 uppercase tracking-wider">
                                             Status
                                         </th>
@@ -336,15 +327,6 @@ export default function UDManagementPage() {
                                                     <p className="text-sm text-gray-500 truncate max-w-[200px] lg:max-w-xs mt-0.5">
                                                         {item.alamat || '-'}
                                                     </p>
-                                                </div>
-                                            </td>
-                                            <td className="px-6 py-4 text-gray-700 hidden lg:table-cell">
-                                                {item.nama_pemilik || '-'}
-                                            </td>
-                                            <td className="px-6 py-4 hidden xl:table-cell">
-                                                <div className="text-sm">
-                                                    <p className="text-gray-900 font-medium">{item.bank || '-'}</p>
-                                                    <p className="text-gray-500 mt-0.5">{item.no_rekening || '-'}</p>
                                                 </div>
                                             </td>
                                             <td className="px-6 py-4 text-center whitespace-nowrap">
@@ -432,23 +414,6 @@ export default function UDManagementPage() {
                                             </button>
                                         </div>
                                     </div>
-
-                                    {(item.nama_pemilik || item.bank) && (
-                                        <div className="grid grid-cols-2 gap-4 pt-2 border-t border-gray-50">
-                                            {item.nama_pemilik && (
-                                                <div>
-                                                    <p className="font-semibold text-gray-400 uppercase tracking-wider">Pemilik</p>
-                                                    <p className="text-gray-700 font-medium truncate">{item.nama_pemilik}</p>
-                                                </div>
-                                            )}
-                                            {item.bank && (
-                                                <div>
-                                                    <p className="font-semibold text-gray-400 uppercase tracking-wider">Bank</p>
-                                                    <p className="text-gray-700 font-medium truncate">{item.bank}</p>
-                                                </div>
-                                            )}
-                                        </div>
-                                    )}
                                 </div>
                             ))}
                         </div>
