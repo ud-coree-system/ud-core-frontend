@@ -263,62 +263,81 @@ export default function PeriodeManagementPage() {
                             {data.map((item, index) => (
                                 <div key={item._id} className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm space-y-4">
                                     <div className="flex items-start justify-between">
-                                        <div className="space-y-1">
-                                            <div className="flex items-center gap-2">
-                                                <span className="bg-blue-100 text-blue-700 font-bold px-2 py-0.5 rounded text-[10px]">
-                                                    #{(pagination.page - 1) * pagination.limit + index + 1}
-                                                </span>
-                                                <h3 className="font-bold text-gray-900 text-lg">{item.nama_periode}</h3>
-                                                <div className="flex items-center gap-1.5">
+                                        <div className="space-y-3">
+                                            <div className="space-y-1">
+                                                <div className="flex items-center gap-2">
+                                                    <span className="bg-blue-100 text-blue-700 font-bold px-2 py-0.5 rounded text-[10px]">
+                                                        #{(pagination.page - 1) * pagination.limit + index + 1}
+                                                    </span>
+                                                    <h3 className="font-bold text-gray-900 text-base sm:text-lg line-clamp-2">{item.nama_periode}</h3>
+                                                </div>
+                                                <div className="flex items-center gap-1.5 flex-wrap">
                                                     <span className={`px-2 py-0.5 text-[10px] font-semibold rounded-full uppercase tracking-wider
-                                    ${item.isActive ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'}
+                                    ${item.isActive ? 'bg-green-100 text-green-700 border border-green-200' : 'bg-gray-100 text-gray-600 border border-gray-200'}
                                   `}>
                                                         {item.isActive ? 'Aktif' : 'Nonaktif'}
                                                     </span>
                                                     {item.isClosed && (
-                                                        <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-semibold rounded-full bg-purple-100 text-purple-700 uppercase tracking-wider">
+                                                        <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-semibold rounded-full bg-purple-100 text-purple-700 border border-purple-200 uppercase tracking-wider">
                                                             <Lock className="w-3 h-3" />
                                                             Closed
                                                         </span>
                                                     )}
                                                 </div>
                                             </div>
-                                            <div className="flex flex-col gap-1 mt-2 text-sm text-gray-600">
+
+                                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2 text-sm text-gray-600">
                                                 <div className="flex items-center gap-2">
-                                                    <Calendar className="w-4 h-4 text-gray-400" />
-                                                    <span>{formatDate(item.tanggal_mulai)} - {formatDate(item.tanggal_selesai)}</span>
+                                                    <div className="w-8 h-8 rounded-lg bg-gray-50 flex items-center justify-center shrink-0">
+                                                        <Calendar className="w-4 h-4 text-gray-400" />
+                                                    </div>
+                                                    <div className="flex flex-col">
+                                                        <span className="text-[10px] text-gray-400 uppercase font-bold tracking-tight">Mulai</span>
+                                                        <span className="font-medium text-gray-700">{formatDate(item.tanggal_mulai)}</span>
+                                                    </div>
+                                                </div>
+                                                <div className="flex items-center gap-2">
+                                                    <div className="w-8 h-8 rounded-lg bg-gray-50 flex items-center justify-center shrink-0">
+                                                        <Calendar className="w-4 h-4 text-gray-400" />
+                                                    </div>
+                                                    <div className="flex flex-col">
+                                                        <span className="text-[10px] text-gray-400 uppercase font-bold tracking-tight">Selesai</span>
+                                                        <span className="font-medium text-gray-700">{formatDate(item.tanggal_selesai)}</span>
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
                                     </div>
 
-                                    <div className="flex items-center gap-3 pt-4 border-t border-gray-50">
+                                    <div className="flex items-center gap-2 pt-4 border-t border-gray-100">
                                         {!item.isClosed ? (
                                             <>
                                                 <button
                                                     onClick={() => openEditModal(item)}
-                                                    className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-blue-50 text-blue-600 rounded-lg text-sm font-semibold hover:bg-blue-100 transition-colors"
+                                                    className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-blue-50 text-blue-600 rounded-xl text-sm font-bold hover:bg-blue-100 transition-colors active:scale-95"
                                                 >
                                                     <Edit className="w-4 h-4" />
                                                     Edit
                                                 </button>
                                                 <button
                                                     onClick={() => openCloseDialog(item)}
-                                                    className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-purple-50 text-purple-600 rounded-lg text-sm font-semibold hover:bg-purple-100 transition-colors"
+                                                    className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-purple-50 text-purple-600 rounded-xl text-sm font-bold hover:bg-purple-100 transition-colors active:scale-95"
                                                 >
                                                     <Lock className="w-4 h-4" />
                                                     Tutup
                                                 </button>
                                                 <button
                                                     onClick={() => openDeleteDialog(item)}
-                                                    className="p-2.5 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition-colors"
+                                                    className="p-2.5 bg-red-50 text-red-600 rounded-xl hover:bg-red-100 transition-colors active:scale-95"
+                                                    title="Hapus"
                                                 >
                                                     <Trash2 className="w-4 h-4" />
                                                 </button>
                                             </>
                                         ) : (
-                                            <div className="w-full text-center py-2 text-sm text-gray-400 italic bg-gray-50 rounded-lg">
-                                                Periode Terkunci
+                                            <div className="w-full flex items-center justify-center gap-2 py-3 text-sm font-bold text-gray-400 bg-gray-50 rounded-xl border border-dashed border-gray-200">
+                                                <Lock className="w-4 h-4" />
+                                                PERIODE TERKUNCI
                                             </div>
                                         )}
                                     </div>
@@ -332,22 +351,24 @@ export default function PeriodeManagementPage() {
                                 <table className="w-full">
                                     <thead className="bg-gray-50 border-b border-gray-200">
                                         <tr>
-                                            <th className="px-3 md:px-4 lg:px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider w-16">
+                                            <th className="px-2 md:px-3 lg:px-6 py-4 text-left text-[10px] md:text-xs font-bold text-gray-500 uppercase tracking-wider w-12 md:w-16">
                                                 No
                                             </th>
-                                            <th className="px-3 md:px-4 lg:px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">
+                                            <th className="px-2 md:px-3 lg:px-6 py-4 text-left text-[10px] md:text-xs font-bold text-gray-500 uppercase tracking-wider min-w-[100px] md:min-w-[150px]">
                                                 Nama Periode
                                             </th>
-                                            <th className="hidden lg:table-cell px-3 md:px-4 lg:px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">
-                                                Tanggal Mulai
+                                            <th className="hidden md:table-cell px-2 md:px-3 lg:px-6 py-4 text-left text-[10px] md:text-xs font-bold text-gray-500 uppercase tracking-wider">
+                                                <span className="md:hidden lg:inline">Tanggal Mulai</span>
+                                                <span className="hidden md:inline lg:hidden">Tgl. Mulai</span>
                                             </th>
-                                            <th className="hidden lg:table-cell px-3 md:px-4 lg:px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">
-                                                Tanggal Selesai
+                                            <th className="hidden md:table-cell px-2 md:px-3 lg:px-6 py-4 text-left text-[10px] md:text-xs font-bold text-gray-500 uppercase tracking-wider">
+                                                <span className="md:hidden lg:inline">Tanggal Selesai</span>
+                                                <span className="hidden md:inline lg:hidden">Tgl. Selesai</span>
                                             </th>
-                                            <th className="hidden lg:table-cell px-3 md:px-4 lg:px-6 py-4 text-center text-xs font-bold text-gray-500 uppercase tracking-wider">
+                                            <th className="hidden sm:table-cell px-2 md:px-3 lg:px-6 py-4 text-center text-[10px] md:text-xs font-bold text-gray-500 uppercase tracking-wider">
                                                 Status
                                             </th>
-                                            <th className="px-3 md:px-4 lg:px-6 py-4 text-center text-xs font-bold text-gray-500 uppercase tracking-wider">
+                                            <th className="px-2 md:px-3 lg:px-6 py-4 text-center text-[10px] md:text-xs font-bold text-gray-500 uppercase tracking-wider">
                                                 Aksi
                                             </th>
                                         </tr>
@@ -355,61 +376,61 @@ export default function PeriodeManagementPage() {
                                     <tbody className="divide-y divide-gray-200">
                                         {data.map((item, index) => (
                                             <tr key={item._id} className="hover:bg-gray-50/50 transition-colors">
-                                                <td className="px-3 md:px-4 lg:px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                                <td className="px-2 md:px-3 lg:px-6 py-4 whitespace-nowrap text-[11px] md:text-sm text-gray-500">
                                                     {(pagination.page - 1) * pagination.limit + index + 1}
                                                 </td>
-                                                <td className="px-3 md:px-4 lg:px-6 py-4 whitespace-nowrap">
-                                                    <p className="font-semibold text-gray-900 line-clamp-2 md:line-clamp-1">{item.nama_periode}</p>
+                                                <td className="px-2 md:px-3 lg:px-6 py-4">
+                                                    <p className="font-semibold text-gray-900 text-xs md:text-sm lg:text-base line-clamp-2">{item.nama_periode}</p>
                                                 </td>
-                                                <td className="hidden lg:table-cell px-3 md:px-4 lg:px-6 py-4 whitespace-nowrap">
-                                                    <p className="text-sm text-gray-700">{formatDate(item.tanggal_mulai)}</p>
+                                                <td className="hidden md:table-cell px-2 md:px-3 lg:px-6 py-4 whitespace-nowrap">
+                                                    <p className="text-[11px] lg:text-sm text-gray-700 font-medium">{formatDate(item.tanggal_mulai)}</p>
                                                 </td>
-                                                <td className="hidden lg:table-cell px-3 md:px-4 lg:px-6 py-4 whitespace-nowrap">
-                                                    <p className="text-sm text-gray-700">{formatDate(item.tanggal_selesai)}</p>
+                                                <td className="hidden md:table-cell px-2 md:px-3 lg:px-6 py-4 whitespace-nowrap">
+                                                    <p className="text-[11px] lg:text-sm text-gray-700 font-medium">{formatDate(item.tanggal_selesai)}</p>
                                                 </td>
-                                                <td className="hidden lg:table-cell px-3 md:px-4 lg:px-6 py-4 whitespace-nowrap">
-                                                    <div className="flex items-center justify-center gap-2">
-                                                        <span className={`inline-flex px-3 py-1 text-xs font-bold rounded-full uppercase tracking-wider
-                                   ${item.isActive ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'}
-                                 `}>
+                                                <td className="hidden sm:table-cell px-2 md:px-3 lg:px-6 py-4 whitespace-nowrap">
+                                                    <div className="flex flex-col items-center justify-center gap-1">
+                                                        <span className={`inline-flex px-1.5 md:px-3 py-0.5 md:py-1 text-[9px] md:text-[10px] lg:text-xs font-bold rounded-full uppercase tracking-wider
+                                    ${item.isActive ? 'bg-green-100 text-green-700 border border-green-200' : 'bg-gray-100 text-gray-600 border border-gray-200'}
+                                  `}>
                                                             {item.isActive ? 'Aktif' : 'Nonaktif'}
                                                         </span>
                                                         {item.isClosed && (
-                                                            <span className="inline-flex items-center gap-1 px-3 py-1 text-xs font-bold rounded-full bg-purple-100 text-purple-700 uppercase tracking-wider">
-                                                                <Lock className="w-3 h-3" />
+                                                            <span className="inline-flex items-center gap-1 px-1.5 md:px-3 py-0.5 md:py-1 text-[9px] md:text-[10px] lg:text-xs font-bold rounded-full bg-purple-100 text-purple-700 border border-purple-200 uppercase tracking-wider">
+                                                                <Lock className="w-2.5 h-2.5 md:w-3 h-3" />
                                                                 Closed
                                                             </span>
                                                         )}
                                                     </div>
                                                 </td>
-                                                <td className="px-3 md:px-4 lg:px-6 py-4 whitespace-nowrap">
-                                                    <div className="flex items-center justify-center gap-1">
+                                                <td className="px-2 md:px-3 lg:px-6 py-4 whitespace-nowrap">
+                                                    <div className="flex items-center justify-center gap-0.5 md:gap-1">
                                                         {!item.isClosed ? (
                                                             <>
                                                                 <button
                                                                     onClick={() => openEditModal(item)}
-                                                                    className="p-1.5 md:p-2 hover:bg-blue-50 rounded-lg text-blue-600 transition-all hover:scale-110"
+                                                                    className="p-1 md:p-1.5 lg:p-2 hover:bg-blue-50 rounded-lg text-blue-600 transition-all hover:scale-110"
                                                                     title="Edit"
                                                                 >
-                                                                    <Edit className="w-4 h-4" />
+                                                                    <Edit className="w-3.5 h-3.5 md:w-4 h-4" />
                                                                 </button>
                                                                 <button
                                                                     onClick={() => openCloseDialog(item)}
-                                                                    className="p-1.5 md:p-2 hover:bg-purple-50 rounded-lg text-purple-600 transition-all hover:scale-110"
+                                                                    className="p-1 md:p-1.5 lg:p-2 hover:bg-purple-50 rounded-lg text-purple-600 transition-all hover:scale-110"
                                                                     title="Tutup Periode"
                                                                 >
-                                                                    <Lock className="w-4 h-4" />
+                                                                    <Lock className="w-3.5 h-3.5 md:w-4 h-4" />
                                                                 </button>
                                                                 <button
                                                                     onClick={() => openDeleteDialog(item)}
-                                                                    className="p-1.5 md:p-2 hover:bg-red-50 rounded-lg text-red-600 transition-all hover:scale-110"
+                                                                    className="p-1 md:p-1.5 lg:p-2 hover:bg-red-50 rounded-lg text-red-600 transition-all hover:scale-110"
                                                                     title="Hapus"
                                                                 >
-                                                                    <Trash2 className="w-4 h-4" />
+                                                                    <Trash2 className="w-3.5 h-3.5 md:w-4 h-4" />
                                                                 </button>
                                                             </>
                                                         ) : (
-                                                            <span className="text-sm text-gray-400 italic">Terkunci</span>
+                                                            <span className="text-[10px] md:text-xs text-gray-400 font-medium italic">Terkunci</span>
                                                         )}
                                                     </div>
                                                 </td>
