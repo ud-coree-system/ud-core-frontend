@@ -197,25 +197,49 @@ export const exportLaporanExcel = async ({
 
     // --- Sheets per UD ---
     itemsByUD.forEach((ud) => {
-        const sheetName = `LAP. UD. ${ud.nama_ud}`.substring(0, 31).replace(/[\[\]\*\?\/\\]/g, '');
+        const sheetName = `LAP. ${ud.nama_ud}`.substring(0, 31).replace(/[\[\]\*\?\/\\]/g, '');
         const wsUD = wb.addWorksheet(sheetName);
 
         wsUD.columns = [
-            { width: 6 }, { width: 35 }, { width: 8 }, { width: 10 },
-            { width: 16 }, { width: 18 }, { width: 16 }, { width: 18 }, { width: 15 }
+            { width: 6 },  // No
+            { width: 35 }, // Nama Barang
+            { width: 10 }, // Qty
+            { width: 10 }, // Satuan
+            { width: 20 }, // Harga Jual Suplier
+            { width: 22 }, // Total Harga Jual Suplier
+            { width: 20 }, // Harga Modal Suplier
+            { width: 22 }, // Jumlah Modal Suplier
+            { width: 15 }  // Keuntungan
         ];
 
         // UD Header Info
-        wsUD.addRow([`NOTE : ${ud.nama_ud.toUpperCase()}`]).font = { bold: true };
-        wsUD.addRow([`AN. ${ud.items[0]?.ud_id?.nama_pemilik || '-'}`]);
-        wsUD.addRow([`NO REK ${ud.items[0]?.ud_id?.bank || ''} : ${ud.items[0]?.ud_id?.no_rekening || '-'}`]);
+        const noteRow = wsUD.addRow([`NOTE : ${ud.nama_ud.toUpperCase()}`]);
+        wsUD.mergeCells(`A${noteRow.number}:I${noteRow.number}`);
+        noteRow.font = { bold: true };
+
+        const anRow = wsUD.addRow([`AN. ${ud.items[0]?.ud_id?.nama_pemilik || '-'}`]);
+        wsUD.mergeCells(`A${anRow.number}:I${anRow.number}`);
+
+        const rekRow = wsUD.addRow([`NO REK ${ud.items[0]?.ud_id?.bank || ''} : ${ud.items[0]?.ud_id?.no_rekening || '-'}`]);
+        wsUD.mergeCells(`A${rekRow.number}:I${rekRow.number}`);
+
         wsUD.addRow([]);
-        wsUD.addRow([`KBLI MELIPUTI : ${(ud.items[0]?.ud_id?.kbli || []).join(', ')}`]);
+
+        const kbliRow = wsUD.addRow([`KBLI MELIPUTI : ${(ud.items[0]?.ud_id?.kbli || []).join(', ')}`]);
+        wsUD.mergeCells(`A${kbliRow.number}:I${kbliRow.number}`);
+        kbliRow.getCell(1).alignment = { wrapText: true, vertical: 'top' };
+        // Estimate height based on content length (roughly)
+        const kbliLength = (ud.items[0]?.ud_id?.kbli || []).join(', ').length;
+        if (kbliLength > 100) kbliRow.height = 30;
+        if (kbliLength > 200) kbliRow.height = 45;
+
         wsUD.addRow([]);
 
         // Table Header
         const headerRow = wsUD.addRow(['No.', 'Nama Barang', 'Qty', 'Satuan', 'Harga Jual Suplier', 'Total Harga Jual Suplier', 'Harga Modal Suplier', 'Jumlah Modal Suplier', 'Keuntungan']);
         applyRowStyle(headerRow, STYLES.header);
+        headerRow.height = 30; // Extra height for wrapped text
+        headerRow.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };
 
         const udGroupedByDate = {};
         ud.items.forEach(item => {
