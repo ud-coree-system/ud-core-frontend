@@ -57,6 +57,7 @@ export default function BarangManagementPage() {
         totalPages: 1,
         totalDocuments: 0,
     });
+    const [groupingMode, setGroupingMode] = useState('ud');
 
     // Modal state
     const [modalOpen, setModalOpen] = useState(false);
@@ -303,7 +304,7 @@ export default function BarangManagementPage() {
 
                     {/* Filter by UD */}
                     <div className="relative sm:w-64">
-                        <Filter className="absolute left-3 top-1/2 -translate-y-1/2 w-4 sm:w-5 h-4 sm:h-5 text-gray-400" />
+                        <Filter className="absolute left-3 top-1/2 -translate-y-1/2 w-4 sm:h-5 h-4 sm:h-5 text-gray-400" />
                         <select
                             value={filterUD}
                             onChange={handleFilterUD}
@@ -316,6 +317,25 @@ export default function BarangManagementPage() {
                                     {ud.nama_ud}
                                 </option>
                             ))}
+                        </select>
+                        <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                            <svg className="h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                            </svg>
+                        </div>
+                    </div>
+
+                    {/* Grouping Filter */}
+                    <div className="relative sm:w-64">
+                        <Package className="absolute left-3 top-1/2 -translate-y-1/2 w-4 sm:h-5 h-4 sm:h-5 text-gray-400" />
+                        <select
+                            value={groupingMode}
+                            onChange={(e) => setGroupingMode(e.target.value)}
+                            className="w-full pl-9 sm:pl-10 pr-10 py-2 sm:py-2.5 text-sm sm:text-base border border-gray-200 rounded-lg appearance-none
+                       focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 bg-white"
+                        >
+                            <option value="ud">Group per UD</option>
+                            <option value="none">Tanpa Grouping</option>
                         </select>
                         <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
                             <svg className="h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -410,7 +430,7 @@ export default function BarangManagementPage() {
                                 </thead>
                                 <tbody className="divide-y divide-gray-200">
                                     {(() => {
-                                        if (filterUD) {
+                                        if (filterUD || groupingMode === 'none') {
                                             return data.map((item, index) => (
                                                 <tr key={item._id} className="hover:bg-gray-50 transition-colors">
                                                     <td className="px-3 md:px-4 py-4 text-center text-gray-500 font-medium">
@@ -495,6 +515,7 @@ export default function BarangManagementPage() {
 
                                         return groupedEntries.map((group) => {
                                             const udId = group.ud?._id || 'others';
+                                            let localIndex = 0;
                                             return (
                                                 <Fragment key={udId}>
                                                     <tr className="bg-gray-100/50">
@@ -505,11 +526,11 @@ export default function BarangManagementPage() {
                                                         </td>
                                                     </tr>
                                                     {group.items.map((item) => {
-                                                        globalIndex++;
+                                                        localIndex++;
                                                         return (
                                                             <tr key={item._id} className="hover:bg-gray-50 transition-colors">
                                                                 <td className="px-3 md:px-4 py-4 text-center text-gray-500 font-medium">
-                                                                    {globalIndex}
+                                                                    {localIndex}
                                                                 </td>
                                                                 <td className="px-3 md:px-4 py-4 min-w-[150px]">
                                                                     <p className="font-medium text-gray-900 line-clamp-2 md:line-clamp-1">{item.nama_barang}</p>
@@ -571,7 +592,7 @@ export default function BarangManagementPage() {
                         {/* Mobile View Cards */}
                         <div className="md:hidden divide-y divide-gray-100">
                             {(() => {
-                                if (filterUD) {
+                                if (filterUD || groupingMode === 'none') {
                                     return data.map((item, index) => (
                                         <div key={item._id} className="p-4 space-y-3 hover:bg-gray-50 transition-colors relative">
                                             <div className="absolute top-4 left-4 -ml-2 -mt-2">
@@ -667,6 +688,7 @@ export default function BarangManagementPage() {
 
                                 return groupedEntries.map((group) => {
                                     const udId = group.ud?._id || 'others';
+                                    let localIndex = 0;
                                     return (
                                         <div key={udId} className="divide-y divide-gray-100">
                                             <div className="bg-gray-50 px-4 py-2 border-y border-gray-100">
@@ -675,12 +697,12 @@ export default function BarangManagementPage() {
                                                 </p>
                                             </div>
                                             {group.items.map((item) => {
-                                                globalIndex++;
+                                                localIndex++;
                                                 return (
                                                     <div key={item._id} className="p-4 space-y-3 hover:bg-gray-50 transition-colors relative">
                                                         <div className="absolute top-4 left-4 -ml-2 -mt-2">
                                                             <span className="w-5 h-5 bg-blue-100 text-blue-600 text-[10px] font-bold rounded-full flex items-center justify-center">
-                                                                {globalIndex}
+                                                                {localIndex}
                                                             </span>
                                                         </div>
                                                         <div className="flex justify-between items-start gap-4 pl-6">
