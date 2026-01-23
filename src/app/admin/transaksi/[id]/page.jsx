@@ -28,6 +28,7 @@ export default function TransaksiDetailPage() {
     const [selectedUDForPrint, setSelectedUDForPrint] = useState(null);
     const [downloading, setDownloading] = useState(null);
     const [downloadingAll, setDownloadingAll] = useState(false);
+    const [printing, setPrinting] = useState(null); // 'all' or udId
 
     useEffect(() => {
         if (params.id) {
@@ -109,19 +110,23 @@ export default function TransaksiDetailPage() {
     };
 
     const handlePrintAll = () => {
+        setPrinting('all');
         setSelectedUDForPrint(null);
         setTimeout(() => {
             window.print();
-        }, 100);
+            setPrinting(null);
+        }, 500);
     };
 
     const handlePrintIndividual = (udId) => {
+        setPrinting(udId);
         setSelectedUDForPrint(udId);
         setTimeout(() => {
             window.print();
             // Reset after print dialog closes
+            setPrinting(null);
             setTimeout(() => setSelectedUDForPrint(null), 1000);
-        }, 100);
+        }, 500);
     };
 
     const handleDownloadIndividual = async (udId, udName) => {
@@ -243,10 +248,15 @@ export default function TransaksiDetailPage() {
                     </button>
                     <button
                         onClick={handlePrintAll}
+                        disabled={printing === 'all'}
                         className="inline-flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-xl
-                                 hover:bg-blue-700 transition-all font-semibold shadow-lg shadow-blue-500/20 active:scale-95 text-sm"
+                                 hover:bg-blue-700 transition-all font-semibold shadow-lg shadow-blue-500/20 active:scale-95 disabled:opacity-50 text-sm"
                     >
-                        <Printer className="w-4 h-4" />
+                        {printing === 'all' ? (
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                        ) : (
+                            <Printer className="w-4 h-4" />
+                        )}
                         Cetak Nota
                     </button>
                     {/* <button
@@ -327,11 +337,16 @@ export default function TransaksiDetailPage() {
                                     <div className="flex items-center gap-2">
                                         <button
                                             onClick={() => handlePrintIndividual(udId)}
+                                            disabled={printing !== null}
                                             className="p-2 bg-white border border-gray-300 text-gray-700 rounded-xl
-                                                     hover:bg-gray-50 transition-all active:scale-95 shadow-sm"
+                                                     hover:bg-gray-50 transition-all active:scale-95 shadow-sm disabled:opacity-50"
                                             title="Cetak Nota UD"
                                         >
-                                            <Printer className="w-5 h-5" />
+                                            {printing === udId ? (
+                                                <Loader2 className="w-5 h-5 animate-spin" />
+                                            ) : (
+                                                <Printer className="w-5 h-5" />
+                                            )}
                                         </button>
                                         <button
                                             onClick={() => handleDownloadIndividual(udId, udData.nama_ud)}
