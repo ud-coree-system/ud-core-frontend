@@ -17,6 +17,7 @@ import { transaksiAPI, periodeAPI, dapurAPI, barangAPI, udAPI } from '@/lib/api'
 import DatePicker from '@/components/ui/DatePicker';
 import { useToast } from '@/contexts/ToastContext';
 import { getErrorMessage, formatCurrency, debounce } from '@/lib/utils';
+import CurrencyInput from '@/components/ui/CurrencyInput';
 
 const SATUAN_OPTIONS = [
     { value: 'pcs', label: 'Pieces (pcs)' },
@@ -678,24 +679,18 @@ export default function EditTransaksiPage() {
                                                         className="w-16 px-1 py-1.5 border border-gray-200 rounded-md text-center focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none text-xs font-bold"
                                                     />
                                                 </td>
-                                                <td className="px-2 py-4">
-                                                    <input
-                                                        type="number"
+                                                <td className="px-2 py-4 text-center">
+                                                    <CurrencyInput
                                                         value={item.harga_modal}
                                                         onChange={(e) => handleHargaModalChange(item.barang_id, e.target.value)}
-                                                        onFocus={(e) => e.target.select()}
-                                                        min="0"
-                                                        className="w-24 px-2 py-1.5 border border-gray-200 rounded-md text-right focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none text-xs font-medium"
+                                                        className="w-24 px-2 py-1.5 text-right text-xs font-medium"
                                                     />
                                                 </td>
                                                 <td className="px-2 py-4">
-                                                    <input
-                                                        type="number"
+                                                    <CurrencyInput
                                                         value={item.harga_jual}
                                                         onChange={(e) => handleHargaJualChange(item.barang_id, e.target.value)}
-                                                        onFocus={(e) => e.target.select()}
-                                                        min="0"
-                                                        className="w-24 px-2 py-1.5 border border-gray-200 rounded-md text-right focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none text-xs font-bold text-gray-900"
+                                                        className="w-24 px-2 py-1.5 text-right text-xs font-bold text-gray-900"
                                                     />
                                                 </td>
                                                 <td className="px-3 py-4 text-right font-black text-blue-600 text-xs whitespace-nowrap">
@@ -783,22 +778,18 @@ export default function EditTransaksiPage() {
                                             <div className="grid grid-cols-2 gap-3">
                                                 <div className="space-y-1">
                                                     <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Harga Modal</label>
-                                                    <input
-                                                        type="number"
+                                                    <CurrencyInput
                                                         value={item.harga_modal}
                                                         onChange={(e) => handleHargaModalChange(item.barang_id, e.target.value)}
-                                                        onFocus={(e) => e.target.select()}
-                                                        className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500/20 outline-none text-sm"
+                                                        className="px-3 py-2 text-sm"
                                                     />
                                                 </div>
                                                 <div className="space-y-1">
                                                     <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Harga Jual</label>
-                                                    <input
-                                                        type="number"
+                                                    <CurrencyInput
                                                         value={item.harga_jual}
                                                         onChange={(e) => handleHargaJualChange(item.barang_id, e.target.value)}
-                                                        onFocus={(e) => e.target.select()}
-                                                        className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500/20 outline-none text-sm"
+                                                        className="px-3 py-2 text-sm font-bold"
                                                     />
                                                 </div>
                                             </div>
@@ -979,26 +970,20 @@ export default function EditTransaksiPage() {
                                     <label className="block text-sm font-semibold text-gray-700 mb-1.5">
                                         Harga Modal
                                     </label>
-                                    <input
-                                        type="number"
+                                    <CurrencyInput
                                         value={newBarang.harga_modal}
                                         onChange={(e) => setNewBarang({ ...newBarang, harga_modal: e.target.value })}
-                                        className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all"
-                                        min="0"
-                                        placeholder="0"
+                                        className="px-4 py-2.5 rounded-xl transition-all"
                                     />
                                 </div>
                                 <div>
                                     <label className="block text-sm font-semibold text-gray-700 mb-1.5">
                                         Harga Jual
                                     </label>
-                                    <input
-                                        type="number"
+                                    <CurrencyInput
                                         value={newBarang.harga_jual}
                                         onChange={(e) => setNewBarang({ ...newBarang, harga_jual: e.target.value })}
-                                        className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all"
-                                        min="0"
-                                        placeholder="0"
+                                        className="px-4 py-2.5 rounded-xl transition-all"
                                     />
                                 </div>
                             </div>
