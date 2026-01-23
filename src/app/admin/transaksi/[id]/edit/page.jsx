@@ -623,8 +623,8 @@ export default function EditTransaksiPage() {
                                         <th className="text-left px-3 py-3 text-[10px] font-bold text-gray-400 uppercase tracking-widest">Barang & UD</th>
                                         <th className="text-center px-2 py-3 text-[10px] font-bold text-gray-400 uppercase tracking-widest w-16">Satuan</th>
                                         <th className="text-center px-2 py-3 text-[10px] font-bold text-gray-400 uppercase tracking-widest w-16">Qty</th>
-                                        <th className="text-right px-2 py-3 text-[10px] font-bold text-gray-400 uppercase tracking-widest w-28">Modal</th>
-                                        <th className="text-right px-2 py-3 text-[10px] font-bold text-gray-400 uppercase tracking-widest w-28">Jual</th>
+                                        <th className="text-center px-2 py-3 text-[10px] font-bold text-gray-400 uppercase tracking-widest w-28">Modal</th>
+                                        <th className="text-center px-2 py-3 text-[10px] font-bold text-gray-400 uppercase tracking-widest w-28">Jual</th>
                                         <th className="text-right px-3 py-3 text-[10px] font-bold text-gray-400 uppercase tracking-widest w-28">Subtotal</th>
                                         <th className="text-center px-2 py-3 text-[10px] font-bold text-gray-400 uppercase tracking-widest w-12">Aksi</th>
                                     </tr>
@@ -668,7 +668,7 @@ export default function EditTransaksiPage() {
                                                         className="w-14 px-1 py-1.5 border border-gray-200 rounded-md text-center focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none text-[10px] font-bold uppercase"
                                                     />
                                                 </td>
-                                                <td className="px-2 py-4">
+                                                <td className="px-2 py-4 text-center">
                                                     <input
                                                         type="number"
                                                         value={item.qty}
@@ -683,14 +683,14 @@ export default function EditTransaksiPage() {
                                                     <CurrencyInput
                                                         value={item.harga_modal}
                                                         onChange={(e) => handleHargaModalChange(item.barang_id, e.target.value)}
-                                                        className="w-24 px-2 py-1.5 text-right text-xs font-medium"
+                                                        className="w-24 px-2 py-1.5 text-center text-xs font-medium"
                                                     />
                                                 </td>
-                                                <td className="px-2 py-4">
+                                                <td className="px-2 py-4 text-center">
                                                     <CurrencyInput
                                                         value={item.harga_jual}
                                                         onChange={(e) => handleHargaJualChange(item.barang_id, e.target.value)}
-                                                        className="w-24 px-2 py-1.5 text-right text-xs font-bold text-gray-900"
+                                                        className="w-24 px-2 py-1.5 text-center text-xs font-bold text-gray-900"
                                                     />
                                                 </td>
                                                 <td className="px-3 py-4 text-right font-black text-blue-600 text-xs whitespace-nowrap">
