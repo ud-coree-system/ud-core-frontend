@@ -57,7 +57,7 @@ export const exportLaporanExcel = async ({
         let udCounter = 0;
 
         // Table Header
-        const headerRow = ws1.addRow(['No', 'Nama Barang', 'Qty', 'Satuan', 'Harga Jual', 'Total Harga']);
+        const headerRow = ws1.addRow(['No', 'Nama Barang', 'Qty', 'Satuan', 'Harga Jual Suplier', 'Total Harga']);
         applyRowStyle(headerRow, STYLES.header);
 
         group.items.forEach((item) => {

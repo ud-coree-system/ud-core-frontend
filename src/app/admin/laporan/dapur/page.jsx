@@ -256,8 +256,8 @@ export default function LaporanDapurPage() {
                 const dailyTotal = group.items.reduce((sum, i) => sum + i.subtotal_jual, 0);
                 grandTotal += dailyTotal;
                 tableData.push([
-                    { content: `TOTAL ${formatDateShort(group.tanggal).toUpperCase()}`, colSpan: 5, styles: { halign: 'right', fontStyle: 'bold', fillColor: [226, 232, 240] } },
-                    { content: formatCurrency(dailyTotal), styles: { fontStyle: 'bold', fillColor: [226, 232, 240] } }
+                    { content: `TOTAL JUAL ${formatDateShort(group.tanggal).toUpperCase()}`, colSpan: 5, styles: { halign: 'right', fontStyle: 'bold', fillColor: [226, 232, 240], lineColor: [0, 0, 0], lineWidth: 0.1, textColor: [0, 0, 0] } },
+                    { content: formatCurrency(dailyTotal), styles: { fontStyle: 'bold', fillColor: [226, 232, 240], lineColor: [0, 0, 0], lineWidth: 0.1, textColor: [0, 0, 0] } }
                 ]);
             });
 
@@ -285,10 +285,11 @@ export default function LaporanDapurPage() {
 
             autoTable(doc, {
                 startY: filterTanggal ? 40 : 35,
-                head: [['No', 'Nama Barang', 'Qty', 'Satuan', 'Harga Jual', 'Total Harga']],
+                head: [['No', 'Nama Barang', 'Qty', 'Satuan', 'Harga Jual Suplier', 'Total Harga']],
                 body: tableData,
                 theme: 'grid',
-                headStyles: { fillColor: [71, 85, 105] },
+                styles: { fontSize: 8, lineColor: [0, 0, 0], lineWidth: 0.1, textColor: [0, 0, 0] },
+                headStyles: { fillColor: [71, 85, 105], textColor: [255, 255, 255], halign: 'center', valign: 'middle' },
                 columnStyles: {
                     0: { cellWidth: 10 },
                     2: { cellWidth: 15 },
@@ -487,8 +488,8 @@ export default function LaporanDapurPage() {
                                             <th className="px-4 lg:px-6 py-4 text-left">Nama Barang</th>
                                             <th className="px-4 lg:px-6 py-4 text-center">Qty</th>
                                             <th className="hidden lg:table-cell px-6 py-4 text-center">Satuan</th>
-                                            <th className="hidden xl:table-cell px-6 py-4 text-right">Harga Jual</th>
-                                            <th className="px-4 lg:px-6 py-4 text-right">Total Harga</th>
+                                            <th className="hidden xl:table-cell px-6 py-4 text-right">Harga Jual Suplier</th>
+                                            <th className="px-4 lg:px-6 py-4 text-right">Total Jual Suplier</th>
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-gray-50">

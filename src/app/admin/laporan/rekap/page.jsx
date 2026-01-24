@@ -339,14 +339,14 @@ export default function LaporanRekapPage() {
                         { content: 'Budget Dapur', colSpan: 2, styles: { halign: 'center' } },
                         { content: 'Jual Suplier', colSpan: 2, styles: { halign: 'center' } },
                         { content: 'Modal Suplier', colSpan: 2, styles: { halign: 'center' } },
-                        { content: 'Untung', rowSpan: 2 }
+                        { content: 'Keuntungan', rowSpan: 2 }
                     ], [
                         'Harga', 'Total', 'Harga', 'Total', 'Harga', 'Total'
                     ]],
                     body: tableRows,
                     theme: 'grid',
-                    styles: { fontSize: 7 },
-                    headStyles: { fillColor: [59, 130, 246] },
+                    styles: { fontSize: 7, lineColor: [0, 0, 0], lineWidth: 0.1, textColor: [0, 0, 0] },
+                    headStyles: { fillColor: [59, 130, 246], textColor: [255, 255, 255], halign: 'center', valign: 'middle' },
                     columnStyles: {
                         3: { halign: 'right' },
                         4: { halign: 'right' },
@@ -380,8 +380,8 @@ export default function LaporanRekapPage() {
                         formatCurrency(grandTotalKeuntungan)
                     ]],
                     theme: 'grid',
-                    styles: { fontSize: 10, fontStyle: 'bold' },
-                    headStyles: { fillColor: [71, 85, 105] },
+                    styles: { fontSize: 10, fontStyle: 'bold', lineColor: [0, 0, 0], lineWidth: 0.1, textColor: [0, 0, 0] },
+                    headStyles: { fillColor: [71, 85, 105], textColor: [255, 255, 255], halign: 'center', valign: 'middle' },
                 });
 
                 const tableRows = [];
@@ -435,15 +435,15 @@ export default function LaporanRekapPage() {
 
                 autoTable(doc, {
                     startY: doc.lastAutoTable.finalY + 10,
-                    head: [['No', 'Nama Barang', 'Qty', 'Sat', 'Harga Jual', 'Total Jual', 'Hrg Modal', 'Tot Modal', 'Untung']],
+                    head: [['No', 'Nama Barang', 'Qty', 'Satuan', 'Harga Jual Suplier', 'Total Jual Suplier', 'Harga Modal Suplier', 'Total Modal Suplier', 'Keuntungan']],
                     body: tableRows,
                     theme: 'grid',
-                    styles: { fontSize: 8 },
-                    headStyles: { fillColor: [59, 130, 246] },
+                    styles: { fontSize: 8, lineColor: [0, 0, 0], lineWidth: 0.1, textColor: [0, 0, 0] },
+                    headStyles: { fillColor: [59, 130, 246], textColor: [255, 255, 255], halign: 'center', valign: 'middle' },
                     columnStyles: {
                         0: { cellWidth: 10, halign: 'center' },
                         2: { cellWidth: 12, halign: 'center' },
-                        3: { cellWidth: 15, halign: 'center' },
+                        3: { cellWidth: 20, halign: 'center' },
                         4: { halign: 'right' },
                         5: { halign: 'right' },
                         6: { halign: 'right' },
@@ -467,7 +467,7 @@ export default function LaporanRekapPage() {
                         ['Total Keuntungan', formatCurrency(grandTotalKeuntungan)]
                     ],
                     theme: 'plain',
-                    styles: { fontSize: 12, fontStyle: 'bold' },
+                    styles: { fontSize: 12, fontStyle: 'bold', lineColor: [0, 0, 0], lineWidth: 0.1, textColor: [0, 0, 0] },
                     columnStyles: {
                         1: { halign: 'right' }
                     }
@@ -844,10 +844,10 @@ export default function LaporanRekapPage() {
                                                 <th className="px-3 md:px-4 lg:px-6 py-3 text-left border-b border-gray-200 print:border-black">Nama Barang</th>
                                                 <th className="px-3 md:px-4 lg:px-6 py-3 text-center border-b border-gray-200 print:border-black">Qty</th>
                                                 <th className="hidden lg:table-cell px-6 py-3 text-center border-b border-gray-200 print:border-black">Satuan</th>
-                                                <th className="hidden xl:table-cell px-6 py-3 text-right border-b border-gray-200 print:border-black">Harga Jual</th>
-                                                <th className="px-3 md:px-4 lg:px-6 py-3 text-right border-b border-gray-200 print:border-black">Total Jual</th>
-                                                <th className="hidden xl:table-cell px-6 py-3 text-right border-b border-gray-200 print:border-black">Harga Modal</th>
-                                                <th className="px-3 md:px-4 lg:px-6 py-3 text-right border-b border-gray-200 print:border-black">Total Modal</th>
+                                                <th className="hidden xl:table-cell px-6 py-3 text-right border-b border-gray-200 print:border-black">Harga Jual Suplier</th>
+                                                <th className="px-3 md:px-4 lg:px-6 py-3 text-right border-b border-gray-200 print:border-black">Total Jual Suplier</th>
+                                                <th className="hidden xl:table-cell px-6 py-3 text-right border-b border-gray-200 print:border-black">Harga Modal Suplier</th>
+                                                <th className="px-3 md:px-4 lg:px-6 py-3 text-right border-b border-gray-200 print:border-black">Total Modal Suplier</th>
                                                 <th className="px-3 md:px-4 lg:px-6 py-3 text-right border-b border-gray-200 print:border-black">Keuntungan</th>
                                             </tr>
                                         </thead>

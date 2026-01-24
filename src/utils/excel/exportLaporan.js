@@ -25,10 +25,10 @@ export const exportLaporanExcel = async ({
         { width: 35 }, // Nama Barang
         { width: 8 },  // Qty
         { width: 10 }, // Satuan
-        { width: 16 }, // Harga Jual
-        { width: 18 }, // Total Jual
-        { width: 16 }, // Harga Modal
-        { width: 18 }, // Total Modal
+        { width: 25 }, // Harga Jual Suplier
+        { width: 25 }, // Total Jual Suplier
+        { width: 25 }, // Harga Modal Suplier
+        { width: 25 }, // Total Modal Suplier
         { width: 15 }  // Keuntungan
     ];
 
@@ -91,7 +91,7 @@ export const exportLaporanExcel = async ({
         dateRow.height = 20;
 
         // Table Header
-        const headerRow = ws1.addRow(['No', 'Nama Barang', 'Qty', 'Satuan', 'Harga Jual', 'Total Jual', 'Harga Modal', 'Total Modal', 'Keuntungan']);
+        const headerRow = ws1.addRow(['No', 'Nama Barang', 'Qty', 'Satuan', 'Harga Jual Suplier', 'Total Jual Suplier', 'Harga Modal Suplier', 'Total Modal Suplier', 'Keuntungan']);
         applyRowStyle(headerRow, STYLES.header);
 
         const sortedUdIds = Object.keys(udGroups).sort((a, b) => udGroups[a].nama_ud.localeCompare(udGroups[b].nama_ud));
@@ -205,10 +205,10 @@ export const exportLaporanExcel = async ({
             { width: 35 }, // Nama Barang
             { width: 10 }, // Qty
             { width: 10 }, // Satuan
-            { width: 20 }, // Harga Jual Suplier
-            { width: 22 }, // Total Harga Jual Suplier
-            { width: 20 }, // Harga Modal Suplier
-            { width: 22 }, // Jumlah Modal Suplier
+            { width: 25 }, // Harga Jual Suplier
+            { width: 25 }, // Total Jual Suplier
+            { width: 25 }, // Harga Modal Suplier
+            { width: 25 }, // Total Modal Suplier
             { width: 15 }  // Keuntungan
         ];
 
@@ -236,7 +236,7 @@ export const exportLaporanExcel = async ({
         wsUD.addRow([]);
 
         // Table Header
-        const headerRow = wsUD.addRow(['No.', 'Nama Barang', 'Qty', 'Satuan', 'Harga Jual Suplier', 'Total Harga Jual Suplier', 'Harga Modal Suplier', 'Jumlah Modal Suplier', 'Keuntungan']);
+        const headerRow = wsUD.addRow(['No.', 'Nama Barang', 'Qty', 'Satuan', 'Harga Jual Suplier', 'Total Jual Suplier', 'Harga Modal Suplier', 'Total Modal Suplier', 'Keuntungan']);
         applyRowStyle(headerRow, STYLES.header);
         headerRow.height = 30; // Extra height for wrapped text
         headerRow.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };

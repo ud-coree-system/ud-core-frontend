@@ -245,8 +245,8 @@ export default function LaporanPage() {
                     formatCurrency(totalUntungAll)
                 ]],
                 theme: 'grid',
-                styles: { fontSize: 10, fontStyle: 'bold' },
-                headStyles: { fillColor: [71, 85, 105] },
+                styles: { fontSize: 10, fontStyle: 'bold', lineColor: [0, 0, 0], lineWidth: 0.1, textColor: [0, 0, 0] },
+                headStyles: { fillColor: [71, 85, 105], textColor: [255, 255, 255], halign: 'center', valign: 'middle' },
             });
 
             // Create lookup maps for enrichment
@@ -360,15 +360,15 @@ export default function LaporanPage() {
 
                 autoTable(doc, {
                     startY: currentY,
-                    head: [['No', 'Nama Barang', 'Qty', 'Sat', 'Harga Jual', 'Total Jual', 'Hrg Modal', 'Tot Modal', 'Untung']],
+                    head: [['No', 'Nama Barang', 'Qty', 'Satuan', 'Harga Jual Suplier', 'Total Jual Suplier', 'Harga Modal Suplier', 'Total Modal Suplier', 'Keuntungan']],
                     body: tableRows,
                     theme: 'grid',
-                    styles: { fontSize: 8 },
-                    headStyles: { fillColor: [59, 130, 246] },
+                    styles: { fontSize: 8, lineColor: [0, 0, 0], lineWidth: 0.1, textColor: [0, 0, 0] },
+                    headStyles: { fillColor: [59, 130, 246], textColor: [255, 255, 255], halign: 'center', valign: 'middle' },
                     columnStyles: {
                         0: { cellWidth: 10, halign: 'center' },
                         2: { cellWidth: 12, halign: 'center' },
-                        3: { cellWidth: 15, halign: 'center' },
+                        3: { cellWidth: 20, halign: 'center' },
                         4: { halign: 'right' },
                         5: { halign: 'right' },
                         6: { halign: 'right' },
@@ -389,7 +389,7 @@ export default function LaporanPage() {
             });
 
             // Final Recap Block
-            if (currentY > 200) {
+            if (currentY > 180) {
                 doc.addPage();
                 currentY = 20;
             }
@@ -406,7 +406,7 @@ export default function LaporanPage() {
                     ['Total Keuntungan', formatCurrency(totalUntungAll)]
                 ],
                 theme: 'plain',
-                styles: { fontSize: 12, fontStyle: 'bold' },
+                styles: { fontSize: 12, fontStyle: 'bold', lineColor: [0, 0, 0], lineWidth: 0.1, textColor: [0, 0, 0] },
                 columnStyles: {
                     1: { halign: 'right' }
                 }
@@ -486,16 +486,16 @@ export default function LaporanPage() {
 
                 autoTable(doc, {
                     startY: 50,
-                    head: [['No', 'Tanggal', 'Nama Barang', 'Qty', 'Sat', 'Hrg Jual', 'Tot Jual', 'Hrg Modal', 'Tot Modal', 'Untung']],
+                    head: [['No', 'Tanggal', 'Nama Barang', 'Qty', 'Satuan', 'Harga Jual Suplier', 'Total Jual Suplier', 'Harga Modal Suplier', 'Total Modal Suplier', 'Keuntungan']],
                     body: udTableRows,
                     theme: 'grid',
-                    styles: { fontSize: 8 },
-                    headStyles: { fillColor: [30, 41, 59] },
+                    styles: { fontSize: 8, lineColor: [0, 0, 0], lineWidth: 0.1, textColor: [0, 0, 0] },
+                    headStyles: { fillColor: [30, 41, 59], textColor: [255, 255, 255], halign: 'center', valign: 'middle' },
                     columnStyles: {
                         0: { cellWidth: 10, halign: 'center' },
                         1: { cellWidth: 20 },
                         3: { cellWidth: 12, halign: 'center' },
-                        4: { cellWidth: 12, halign: 'center' },
+                        4: { cellWidth: 20, halign: 'center' },
                         5: { halign: 'right' },
                         6: { halign: 'right' },
                         7: { halign: 'right' },
@@ -655,16 +655,16 @@ export default function LaporanPage() {
             autoTable(doc, {
                 startY: periodRange ? 40 : 35,
                 head: [
-                    ['No', 'Nama Barang', 'Qty', 'Satuan', 'Harga Jual Suplier', 'Total Harga Jual Suplier', 'Harga Modal Suplier', 'Jumlah Modal Suplier', 'Keuntungan']
+                    ['No', 'Nama Barang', 'Qty', 'Satuan', 'Harga Jual Suplier', 'Total Jual Suplier', 'Harga Modal Suplier', 'Total Modal Suplier', 'Keuntungan']
                 ],
                 body: allTableRows,
                 theme: 'grid',
                 styles: { fontSize: 7, cellPadding: 1, lineColor: [0, 0, 0], lineWidth: 0.1, textColor: [0, 0, 0] },
-                headStyles: { fillColor: [255, 255, 255], textColor: [0, 0, 0], lineWidth: 0.1, lineColor: [0, 0, 0], fontStyle: 'bold' },
+                headStyles: { fillColor: [255, 255, 255], textColor: [0, 0, 0], lineWidth: 0.1, lineColor: [0, 0, 0], fontStyle: 'bold', halign: 'center', valign: 'middle' },
                 columnStyles: {
                     0: { cellWidth: 7, halign: 'center' },
                     2: { cellWidth: 10, halign: 'center' },
-                    3: { cellWidth: 12, halign: 'center' },
+                    3: { cellWidth: 20, halign: 'center' },
                     4: { cellWidth: 20, halign: 'right' },
                     5: { cellWidth: 25, halign: 'right' },
                     6: { cellWidth: 20, halign: 'right' },
@@ -770,9 +770,9 @@ export default function LaporanPage() {
                                 <tr>
                                     <th className="text-left px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">UD</th>
                                     <th className="text-right px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Jumlah Item</th>
-                                    <th className="text-right px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Total Jual</th>
+                                    <th className="text-right px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Total Penjualan</th>
                                     <th className="text-right px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Total Modal</th>
-                                    <th className="text-right px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Total Untung</th>
+                                    <th className="text-right px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Total Keuntungan</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-gray-100">

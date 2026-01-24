@@ -110,22 +110,37 @@ export default function TransaksiDetailPage() {
     };
 
     const handlePrintAll = () => {
+        const originalTitle = document.title;
+        const dateStr = data.tanggal ? new Date(data.tanggal).toISOString().split('T')[0] : 'date';
+        document.title = `Semua_Nota_${dateStr}`;
+
         setPrinting('all');
         setSelectedUDForPrint(null);
         setTimeout(() => {
             window.print();
             setPrinting(null);
+            document.title = originalTitle;
         }, 500);
     };
 
     const handlePrintIndividual = (udId) => {
+        const itemsByUD = getItemsByUD();
+        const udData = itemsByUD[udId];
+        const originalTitle = document.title;
+        const dateStr = data.tanggal ? new Date(data.tanggal).toISOString().split('T')[0] : 'date';
+        const udName = udData?.nama_ud || 'UD';
+        document.title = `Nota_${udName.replace(/\s+/g, '_')}_${dateStr}`;
+
         setPrinting(udId);
         setSelectedUDForPrint(udId);
         setTimeout(() => {
             window.print();
             // Reset after print dialog closes
             setPrinting(null);
-            setTimeout(() => setSelectedUDForPrint(null), 1000);
+            setTimeout(() => {
+                setSelectedUDForPrint(null);
+                document.title = originalTitle;
+            }, 1000);
         }, 500);
     };
 
