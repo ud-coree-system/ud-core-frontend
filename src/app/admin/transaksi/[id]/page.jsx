@@ -36,6 +36,14 @@ export default function TransaksiDetailPage() {
         }
     }, [params.id]);
 
+    // Restore original title on unmount
+    useEffect(() => {
+        const originalTitle = document.title;
+        return () => {
+            document.title = originalTitle;
+        };
+    }, []);
+
     const fetchData = async () => {
         try {
             setLoading(true);
@@ -112,15 +120,19 @@ export default function TransaksiDetailPage() {
     const handlePrintAll = () => {
         const originalTitle = document.title;
         const dateStr = data.tanggal ? new Date(data.tanggal).toISOString().split('T')[0] : 'date';
-        document.title = `Semua_Nota_${dateStr}`;
+        const newTitle = `Semua_Nota_${dateStr}`;
+        document.title = newTitle;
 
         setPrinting('all');
         setSelectedUDForPrint(null);
         setTimeout(() => {
             window.print();
             setPrinting(null);
-            document.title = originalTitle;
-        }, 500);
+            // Longer delay for mobile capture
+            setTimeout(() => {
+                document.title = originalTitle;
+            }, 5000);
+        }, 1000);
     };
 
     const handlePrintIndividual = (udId) => {
@@ -129,19 +141,19 @@ export default function TransaksiDetailPage() {
         const originalTitle = document.title;
         const dateStr = data.tanggal ? new Date(data.tanggal).toISOString().split('T')[0] : 'date';
         const udName = udData?.nama_ud || 'UD';
-        document.title = `Nota_${udName.replace(/\s+/g, '_')}_${dateStr}`;
+        const newTitle = `Nota_${udName.replace(/\s+/g, '_')}_${dateStr}`;
+        document.title = newTitle;
 
         setPrinting(udId);
         setSelectedUDForPrint(udId);
         setTimeout(() => {
             window.print();
-            // Reset after print dialog closes
             setPrinting(null);
             setTimeout(() => {
                 setSelectedUDForPrint(null);
                 document.title = originalTitle;
-            }, 1000);
-        }, 500);
+            }, 5000); // Shifting to 5s for mobile stability
+        }, 1000);
     };
 
     const handleDownloadIndividual = async (udId, udName) => {
@@ -149,6 +161,9 @@ export default function TransaksiDetailPage() {
             setDownloading(udId);
             const dateStr = data.tanggal ? new Date(data.tanggal).toISOString().split('T')[0] : 'date';
             const fileName = `Nota_${udName.replace(/\s+/g, '_')}_${dateStr}.pdf`;
+
+            // Persistent title for mobile tab identification
+            document.title = fileName.replace('.pdf', '');
 
             // Beri waktu React untuk render komponen ke DOM
             await new Promise(resolve => setTimeout(resolve, 300));
@@ -159,6 +174,7 @@ export default function TransaksiDetailPage() {
             toast.error('Gagal mengunduh PDF');
         } finally {
             setDownloading(null);
+            // We leave the title so mobile browsers opening it in a tab see it
         }
     };
 
@@ -174,6 +190,8 @@ export default function TransaksiDetailPage() {
         try {
             setDownloadingAll(true);
             const dateStr = data.tanggal ? new Date(data.tanggal).toISOString().split('T')[0] : 'date';
+
+            document.title = `Semua_Nota_${dateStr}`;
 
             // Beri waktu React untuk render komponen ke DOM
             await new Promise(resolve => setTimeout(resolve, 300));
@@ -191,6 +209,7 @@ export default function TransaksiDetailPage() {
             console.error(error);
         } finally {
             setDownloadingAll(false);
+            // Leave title for mobile
         }
     };
 
