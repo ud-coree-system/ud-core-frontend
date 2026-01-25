@@ -177,6 +177,18 @@ export function toLocalDate(date) {
 }
 
 /**
+ * Format date to DD-MM-YYYY for filenames
+ */
+export function formatDateFilename(date) {
+    if (!date) {
+        const d = new Date();
+        return `${String(d.getDate()).padStart(2, '0')}-${String(d.getMonth() + 1).padStart(2, '0')}-${d.getFullYear()}`;
+    }
+    const d = new Date(date);
+    return `${String(d.getDate()).padStart(2, '0')}-${String(d.getMonth() + 1).padStart(2, '0')}-${d.getFullYear()}`;
+}
+
+/**
  * Status badge colors
  */
 export const statusColors = {

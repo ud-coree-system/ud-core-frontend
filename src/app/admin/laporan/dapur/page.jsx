@@ -14,7 +14,7 @@ import {
 import { transaksiAPI, periodeAPI, dapurAPI, udAPI, barangAPI } from '@/lib/api';
 import DatePicker from '@/components/ui/DatePicker';
 import { useToast } from '@/contexts/ToastContext';
-import { getErrorMessage, formatCurrency, formatDateShort, toDateInputValue, toLocalDate } from '@/lib/utils';
+import { getErrorMessage, formatCurrency, formatDateShort, toDateInputValue, toLocalDate, formatDateFilename } from '@/lib/utils';
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { exportLaporanExcel } from '@/utils/dapurexcelpdf/exportLaporan';
@@ -181,7 +181,7 @@ export default function LaporanDapurPage() {
 
         setGenerating(true);
         try {
-            const timestamp = new Date().toISOString().split('T')[0];
+            const timestamp = formatDateFilename();
             const datePart = filterTanggal ? `_${toLocalDate(filterTanggal)}` : '';
             const fileName = `Laporan_Dapur_${selectedDapur?.nama_dapur.replace(/\s+/g, '_')}_${periodName.replace(/\s+/g, '_')}${datePart}_${timestamp}.xlsx`;
 
@@ -300,7 +300,8 @@ export default function LaporanDapurPage() {
                 }
             });
 
-            const fileName = `laporan-dapur-${selectedDapur?.nama_dapur || 'all'}-${new Date().getTime()}.pdf`;
+            const timestamp = formatDateFilename();
+            const fileName = `laporan-dapur-${selectedDapur?.nama_dapur || 'all'}-${timestamp}.pdf`;
             doc.save(fileName);
             toast.success('PDF berhasil dibuat');
         } catch (error) {

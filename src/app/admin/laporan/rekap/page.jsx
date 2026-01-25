@@ -22,7 +22,7 @@ import autoTable from 'jspdf-autotable';
 import { exportLaporanExcel } from '@/utils/excel/exportLaporan';
 import { periodeAPI, transaksiAPI, udAPI, barangAPI, dapurAPI } from '@/lib/api';
 import { useToast } from '@/contexts/ToastContext';
-import { getErrorMessage, formatCurrency, formatDateShort } from '@/lib/utils';
+import { getErrorMessage, formatCurrency, formatDateShort, formatDateFilename } from '@/lib/utils';
 import { cn } from '@/lib/utils';
 import SearchableSelect from '@/components/ui/SearchableSelect';
 
@@ -493,7 +493,7 @@ export default function LaporanRekapPage() {
             const udName = isUDSpecific ? selectedUDData.nama_ud.replace(/\s+/g, '_') : '';
             const dapurName = selectedDapur ? selectedDapur.nama_dapur.replace(/\s+/g, '_') : '';
             const periodClean = periodName.replace(/\s+/g, '_');
-            const timestamp = new Date().toISOString().split('T')[0];
+            const timestamp = formatDateFilename();
 
             let fileNamePrefix = 'Laporan_Rekap';
             let fileNameSuffix = '';
@@ -588,7 +588,7 @@ export default function LaporanRekapPage() {
             const udName = (filterUD && selectedUDData) ? selectedUDData.nama_ud.replace(/\s+/g, '_') : '';
             const dapurName = selectedDapur ? selectedDapur.nama_dapur.replace(/\s+/g, '_') : '';
             const periodClean = periodName.replace(/\s+/g, '_');
-            const timestamp = new Date().toISOString().split('T')[0];
+            const timestamp = formatDateFilename();
 
             let fileNamePrefix = 'Laporan_Rekap';
             let fileNameSuffix = '';

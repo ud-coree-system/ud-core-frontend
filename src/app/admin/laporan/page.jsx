@@ -13,7 +13,7 @@ import {
 } from 'lucide-react';
 import { transaksiAPI, periodeAPI, dapurAPI, udAPI, barangAPI } from '@/lib/api';
 import { useToast } from '@/contexts/ToastContext';
-import { getErrorMessage, formatCurrency, formatDateShort, toDateInputValue, toLocalDate } from '@/lib/utils';
+import { getErrorMessage, formatCurrency, formatDateShort, toDateInputValue, toLocalDate, formatDateFilename } from '@/lib/utils';
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { exportLaporanExcel } from '@/utils/excel/exportLaporan';
@@ -189,7 +189,7 @@ export default function LaporanPage() {
         try {
             const periodClean = periodName.replace(/\s+/g, '_');
             const dapurName = selectedDapur ? selectedDapur.nama_dapur.replace(/\s+/g, '_') : '';
-            const timestamp = new Date().toISOString().split('T')[0];
+            const timestamp = formatDateFilename();
 
             let fileNamePrefix = 'Laporan_Rekap_Penjualan';
             let fileNameSuffix = '';
@@ -251,7 +251,7 @@ export default function LaporanPage() {
             // Filename logic
             const periodClean = periodName.replace(/\s+/g, '_');
             const dapurName = selectedDapur ? selectedDapur.nama_dapur.replace(/\s+/g, '_') : '';
-            const timestamp = new Date().toISOString().split('T')[0];
+            const timestamp = formatDateFilename();
 
             let fileNamePrefix = 'Laporan_Rekap_Penjualan';
             let fileNameSuffix = '';
@@ -587,7 +587,7 @@ export default function LaporanPage() {
             // Filename logic
             const periodClean = periodName.replace(/\s+/g, '_');
             const dapurName = selectedDapur ? selectedDapur.nama_dapur.replace(/\s+/g, '_') : '';
-            const timestamp = new Date().toISOString().split('T')[0];
+            const timestamp = formatDateFilename();
 
             let fileNamePrefix = 'Rekap_Data_Penjualan';
             let fileNameSuffix = '';
