@@ -18,6 +18,7 @@ import { getErrorMessage, formatCurrency, formatDateShort, toDateInputValue, toL
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { exportLaporanExcel } from '@/utils/dapurexcelpdf/exportLaporan';
+import SearchableSelect from '@/components/ui/SearchableSelect';
 
 export default function LaporanDapurPage() {
     const { toast } = useToast();
@@ -335,16 +336,16 @@ export default function LaporanDapurPage() {
                             <ChefHat className="w-3 h-3" />
                             Target Dapur
                         </label>
-                        <select
+                        <SearchableSelect
                             value={filterDapur}
                             onChange={(e) => setFilterDapur(e.target.value)}
-                            className="w-full bg-gray-50 border-gray-100 rounded-2xl px-4 py-3 text-sm font-bold focus:ring-4 focus:ring-blue-500/5 transition-all outline-none"
-                        >
-                            <option value="">Pilih Dapur</option>
-                            {dapurList.map((d) => (
-                                <option key={d._id} value={d._id}>{d.nama_dapur}</option>
-                            ))}
-                        </select>
+                            options={dapurList.map(d => ({
+                                value: d._id,
+                                label: d.nama_dapur
+                            }))}
+                            placeholder="Pilih Dapur"
+                            searchPlaceholder="Cari dapur..."
+                        />
                     </div>
 
                     <div className="space-y-2">
@@ -352,18 +353,16 @@ export default function LaporanDapurPage() {
                             <Calendar className="w-3 h-3" />
                             Pilih Periode
                         </label>
-                        <select
+                        <SearchableSelect
                             value={filterPeriode}
                             onChange={(e) => setFilterPeriode(e.target.value)}
-                            className="w-full bg-gray-50 border-gray-100 rounded-2xl px-4 py-3 text-sm font-bold focus:ring-4 focus:ring-blue-500/5 transition-all outline-none"
-                        >
-                            <option value="">Semua Periode</option>
-                            {periodeList.map((p) => (
-                                <option key={p._id} value={p._id}>
-                                    {p.nama_periode} ({formatDateShort(p.tanggal_mulai)} - {formatDateShort(p.tanggal_selesai)})
-                                </option>
-                            ))}
-                        </select>
+                            options={periodeList.map(p => ({
+                                value: p._id,
+                                label: `${p.nama_periode} (${formatDateShort(p.tanggal_mulai)} - ${formatDateShort(p.tanggal_selesai)})`
+                            }))}
+                            placeholder="Semua Periode"
+                            searchPlaceholder="Cari periode..."
+                        />
                     </div>
 
                     <div className="space-y-2">

@@ -22,6 +22,7 @@ import { periodeAPI, transaksiAPI, udAPI, barangAPI } from '@/lib/api';
 import { useToast } from '@/contexts/ToastContext';
 import { getErrorMessage, formatCurrency, formatDateShort } from '@/lib/utils';
 import { cn } from '@/lib/utils';
+import SearchableSelect from '@/components/ui/SearchableSelect';
 
 export default function LaporanRekapPage() {
     const { toast } = useToast();
@@ -505,36 +506,32 @@ export default function LaporanRekapPage() {
                             <Calendar className="w-4 h-4 text-gray-400" />
                             Pilih Periode
                         </label>
-                        <select
+                        <SearchableSelect
                             value={filterPeriode}
                             onChange={(e) => setFilterPeriode(e.target.value)}
-                            className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500/10 focus:border-blue-500 transition-all appearance-none cursor-pointer text-sm"
-                        >
-                            <option value="">Semua Periode</option>
-                            {periodeList.map((p) => (
-                                <option key={p._id} value={p._id}>
-                                    {p.nama_periode} ({formatDateShort(p.tanggal_mulai)} - {formatDateShort(p.tanggal_selesai)})
-                                </option>
-                            ))}
-                        </select>
+                            options={periodeList.map(p => ({
+                                value: p._id,
+                                label: `${p.nama_periode} (${formatDateShort(p.tanggal_mulai)} - ${formatDateShort(p.tanggal_selesai)})`
+                            }))}
+                            placeholder="Semua Periode"
+                            searchPlaceholder="Cari periode..."
+                        />
                     </div>
                     <div className="w-full">
                         <label className="block text-sm font-medium text-gray-700 mb-1.5 flex items-center gap-2">
                             <Filter className="w-4 h-4 text-gray-400" />
                             Filter UD (Opsional)
                         </label>
-                        <select
+                        <SearchableSelect
                             value={filterUD}
                             onChange={(e) => setFilterUD(e.target.value)}
-                            className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500/10 focus:border-blue-500 transition-all appearance-none cursor-pointer text-sm"
-                        >
-                            <option value="">Semua UD</option>
-                            {udList.map((u) => (
-                                <option key={u._id} value={u._id}>
-                                    {u.nama_ud}
-                                </option>
-                            ))}
-                        </select>
+                            options={udList.map(u => ({
+                                value: u._id,
+                                label: u.nama_ud
+                            }))}
+                            placeholder="Semua UD"
+                            searchPlaceholder="Cari UD..."
+                        />
                     </div>
                     <div className="flex w-full gap-2">
                         <button

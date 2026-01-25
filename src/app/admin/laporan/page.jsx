@@ -16,6 +16,7 @@ import { getErrorMessage, formatCurrency, formatDateShort, toDateInputValue, toL
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { exportLaporanExcel } from '@/utils/excel/exportLaporan';
+import SearchableSelect from '@/components/ui/SearchableSelect';
 
 export default function LaporanPage() {
     const { toast } = useToast();
@@ -708,18 +709,16 @@ export default function LaporanPage() {
                             <Calendar className="w-4 h-4 text-gray-400" />
                             Pilih Periode
                         </label>
-                        <select
+                        <SearchableSelect
                             value={filterPeriode}
                             onChange={(e) => setFilterPeriode(e.target.value)}
-                            className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500/10 focus:border-blue-500 transition-all appearance-none cursor-pointer text-sm"
-                        >
-                            <option value="">Semua Periode</option>
-                            {periodeList.map((p) => (
-                                <option key={p._id} value={p._id}>
-                                    {p.nama_periode} ({formatDateShort(p.tanggal_mulai)} - {formatDateShort(p.tanggal_selesai)})
-                                </option>
-                            ))}
-                        </select>
+                            options={periodeList.map(p => ({
+                                value: p._id,
+                                label: `${p.nama_periode} (${formatDateShort(p.tanggal_mulai)} - ${formatDateShort(p.tanggal_selesai)})`
+                            }))}
+                            placeholder="Semua Periode"
+                            searchPlaceholder="Cari periode..."
+                        />
                     </div>
 
                     <button

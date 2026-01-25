@@ -18,6 +18,7 @@ import DatePicker from '@/components/ui/DatePicker';
 import { useToast } from '@/contexts/ToastContext';
 import { getErrorMessage, formatCurrency, formatDateShort, toDateInputValue, debounce } from '@/lib/utils';
 import CurrencyInput from '@/components/ui/CurrencyInput';
+import SearchableSelect from '@/components/ui/SearchableSelect';
 
 const SATUAN_OPTIONS = [
     { value: 'pcs', label: 'Pieces (pcs)' },
@@ -388,7 +389,7 @@ export default function NewTransaksiPage() {
                         <label className="block text-sm font-medium text-gray-700 mb-1">
                             Periode <span className="text-red-500">*</span>
                         </label>
-                        <select
+                        <SearchableSelect
                             value={periodeId}
                             onChange={(e) => {
                                 const newPeriodeId = e.target.value;
@@ -405,16 +406,13 @@ export default function NewTransaksiPage() {
                                     }
                                 }
                             }}
-                            className="w-full px-3 py-2.5 border border-gray-200 rounded-lg
-                       focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 bg-white text-gray-900"
-                        >
-                            <option value="">Pilih Periode</option>
-                            {periodeList.map((p) => (
-                                <option key={p._id} value={p._id}>
-                                    {p.nama_periode} ({formatDateShort(p.tanggal_mulai)} - {formatDateShort(p.tanggal_selesai)})
-                                </option>
-                            ))}
-                        </select>
+                            options={periodeList.map(p => ({
+                                value: p._id,
+                                label: `${p.nama_periode} (${formatDateShort(p.tanggal_mulai)} - ${formatDateShort(p.tanggal_selesai)})`
+                            }))}
+                            placeholder="Pilih Periode"
+                            searchPlaceholder="Cari periode..."
+                        />
                     </div>
 
                     {/* Dapur */}
@@ -422,19 +420,16 @@ export default function NewTransaksiPage() {
                         <label className="block text-sm font-medium text-gray-700 mb-1">
                             Dapur <span className="text-red-500">*</span>
                         </label>
-                        <select
+                        <SearchableSelect
                             value={dapurId}
                             onChange={(e) => setDapurId(e.target.value)}
-                            className="w-full px-3 py-2.5 border border-gray-200 rounded-lg
-                       focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 bg-white text-gray-900"
-                        >
-                            <option value="">Pilih Dapur</option>
-                            {dapurList.map((d) => (
-                                <option key={d._id} value={d._id}>
-                                    {d.nama_dapur}
-                                </option>
-                            ))}
-                        </select>
+                            options={dapurList.map(d => ({
+                                value: d._id,
+                                label: d.nama_dapur
+                            }))}
+                            placeholder="Pilih Dapur"
+                            searchPlaceholder="Cari dapur..."
+                        />
                     </div>
 
                     {/* Tanggal */}

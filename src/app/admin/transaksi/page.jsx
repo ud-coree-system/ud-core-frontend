@@ -18,6 +18,7 @@ import { getErrorMessage, formatCurrency, formatDateShort, getStatusClass } from
 import Pagination from '@/components/ui/Pagination';
 import EmptyState from '@/components/ui/EmptyState';
 import ConfirmDialog from '@/components/ui/ConfirmDialog';
+import SearchableSelect from '@/components/ui/SearchableSelect';
 
 export default function TransaksiListPage() {
     const { toast } = useToast();
@@ -151,44 +152,38 @@ export default function TransaksiListPage() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
                     {/* Periode */}
                     <div className="relative">
-                        <Filter className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                        <select
+                        <SearchableSelect
                             value={filterPeriode}
                             onChange={(e) => {
                                 setFilterPeriode(e.target.value);
                                 setPagination((prev) => ({ ...prev, page: 1 }));
                             }}
-                            className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-lg appearance-none
-                                   focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 bg-white text-sm"
-                        >
-                            <option value="">Semua Periode</option>
-                            {periodeList.map((p) => (
-                                <option key={p._id} value={p._id}>
-                                    {p.nama_periode}
-                                </option>
-                            ))}
-                        </select>
+                            options={periodeList.map(p => ({
+                                value: p._id,
+                                label: `${p.nama_periode} (${formatDateShort(p.tanggal_mulai)} - ${formatDateShort(p.tanggal_selesai)})`
+                            }))}
+                            placeholder="Semua Periode"
+                            searchPlaceholder="Cari periode..."
+                            className="text-sm"
+                        />
                     </div>
 
                     {/* Dapur */}
                     <div className="relative">
-                        <Filter className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                        <select
+                        <SearchableSelect
                             value={filterDapur}
                             onChange={(e) => {
                                 setFilterDapur(e.target.value);
                                 setPagination((prev) => ({ ...prev, page: 1 }));
                             }}
-                            className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-lg appearance-none
-                                   focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 bg-white text-sm"
-                        >
-                            <option value="">Semua Dapur</option>
-                            {dapurList.map((d) => (
-                                <option key={d._id} value={d._id}>
-                                    {d.nama_dapur}
-                                </option>
-                            ))}
-                        </select>
+                            options={dapurList.map(d => ({
+                                value: d._id,
+                                label: d.nama_dapur
+                            }))}
+                            placeholder="Semua Dapur"
+                            searchPlaceholder="Cari dapur..."
+                            className="text-sm"
+                        />
                     </div>
 
                     {/* Status */}
