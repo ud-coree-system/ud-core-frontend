@@ -33,6 +33,10 @@ const PrintStyles = () => (
                 size: portrait;
                 margin: 1cm;
             }
+            .no-break {
+                break-inside: avoid;
+                page-break-inside: avoid;
+            }
         }
         .nota-container {
             font-family: 'Courier New', Courier, monospace;
@@ -127,8 +131,8 @@ const TemplateESC = ({ data, udData, udId }) => (
                         <td className="text-right">{formatCurrency(item.subtotal_jual).replace('Rp', '')}</td>
                     </tr>
                 ))}
-                {/* Empty rows to fill space similar to reference (up to 20 rows) */}
-                {[...Array(Math.max(0, 20 - udData.items.length))].map((_, idx) => (
+                {/* Empty rows to fill space similar to reference (up to 10 rows) */}
+                {[...Array(Math.max(0, 15 - udData.items.length))].map((_, idx) => (
                     <tr key={`empty-${idx}`}>
                         <td className="h-6">&nbsp;</td><td></td><td></td><td></td><td></td><td></td>
                     </tr>
@@ -150,7 +154,7 @@ const TemplateESC = ({ data, udData, udId }) => (
             </tfoot>
         </table>
 
-        <div className="flex justify-between mt-12 px-12">
+        <div className="flex justify-between mt-12 px-12 no-break">
             <div className="text-center">
                 <div>Penerima,</div>
                 <div className="mt-16 border-t border-black w-40"></div>
@@ -219,7 +223,7 @@ const TemplatePilarPangan = ({ data, udData, udId }) => (
             </tfoot>
         </table>
 
-        <div className="flex justify-between mt-12 px-12">
+        <div className="flex justify-between mt-12 px-12 no-break">
             <div className="text-center">
                 <div className="uppercase">PENERIMA,</div>
                 <div className="mt-16 border-t border-black w-40"></div>
@@ -285,7 +289,7 @@ const TemplateASM = ({ data, udData, udId }) => (
                         <td className="text-right">{formatCurrency(item.subtotal_jual).replace('Rp', '')}</td>
                     </tr>
                 ))}
-                {[...Array(Math.max(0, 20 - udData.items.length))].map((_, idx) => (
+                {[...Array(Math.max(0, 15 - udData.items.length))].map((_, idx) => (
                     <tr key={`empty-${idx}`}>
                         <td className="h-6">&nbsp;</td><td></td><td></td><td></td><td></td><td></td>
                     </tr>
@@ -299,7 +303,7 @@ const TemplateASM = ({ data, udData, udId }) => (
             </tfoot>
         </table>
 
-        <div className="flex justify-between mt-12 px-12">
+        <div className="flex justify-between mt-12 px-12 no-break">
             <div className="text-center">
                 <div>Penerima,</div>
                 <div className="mt-16 border-t border-black w-40"></div>
@@ -365,7 +369,7 @@ const TemplateBanyuMas = ({ data, udData, udId }) => (
                         <td className="text-right">{formatCurrency(item.subtotal_jual).replace('Rp', '')}</td>
                     </tr>
                 ))}
-                {[...Array(Math.max(0, 20 - udData.items.length))].map((_, idx) => (
+                {[...Array(Math.max(0, 15 - udData.items.length))].map((_, idx) => (
                     <tr key={`empty-${idx}`}>
                         <td className="h-6">&nbsp;</td><td></td><td></td><td></td><td></td><td></td>
                     </tr>
@@ -379,13 +383,13 @@ const TemplateBanyuMas = ({ data, udData, udId }) => (
             </tfoot>
         </table>
 
-        <div className="flex justify-between mt-12 px-12">
+        <div className="flex justify-between mt-12 px-12 no-break">
             <div className="text-center">
                 <div>Penerima,</div>
                 <div className="mt-16 border-t border-black w-40"></div>
             </div>
             <div className="text-center">
-                <div className="mb-8">Pengirim,</div>
+                <div className="mb-0">Pengirim,</div>
                 <div className="mt-16 border-t border-black w-40"></div>
             </div>
         </div>
@@ -450,7 +454,7 @@ const TemplateGeneric = ({ data, udData, udId }) => (
             </tfoot>
         </table>
 
-        <div className="flex justify-between mt-12 px-12">
+        <div className="flex justify-between mt-12 px-12 no-break">
             <div className="text-center">
                 <div>Penerima,</div>
                 <div className="mt-16 border-t border-black w-40"></div>

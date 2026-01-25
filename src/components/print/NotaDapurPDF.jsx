@@ -42,7 +42,7 @@ const PDFStyles = () => (
         }
         .nota-table th, .nota-table td {
             border: 1px solid black;
-            padding:8px 8px 16px 8px;
+            padding:4px 8px;
             text-align: left;
             font-size: 16px;
         }
@@ -108,7 +108,7 @@ const TemplateESC = ({ data, udData, udId }) => (
                     </tr>
                 ))}
                 {/* Empty rows to fill space similar to reference (up to 20 rows) */}
-                {[...Array(Math.max(0, 20 - udData.items.length))].map((_, idx) => (
+                {[...Array(Math.max(0, 15 - udData.items.length))].map((_, idx) => (
                     <tr key={`empty-${idx}`}>
                         <td className="h-6">&nbsp;</td><td></td><td></td><td></td><td></td><td></td>
                     </tr>
@@ -265,7 +265,7 @@ const TemplateASM = ({ data, udData, udId }) => (
                         <td className="text-right">{formatCurrency(item.subtotal_jual).replace('Rp', '')}</td>
                     </tr>
                 ))}
-                {[...Array(Math.max(0, 20 - udData.items.length))].map((_, idx) => (
+                {[...Array(Math.max(0, 15 - udData.items.length))].map((_, idx) => (
                     <tr key={`empty-${idx}`}>
                         <td className="h-6">&nbsp;</td><td></td><td></td><td></td><td></td><td></td>
                     </tr>
@@ -345,7 +345,7 @@ const TemplateBanyuMas = ({ data, udData, udId }) => (
                         <td className="text-right">{formatCurrency(item.subtotal_jual).replace('Rp', '')}</td>
                     </tr>
                 ))}
-                {[...Array(Math.max(0, 20 - udData.items.length))].map((_, idx) => (
+                {[...Array(Math.max(0, 15 - udData.items.length))].map((_, idx) => (
                     <tr key={`empty-${idx}`}>
                         <td className="h-6">&nbsp;</td><td></td><td></td><td></td><td></td><td></td>
                     </tr>
