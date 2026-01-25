@@ -9,6 +9,7 @@ import {
     Loader2,
     Filter,
     Calendar,
+    ChefHat,
 } from 'lucide-react';
 import { transaksiAPI, periodeAPI, dapurAPI, udAPI, barangAPI } from '@/lib/api';
 import { useToast } from '@/contexts/ToastContext';
@@ -29,6 +30,7 @@ export default function LaporanPage() {
 
     // Filters
     const [filterPeriode, setFilterPeriode] = useState('');
+    const [filterDapur, setFilterDapur] = useState('');
 
     // Data
     const [transactions, setTransactions] = useState([]);
@@ -49,6 +51,7 @@ export default function LaporanPage() {
             ]);
 
             if (periodeRes.data.success) setPeriodeList(periodeRes.data.data);
+            if (dapurRes.data.success) setDapurList(dapurRes.data.data);
             if (udRes.data.success) setUdList(udRes.data.data);
             if (barangRes.data.success) setBarangList(barangRes.data.data);
         } catch (error) {
@@ -63,6 +66,7 @@ export default function LaporanPage() {
                 limit: 1000,
                 status: 'completed',
                 periode_id: filterPeriode || undefined,
+                dapur_id: filterDapur || undefined,
             };
             const response = await transaksiAPI.getAll(params);
             if (response.data.success) {
@@ -83,7 +87,11 @@ export default function LaporanPage() {
                     const endDate = toLocalDate(selectedPeriode.tanggal_selesai);
 
                     const isInRange = trxDate >= startDate && trxDate <= endDate;
-                    return isCompleted && isInRange;
+
+                    // Client-side Dapur cross-check (optional but safe)
+                    const matchesDapur = filterDapur ? (trx.dapur_id?._id || trx.dapur_id) === filterDapur : true;
+
+                    return isCompleted && isInRange && matchesDapur;
                 });
                 setTransactions(detailedTransactions);
                 toast.success(`Ditemukan ${detailedTransactions.length} transaksi`);
@@ -105,6 +113,10 @@ export default function LaporanPage() {
             trx.items?.forEach((item) => {
                 const bId = item.barang_id?._id || item.barang_id;
                 const uId = item.ud_id?._id || item.ud_id;
+
+                // Strict filtering by Dapur
+                const trxDapurId = trx.dapur_id?._id || trx.dapur_id;
+                if (filterDapur && trxDapurId !== filterDapur) return;
 
                 const barang = barangMap.get(bId);
                 const ud = udLookupMap.get(uId);
@@ -166,8 +178,7 @@ export default function LaporanPage() {
         const itemsByUD = getItemsByUD();
         const period = filterPeriode ? periodeList.find(p => p._id === filterPeriode) : null;
         const periodName = period ? period.nama_periode : 'Semua Periode';
-        const periodRange = period ? `(${formatDateShort(period.tanggal_mulai)} - ${formatDateShort(period.tanggal_selesai)})` : '';
-        const periodeLabel = `${periodName.toUpperCase()} ${periodRange}`;
+        const selectedDapur = filterDapur ? dapurList.find(d => d._id === filterDapur) : null;
 
         // Calculate global totals
         const totalJualAll = transactions.reduce((sum, trx) => sum + (trx.items?.reduce((s, i) => s + i.subtotal_jual, 0) || 0), 0);
@@ -176,8 +187,23 @@ export default function LaporanPage() {
 
         setGenerating(true);
         try {
+            const periodClean = periodName.replace(/\s+/g, '_');
+            const dapurName = selectedDapur ? selectedDapur.nama_dapur.replace(/\s+/g, '_') : '';
             const timestamp = new Date().toISOString().split('T')[0];
-            const fileName = `Laporan_Penjualan_${periodName.replace(/\s+/g, '_')}_${timestamp}.xlsx`;
+
+            let fileNamePrefix = 'Laporan_Rekap_Penjualan';
+            let fileNameSuffix = '';
+
+            if (dapurName) {
+                fileNamePrefix = 'Rekap_Penjualan';
+                fileNameSuffix += `_Dapur_${dapurName}`;
+            }
+
+            const fileName = `${fileNamePrefix}${fileNameSuffix}_${periodClean}_${timestamp}.xlsx`;
+
+            const periodRange = period ? `(${formatDateShort(period.tanggal_mulai)} - ${formatDateShort(period.tanggal_selesai)})` : '';
+            const dapurLabel = selectedDapur ? ` - DAPUR: ${selectedDapur.nama_dapur.toUpperCase()}` : '';
+            const periodeLabel = `${periodName.toUpperCase()} ${periodRange}${dapurLabel}`;
 
             await exportLaporanExcel({
                 transactions,
@@ -212,14 +238,30 @@ export default function LaporanPage() {
             const doc = new jsPDF('l', 'mm', 'a4'); // Landscape orientation
             const pageWidth = doc.internal.pageSize.getWidth();
 
-            // Find selected period info
+            // Period Info
             const period = filterPeriode ? periodeList.find(p => p._id === filterPeriode) : null;
             const periodName = period ? period.nama_periode : 'Semua Periode';
             const periodRange = period ? `(${formatDateShort(period.tanggal_mulai)} - ${formatDateShort(period.tanggal_selesai)})` : '';
-            const periodeLabel = `${periodName.toUpperCase()} ${periodRange}`;
+            const selectedDapur = filterDapur ? dapurList.find(d => d._id === filterDapur) : null;
+
+            const dapurLabel = selectedDapur ? ` - DAPUR: ${selectedDapur.nama_dapur.toUpperCase()}` : '';
+            const periodeLabel = `${periodName.toUpperCase()} ${periodRange}${dapurLabel}`;
             const printTimestamp = `Dicetak pada: ${new Date().toLocaleString('id-ID')}`;
 
-            // Header
+            // Filename logic
+            const periodClean = periodName.replace(/\s+/g, '_');
+            const dapurName = selectedDapur ? selectedDapur.nama_dapur.replace(/\s+/g, '_') : '';
+            const timestamp = new Date().toISOString().split('T')[0];
+
+            let fileNamePrefix = 'Laporan_Rekap_Penjualan';
+            let fileNameSuffix = '';
+
+            if (dapurName) {
+                fileNamePrefix = 'Rekap_Penjualan';
+                fileNameSuffix += `_Dapur_${dapurName}`;
+            }
+
+            const fileName = `${fileNamePrefix}${fileNameSuffix}_${periodClean}_${timestamp}.pdf`;
             doc.setFontSize(18);
             doc.setFont('helvetica', 'bold');
             doc.text(`LAPORAN REKAP PENJUALAN`, pageWidth / 2, 15, { align: 'center' });
@@ -514,8 +556,7 @@ export default function LaporanPage() {
                 });
             });
 
-            const timestamp = new Date().toISOString().split('T')[0];
-            doc.save(`Laporan_Rekap_${periodName.replace(/\s+/g, '_')}_${timestamp}.pdf`);
+            doc.save(fileName);
             toast.success('Laporan PDF Rekap berhasil dibuat');
         } catch (error) {
             toast.error('Gagal membuat laporan PDF');
@@ -540,7 +581,22 @@ export default function LaporanPage() {
             const period = filterPeriode ? periodeList.find(p => p._id === filterPeriode) : null;
             const periodName = period ? period.nama_periode : 'Semua Periode';
             const periodRange = period ? `${formatDateShort(period.tanggal_mulai)} - ${formatDateShort(period.tanggal_selesai)}` : '';
+            const selectedDapur = filterDapur ? dapurList.find(d => d._id === filterDapur) : null;
             const printTimestamp = new Date().toLocaleString('id-ID');
+
+            // Filename logic
+            const periodClean = periodName.replace(/\s+/g, '_');
+            const dapurName = selectedDapur ? selectedDapur.nama_dapur.replace(/\s+/g, '_') : '';
+            const timestamp = new Date().toISOString().split('T')[0];
+
+            let fileNamePrefix = 'Rekap_Data_Penjualan';
+            let fileNameSuffix = '';
+
+            if (dapurName) {
+                if (dapurName) fileNameSuffix += `_Dapur_${dapurName}`;
+            }
+
+            const fileName = `${fileNamePrefix}${fileNameSuffix}_${periodClean}_${timestamp}.pdf`;
 
             // Header Section
             doc.setFontSize(14);
@@ -550,10 +606,16 @@ export default function LaporanPage() {
             doc.setFontSize(10);
             doc.setFont('helvetica', 'normal');
             doc.text(`Laporan Periode: ${periodName}`, 14, 22);
+            let currentY = 27;
             if (periodRange) {
-                doc.text(`Rentang Waktu: ${periodRange}`, 14, 27);
+                doc.text(`Rentang Waktu: ${periodRange}`, 14, currentY);
+                currentY += 5;
             }
-            doc.text(`Dicetak pada: ${printTimestamp}`, 14, periodRange ? 32 : 27);
+            if (selectedDapur) {
+                doc.text(`Dapur: ${selectedDapur.nama_dapur}`, 14, currentY);
+                currentY += 5;
+            }
+            doc.text(`Dicetak pada: ${printTimestamp}`, 14, currentY);
 
             // Create lookup maps for enrichment
             const barangMap = new Map(barangList.map(b => [b._id, b]));
@@ -677,8 +739,7 @@ export default function LaporanPage() {
                 tableLineWidth: 0.1,
             });
 
-            const timestamp = new Date().toISOString().split('T')[0];
-            doc.save(`Rekap_Data_Penjualan_${periodName.replace(/\s+/g, '_')}_${timestamp}.pdf`);
+            doc.save(fileName);
             toast.success('Laporan PDF Periode berhasil dibuat');
         } catch (error) {
             toast.error('Gagal membuat laporan PDF');
@@ -712,14 +773,39 @@ export default function LaporanPage() {
                         <SearchableSelect
                             value={filterPeriode}
                             onChange={(e) => setFilterPeriode(e.target.value)}
-                            options={periodeList.map(p => ({
-                                value: p._id,
-                                label: `${p.nama_periode} (${formatDateShort(p.tanggal_mulai)} - ${formatDateShort(p.tanggal_selesai)})`
-                            }))}
+                            options={[
+                                { value: '', label: 'Semua Periode' },
+                                ...periodeList.map(p => ({
+                                    value: p._id,
+                                    label: `${p.nama_periode} (${formatDateShort(p.tanggal_mulai)} - ${formatDateShort(p.tanggal_selesai)})`
+                                }))
+                            ]}
                             placeholder="Semua Periode"
                             searchPlaceholder="Cari periode..."
                         />
                     </div>
+
+                    <div className="flex-1">
+                        <label className="block text-sm font-medium text-gray-700 mb-1.5 flex items-center gap-2">
+                            <ChefHat className="w-4 h-4 text-gray-400" />
+                            Filter Dapur (Opsional)
+                        </label>
+                        <SearchableSelect
+                            value={filterDapur}
+                            onChange={(e) => setFilterDapur(e.target.value)}
+                            options={[
+                                { value: '', label: 'Semua Dapur' },
+                                ...dapurList.map(d => ({
+                                    value: d._id,
+                                    label: d.nama_dapur
+                                }))
+                            ]}
+                            placeholder="Semua Dapur"
+                            searchPlaceholder="Cari dapur..."
+                        />
+                    </div>
+
+
 
                     <button
                         onClick={fetchTransactions}
