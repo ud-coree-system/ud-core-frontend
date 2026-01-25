@@ -4,12 +4,14 @@ import { useState, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
 import {
     Plus,
+    Search,
     Edit,
     Trash2,
     Calendar,
     Loader2,
     Lock,
     Unlock,
+    X,
 } from 'lucide-react';
 import { periodeAPI } from '@/lib/api';
 import { useToast } from '@/contexts/ToastContext';
@@ -34,11 +36,12 @@ export default function PeriodeManagementPage() {
     // State
     const [data, setData] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [search, setSearch] = useState('');
+    const [debouncedSearch, setDebouncedSearch] = useState('');
     const [pagination, setPagination] = useState({
         page: 1,
         limit: 10,
-        totalPages: 1,
-        totalDocuments: 0,
+        // No longer using totalPages/totalDocuments from API directly
     });
 
     // Modal state
@@ -64,7 +67,14 @@ export default function PeriodeManagementPage() {
 
     useEffect(() => {
         fetchData();
-    }, [pagination.page]);
+    }, []);
+
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            setDebouncedSearch(search);
+        }, 500);
+        return () => clearTimeout(timer);
+    }, [search]);
 
     useEffect(() => {
         const viewId = searchParams.get('view');
@@ -92,17 +102,10 @@ export default function PeriodeManagementPage() {
     const fetchData = async () => {
         try {
             setLoading(true);
-            const params = {
-                page: pagination.page,
-                limit: pagination.limit,
-            };
-            const response = await periodeAPI.getAll(params);
+            // Fetch all data at once to allow full client-side search across all "pages"
+            const response = await periodeAPI.getAll({ limit: 1000 });
             if (response.data.success) {
                 setData(response.data.data);
-                setPagination((prev) => ({
-                    ...prev,
-                    ...response.data.pagination,
-                }));
             }
         } catch (error) {
             toast.error(getErrorMessage(error));
@@ -110,6 +113,28 @@ export default function PeriodeManagementPage() {
             setLoading(false);
         }
     };
+
+    const handleSearch = (e) => {
+        setSearch(e.target.value);
+        setPagination((prev) => ({ ...prev, page: 1 }));
+    };
+
+    const clearSearch = () => {
+        setSearch('');
+        setPagination((prev) => ({ ...prev, page: 1 }));
+    };
+
+    // Client-side filtering across the entire dataset
+    const filteredData = data.filter(item =>
+        item.nama_periode?.toLowerCase().includes(debouncedSearch.toLowerCase())
+    );
+
+    // Client-side pagination
+    const totalPages = Math.ceil(filteredData.length / pagination.limit);
+    const displayData = filteredData.slice(
+        (pagination.page - 1) * pagination.limit,
+        pagination.page * pagination.limit
+    );
 
     const openCreateModal = () => {
         setEditingItem(null);
@@ -274,13 +299,37 @@ export default function PeriodeManagementPage() {
                 </button>
             </div>
 
+            <div className="bg-white rounded-xl sm:rounded-2xl border border-gray-100 p-3 sm:p-4 shadow-sm">
+                <div className="relative">
+                    <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                    <input
+                        type="text"
+                        value={search}
+                        onChange={handleSearch}
+                        placeholder="Cari nama periode..."
+                        className="w-full pl-11 pr-12 py-3 sm:py-2.5 bg-gray-50/50 border border-gray-100 rounded-xl
+                     focus:outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 focus:bg-white transition-all
+                     text-sm sm:text-base"
+                    />
+                    {search && (
+                        <button
+                            onClick={clearSearch}
+                            className="absolute right-3.5 top-1/2 -translate-y-1/2 p-1.5 bg-gray-100 hover:bg-gray-200 text-gray-500 rounded-lg transition-colors"
+                            title="Bersihkan pencarian"
+                        >
+                            <X className="w-4 h-4" />
+                        </button>
+                    )}
+                </div>
+            </div>
+
             {/* Content Container */}
             <div className="space-y-4">
                 {loading ? (
                     <div className="bg-white rounded-2xl border border-gray-100 py-12 flex items-center justify-center">
                         <Loader2 className="w-8 h-8 text-blue-500 animate-spin" />
                     </div>
-                ) : data.length === 0 ? (
+                ) : displayData.length === 0 ? (
                     <div className="bg-white rounded-2xl border border-gray-100">
                         <EmptyState
                             icon={Calendar}
@@ -301,7 +350,7 @@ export default function PeriodeManagementPage() {
                     <>
                         {/* Mobile View (Cards) */}
                         <div className="grid grid-cols-1 gap-4 md:hidden">
-                            {data.map((item, index) => (
+                            {displayData.map((item, index) => (
                                 <div key={item._id} className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm space-y-4">
                                     <div className="flex items-start justify-between">
                                         <div className="space-y-3">
@@ -415,7 +464,7 @@ export default function PeriodeManagementPage() {
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-gray-200">
-                                        {data.map((item, index) => (
+                                        {displayData.map((item, index) => (
                                             <tr key={item._id} className="hover:bg-gray-50/50 transition-colors">
                                                 <td className="px-2 md:px-3 lg:px-6 py-4 whitespace-nowrap text-[11px] md:text-sm text-gray-500">
                                                     {(pagination.page - 1) * pagination.limit + index + 1}
@@ -486,12 +535,12 @@ export default function PeriodeManagementPage() {
                         <div className="bg-white rounded-xl border border-gray-100 p-4 shadow-sm">
                             <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
                                 <p className="text-sm text-gray-500 font-medium">
-                                    Menampilkan <span className="text-gray-900">{data.length}</span> dari <span className="text-gray-900">{pagination.totalDocuments}</span> data
+                                    Menampilkan <span className="text-gray-900">{displayData.length}</span> dari <span className="text-gray-900">{filteredData.length}</span> data
                                 </p>
                                 <div className="w-full sm:w-auto overflow-x-auto flex justify-center">
                                     <Pagination
                                         currentPage={pagination.page}
-                                        totalPages={pagination.totalPages}
+                                        totalPages={totalPages}
                                         onPageChange={(page) => setPagination((prev) => ({ ...prev, page }))}
                                     />
                                 </div>
