@@ -533,9 +533,24 @@ export default function BulkUploadPage() {
                         </div>
                     </div>
 
-                    {/* Data Table */}
+                    {/* Data Table - Hidden on mobile */}
                     <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-                        <div className="overflow-x-auto">
+                        {/* Mobile Message - Show only on small screens */}
+                        <div className="sm:hidden p-8 text-center">
+                            <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                                <FileSpreadsheet className="w-8 h-8 text-blue-600" />
+                            </div>
+                            <h3 className="text-lg font-semibold text-gray-900 mb-2">Beralih ke Desktop</h3>
+                            <p className="text-sm text-gray-500 mb-4">
+                                Untuk melihat preview dan mengedit data sebelum upload, silakan gunakan perangkat desktop atau laptop.
+                            </p>
+                            <p className="text-xs text-gray-400">
+                                {parsedData.length} data telah dibaca dari file
+                            </p>
+                        </div>
+
+                        {/* Desktop Table - Hidden on mobile */}
+                        <div className="hidden sm:block overflow-x-auto">
                             <table className="w-full">
                                 <thead className="bg-gray-50 border-b border-gray-200">
                                     <tr>
@@ -653,9 +668,9 @@ export default function BulkUploadPage() {
                                 </tbody>
                             </table>
                         </div>
-                        {/* Pagination */}
+                        {/* Pagination - Hidden on mobile */}
                         {displayData.length > itemsPerPage && (
-                            <div className="px-4 py-3 bg-gray-50 border-t border-gray-100">
+                            <div className="hidden sm:block px-4 py-3 bg-gray-50 border-t border-gray-100">
                                 <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
                                     <p className="text-xs sm:text-sm text-gray-500">
                                         Menampilkan {(currentPage - 1) * itemsPerPage + 1} - {Math.min(currentPage * itemsPerPage, displayData.length)} dari {displayData.length} baris
@@ -670,8 +685,8 @@ export default function BulkUploadPage() {
                         )}
                     </div>
 
-                    {/* Action Buttons */}
-                    <div className="flex flex-col sm:flex-row items-center justify-between gap-4 bg-white rounded-xl border border-gray-200 p-4">
+                    {/* Action Buttons - Hidden on mobile */}
+                    <div className="hidden sm:flex flex-col sm:flex-row items-center justify-between gap-4 bg-white rounded-xl border border-gray-200 p-4">
                         <div className="text-sm text-gray-600">
                             <span className="text-green-600 font-medium">{validData.length}</span> data siap diupload
                             {invalidData.length > 0 && (
