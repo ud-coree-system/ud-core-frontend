@@ -2,6 +2,7 @@ import { Inter } from 'next/font/google';
 import './globals.css';
 import { AuthProvider } from '@/contexts/AuthContext';
 import { ToastProvider } from '@/contexts/ToastContext';
+import { BulkUploadProvider } from '@/contexts/BulkUploadContext';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -15,9 +16,11 @@ export default function RootLayout({ children }) {
         <html lang="id">
             <body className={inter.className}>
                 <ToastProvider>
-                    <AuthProvider>
-                        {children}
-                    </AuthProvider>
+                    <BulkUploadProvider>
+                        <AuthProvider>
+                            {children}
+                        </AuthProvider>
+                    </BulkUploadProvider>
                 </ToastProvider>
             </body>
         </html>

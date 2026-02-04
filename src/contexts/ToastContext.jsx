@@ -47,11 +47,19 @@ export function ToastProvider({ children }) {
         setToasts((prev) => prev.filter((toast) => toast.id !== id));
     }, []);
 
+    const updateToast = useCallback((id, updates) => {
+        setToasts((prev) =>
+            prev.map((toast) => (toast.id === id ? { ...toast, ...updates } : toast))
+        );
+    }, []);
+
     const toast = {
         success: (message, duration) => addToast(message, 'success', duration),
         error: (message, duration) => addToast(message, 'error', duration),
         warning: (message, duration) => addToast(message, 'warning', duration),
         info: (message, duration) => addToast(message, 'info', duration),
+        update: (id, updates) => updateToast(id, updates),
+        dismiss: (id) => removeToast(id),
     };
 
     return (

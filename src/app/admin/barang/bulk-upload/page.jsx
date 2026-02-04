@@ -19,6 +19,7 @@ import {
 import * as XLSX from 'xlsx';
 import { barangAPI, udAPI } from '@/lib/api';
 import { useToast } from '@/contexts/ToastContext';
+import { useBulkUpload } from '@/contexts/BulkUploadContext';
 import { getErrorMessage } from '@/lib/utils';
 import Modal from '@/components/ui/Modal';
 import Pagination from '@/components/ui/Pagination';
@@ -55,8 +56,16 @@ export default function BulkUploadPage() {
     const [validData, setValidData] = useState([]);
     const [invalidData, setInvalidData] = useState([]);
     const [loading, setLoading] = useState(false);
-    const [uploading, setUploading] = useState(false);
-    const [uploadProgress, setUploadProgress] = useState({ current: 0, total: 0, success: 0, failed: 0 });
+
+    // Use background service
+    const {
+        isUploading: uploading,
+        progress: uploadProgress,
+        result: uploadResultContext,
+        startUpload,
+        resetUploadState
+    } = useBulkUpload();
+
     const [showInvalid, setShowInvalid] = useState(true);
     const [dragActive, setDragActive] = useState(false);
     const [currentPage, setCurrentPage] = useState(1);
@@ -65,6 +74,14 @@ export default function BulkUploadPage() {
     // Result modal
     const [resultModalOpen, setResultModalOpen] = useState(false);
     const [uploadResult, setUploadResult] = useState({ success: [], failed: [] });
+
+    // Sync context result to local state for the modal
+    useEffect(() => {
+        if (!uploading && (uploadResultContext.success.length > 0 || uploadResultContext.failed.length > 0)) {
+            setUploadResult(uploadResultContext);
+            setResultModalOpen(true);
+        }
+    }, [uploading, uploadResultContext]);
 
     useEffect(() => {
         fetchUDList();
@@ -346,51 +363,7 @@ export default function BulkUploadPage() {
             return;
         }
 
-        setUploading(true);
-        setUploadProgress({ current: 0, total: validData.length, success: 0, failed: 0 });
-
-        const successItems = [];
-        const failedItems = [];
-
-        for (let i = 0; i < validData.length; i++) {
-            const item = validData[i];
-            setUploadProgress(prev => ({ ...prev, current: i + 1 }));
-
-            try {
-                const payload = {
-                    nama_barang: item.namaBarang,
-                    satuan: item.satuan,
-                    harga_jual: item.hargaJual,
-                    harga_modal: item.hargaModal,
-                    ud_id: item.ud._id,
-                    isActive: true,
-                };
-
-                await barangAPI.create(payload);
-                successItems.push(item);
-                setUploadProgress(prev => ({ ...prev, success: prev.success + 1 }));
-
-            } catch (error) {
-                failedItems.push({
-                    ...item,
-                    uploadError: getErrorMessage(error),
-                });
-                setUploadProgress(prev => ({ ...prev, failed: prev.failed + 1 }));
-            }
-
-            // Small delay to prevent overwhelming the server
-            await new Promise(resolve => setTimeout(resolve, 50));
-        }
-
-        setUploading(false);
-        setUploadResult({ success: successItems, failed: failedItems });
-        setResultModalOpen(true);
-
-        if (failedItems.length === 0) {
-            toast.success(`Berhasil mengupload ${successItems.length} barang`);
-        } else {
-            toast.warning(`${successItems.length} berhasil, ${failedItems.length} gagal`);
-        }
+        startUpload(validData);
     };
 
     const displayData = showInvalid ? parsedData : validData;
@@ -775,6 +748,7 @@ export default function BulkUploadPage() {
                 isOpen={resultModalOpen}
                 onClose={() => {
                     setResultModalOpen(false);
+                    resetUploadState();
                     if (uploadResult.failed.length === 0) {
                         router.push('/admin/barang');
                     }
