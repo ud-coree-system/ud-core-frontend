@@ -742,6 +742,25 @@ Authorization: bearer <token>
 
 ---
 
+### Uncomplete Transaksi (Revert status to draft)
+```http
+POST /transaksi/:id/uncomplete
+Authorization: bearer <token>
+```
+
+**Response (200):**
+```json
+{
+  "success": true,
+  "message": "Transaksi reverted to draft successfully",
+  "data": { ... }
+}
+```
+
+> ⚠️ Only completed transactions can be uncompleted
+
+---
+
 ### Cancel Transaksi
 ```http
 DELETE /transaksi/:id
@@ -759,6 +778,25 @@ Authorization: bearer <token>
   }
 }
 ```
+
+---
+
+### Uncancel Transaksi (Revert status to draft)
+```http
+POST /transaksi/:id/uncancel
+Authorization: bearer <token>
+```
+
+**Response (200):**
+```json
+{
+  "success": true,
+  "message": "Transaksi reverted to draft successfully",
+  "data": { ... }
+}
+```
+
+> ⚠️ Only cancelled transactions can be uncancelled
 
 ---
 

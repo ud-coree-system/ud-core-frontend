@@ -11,6 +11,7 @@ import {
     ClipboardList,
     Loader2,
     Filter,
+    RotateCcw,
 } from 'lucide-react';
 import { transaksiAPI, periodeAPI, dapurAPI } from '@/lib/api';
 import { useToast } from '@/contexts/ToastContext';
@@ -53,6 +54,17 @@ export default function TransaksiListPage() {
     const [hardDeletingItem, setHardDeletingItem] = useState(null);
     const [hardDeleteLoading, setHardDeleteLoading] = useState(false);
     const [verificationCode, setVerificationCode] = useState('');
+
+    // Uncomplete state (Secure)
+    const [uncompleteDialogOpen, setUncompleteDialogOpen] = useState(false);
+    const [uncompletingItem, setUncompletingItem] = useState(null);
+    const [uncompleteLoading, setUncompleteLoading] = useState(false);
+    const [uncompleteVerificationCode, setUncompleteVerificationCode] = useState('');
+
+    // Uncancel state (Simple)
+    const [uncancelDialogOpen, setUncancelDialogOpen] = useState(false);
+    const [uncancelingItem, setUncancelingItem] = useState(null);
+    const [uncancelLoading, setUncancelLoading] = useState(false);
 
     useEffect(() => {
         fetchOptions();
@@ -141,6 +153,45 @@ export default function TransaksiListPage() {
             toast.error(getErrorMessage(error));
         } finally {
             setHardDeleteLoading(false);
+        }
+    };
+
+    const handleUncompleteTransaksi = async () => {
+        if (!uncompletingItem) return;
+        if (uncompleteVerificationCode !== uncompletingItem.kode_transaksi) {
+            toast.error('Kode transaksi tidak sesuai');
+            return;
+        }
+
+        try {
+            setUncompleteLoading(true);
+            await transaksiAPI.uncomplete(uncompletingItem._id);
+            toast.success('Transaksi berhasil dikembalikan ke Draft');
+            setUncompleteDialogOpen(false);
+            setUncompletingItem(null);
+            setUncompleteVerificationCode('');
+            fetchData();
+        } catch (error) {
+            toast.error(getErrorMessage(error));
+        } finally {
+            setUncompleteLoading(false);
+        }
+    };
+
+    const handleUncancelTransaksi = async () => {
+        if (!uncancelingItem) return;
+
+        try {
+            setUncancelLoading(true);
+            await transaksiAPI.uncancel(uncancelingItem._id);
+            toast.success('Transaksi berhasil dibatalkan pembatalannya');
+            setUncancelDialogOpen(false);
+            setUncancelingItem(null);
+            fetchData();
+        } catch (error) {
+            toast.error(getErrorMessage(error));
+        } finally {
+            setUncancelLoading(false);
         }
     };
 
@@ -372,18 +423,43 @@ export default function TransaksiListPage() {
                                                             </button>
                                                         </>
                                                     )}
-                                                    {item.status === 'cancelled' && (
+                                                    {item.status === 'completed' && (
                                                         <button
                                                             onClick={() => {
-                                                                setHardDeletingItem(item);
-                                                                setHardDeleteDialogOpen(true);
-                                                                setVerificationCode('');
+                                                                setUncompletingItem(item);
+                                                                setUncompleteDialogOpen(true);
+                                                                setUncompleteVerificationCode('');
                                                             }}
-                                                            className="p-1.5 hover:bg-red-100 rounded-lg text-red-700 transition-colors"
-                                                            title="Hapus Permanen"
+                                                            className="p-1.5 hover:bg-blue-100 rounded-lg text-blue-600 transition-colors"
+                                                            title="Kembalikan ke Draft"
                                                         >
-                                                            <Trash2 className="w-4 h-4" />
+                                                            <RotateCcw className="w-4 h-4" />
                                                         </button>
+                                                    )}
+                                                    {item.status === 'cancelled' && (
+                                                        <>
+                                                            <button
+                                                                onClick={() => {
+                                                                    setUncancelingItem(item);
+                                                                    setUncancelDialogOpen(true);
+                                                                }}
+                                                                className="p-1.5 hover:bg-green-100 rounded-lg text-green-600 transition-colors"
+                                                                title="Kembalikan ke Draft"
+                                                            >
+                                                                <RotateCcw className="w-4 h-4" />
+                                                            </button>
+                                                            <button
+                                                                onClick={() => {
+                                                                    setHardDeletingItem(item);
+                                                                    setHardDeleteDialogOpen(true);
+                                                                    setVerificationCode('');
+                                                                }}
+                                                                className="p-1.5 hover:bg-red-100 rounded-lg text-red-700 transition-colors"
+                                                                title="Hapus Permanen"
+                                                            >
+                                                                <Trash2 className="w-4 h-4" />
+                                                            </button>
+                                                        </>
                                                     )}
                                                 </div>
                                             </td>
@@ -456,18 +532,43 @@ export default function TransaksiListPage() {
                                                     </button>
                                                 </>
                                             )}
-                                            {item.status === 'cancelled' && (
+                                            {item.status === 'completed' && (
                                                 <button
                                                     onClick={() => {
-                                                        setHardDeletingItem(item);
-                                                        setHardDeleteDialogOpen(true);
-                                                        setVerificationCode('');
+                                                        setUncompletingItem(item);
+                                                        setUncompleteDialogOpen(true);
+                                                        setUncompleteVerificationCode('');
                                                     }}
-                                                    className="flex flex-col items-center justify-center w-10 h-10 bg-red-50 text-red-700 rounded-xl"
-                                                    title="Hapus Permanen"
+                                                    className="flex flex-col items-center justify-center w-10 h-10 bg-blue-50 text-blue-600 rounded-xl"
+                                                    title="Kembalikan ke Draft"
                                                 >
-                                                    <Trash2 className="w-5 h-5" />
+                                                    <RotateCcw className="w-5 h-5" />
                                                 </button>
+                                            )}
+                                            {item.status === 'cancelled' && (
+                                                <>
+                                                    <button
+                                                        onClick={() => {
+                                                            setUncancelingItem(item);
+                                                            setUncancelDialogOpen(true);
+                                                        }}
+                                                        className="flex flex-col items-center justify-center w-10 h-10 bg-green-50 text-green-600 rounded-xl"
+                                                        title="Kembalikan ke Draft"
+                                                    >
+                                                        <RotateCcw className="w-5 h-5" />
+                                                    </button>
+                                                    <button
+                                                        onClick={() => {
+                                                            setHardDeletingItem(item);
+                                                            setHardDeleteDialogOpen(true);
+                                                            setVerificationCode('');
+                                                        }}
+                                                        className="flex flex-col items-center justify-center w-10 h-10 bg-red-50 text-red-700 rounded-xl"
+                                                        title="Hapus Permanen"
+                                                    >
+                                                        <Trash2 className="w-5 h-5" />
+                                                    </button>
+                                                </>
                                             )}
                                         </div>
                                     </div>
@@ -505,6 +606,76 @@ export default function TransaksiListPage() {
                 confirmText="Ya, Batalkan"
                 loading={deleteLoading}
             />
+
+            {/* Uncancel Confirm Dialog */}
+            <ConfirmDialog
+                isOpen={uncancelDialogOpen}
+                onClose={() => {
+                    setUncancelDialogOpen(false);
+                    setUncancelingItem(null);
+                }}
+                onConfirm={handleUncancelTransaksi}
+                title="Kembalikan Transaksi"
+                message={`Apakah Anda yakin ingin mengembalikan transaksi "${uncancelingItem?.kode_transaksi}" ke status Draft?`}
+                confirmText="Ya, Kembalikan"
+                variant="info"
+                loading={uncancelLoading}
+            />
+
+            {/* Uncomplete Secure Confirm Dialog */}
+            <div className={`fixed inset-0 z-50 flex items-center justify-center p-4 ${uncompleteDialogOpen ? 'visible' : 'hidden'}`}>
+                <div
+                    className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+                    onClick={() => {
+                        if (!uncompleteLoading) {
+                            setUncompleteDialogOpen(false);
+                            setUncompletingItem(null);
+                        }
+                    }}
+                />
+                <div className="relative w-full max-w-md bg-white rounded-2xl shadow-xl p-6 animate-fade-in text-center">
+                    <div className="w-16 h-16 rounded-full bg-blue-100 flex items-center justify-center mx-auto mb-4">
+                        <RotateCcw className="w-8 h-8 text-blue-600" />
+                    </div>
+                    <h3 className="text-xl font-bold text-gray-900 mb-2">Uncomplete Transaksi</h3>
+                    <p className="text-gray-500 mb-6 text-sm">
+                        Mengembalikan transaksi <span className="font-mono font-bold text-gray-900 bg-gray-100 px-1 rounded">{uncompletingItem?.kode_transaksi}</span> ke status **Draft**.
+                        Ini akan memungkinkan Anda untuk mengedit kembali transaksi ini.
+                    </p>
+                    <div className="mb-6 text-left">
+                        <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">
+                            Ketik Kode Transaksi untuk Konfirmasi
+                        </label>
+                        <input
+                            type="text"
+                            value={uncompleteVerificationCode}
+                            onChange={(e) => setUncompleteVerificationCode(e.target.value)}
+                            placeholder={uncompletingItem?.kode_transaksi}
+                            className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 font-mono text-center tracking-wider transition-all"
+                            autoFocus
+                        />
+                    </div>
+                    <div className="flex gap-3 mt-8">
+                        <button
+                            onClick={() => {
+                                setUncompleteDialogOpen(false);
+                                setUncompletingItem(null);
+                            }}
+                            disabled={uncompleteLoading}
+                            className="flex-1 px-4 py-3 border border-gray-200 rounded-xl text-gray-600 font-bold hover:bg-gray-50 transition-all disabled:opacity-50"
+                        >
+                            Batal
+                        </button>
+                        <button
+                            onClick={handleUncompleteTransaksi}
+                            disabled={uncompleteLoading || uncompleteVerificationCode !== uncompletingItem?.kode_transaksi}
+                            className="flex-[1.5] px-4 py-3 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 transition-all shadow-lg shadow-blue-500/20 disabled:opacity-50 disabled:grayscale disabled:shadow-none active:scale-95"
+                        >
+                            {uncompleteLoading ? 'Memproses...' : 'Ya, Kembalikan ke Draft'}
+                        </button>
+                    </div>
+                </div>
+            </div>
 
             {/* Hard Delete Confirm Dialog */}
             <div className={`fixed inset-0 z-50 flex items-center justify-center p-4 ${hardDeleteDialogOpen ? 'visible' : 'hidden'}`}>

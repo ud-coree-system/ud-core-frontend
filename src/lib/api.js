@@ -93,7 +93,9 @@ export const transaksiAPI = {
     create: (data) => api.post('/transaksi', data),
     update: (id, data) => api.put(`/transaksi/${id}`, data),
     complete: (id) => api.post(`/transaksi/${id}/complete`),
+    uncomplete: (id) => api.post(`/transaksi/${id}/uncomplete`),
     cancel: (id) => api.delete(`/transaksi/${id}`),
+    uncancel: (id) => api.post(`/transaksi/${id}/uncancel`),
     hardDelete: (id) => api.delete(`/transaksi/${id}/hard`),
 };
 
