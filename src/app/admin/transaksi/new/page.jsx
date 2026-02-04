@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback, Fragment } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import {
     ShoppingCart,
     Search,
@@ -12,6 +13,7 @@ import {
     CheckCircle,
     ArrowLeft,
     X,
+    FileSpreadsheet,
 } from 'lucide-react';
 import { transaksiAPI, periodeAPI, dapurAPI, barangAPI, udAPI } from '@/lib/api';
 import DatePicker from '@/components/ui/DatePicker';
@@ -383,6 +385,14 @@ export default function NewTransaksiPage() {
                     <h1 className="text-xl md:text-2xl font-bold text-gray-900 leading-tight">Input Transaksi Baru</h1>
                     <p className="text-sm md:text-gray-500 mt-0.5">Masukkan data barang untuk transaksi</p>
                 </div>
+                <Link
+                    href="/admin/transaksi/bulk"
+                    className="ml-auto inline-flex items-center justify-center gap-2 px-4 py-2 bg-green-600 text-white rounded-xl
+                               hover:bg-green-700 transition-all font-semibold shadow-lg shadow-green-500/20 active:scale-95 text-sm"
+                >
+                    <FileSpreadsheet className="w-4 h-4" />
+                    Bulk Upload dari Excel
+                </Link>
             </div>
 
             {/* Form */}
