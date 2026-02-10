@@ -78,7 +78,7 @@ export const barangAPI = {
 
 // ============ Dapur API ============
 export const dapurAPI = {
-    getAll: (params) => publicApi.get('/dapur', { params }),
+    getAll: (params) => api.get('/dapur', { params }),
     getById: (id) => api.get(`/dapur/${id}`),
     create: (data) => api.post('/dapur', data),
     update: (id, data) => api.put(`/dapur/${id}`, data),
