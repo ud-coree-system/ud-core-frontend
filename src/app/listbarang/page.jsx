@@ -259,6 +259,7 @@ export default function KitchenBarangPage() {
                                             <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-widest w-20">No</th>
                                             <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-widest">Nama Barang</th>
                                             <th className="px-6 py-4 text-center text-xs font-bold text-gray-500 uppercase tracking-widest w-40">Satuan</th>
+                                            <th className="px-6 py-4 text-right text-xs font-bold text-gray-500 uppercase tracking-widest w-40">Harga Jual</th>
                                             <th className="px-6 py-4 text-center text-xs font-bold text-gray-500 uppercase tracking-widest w-60">Status Stok</th>
                                         </tr>
                                     </thead>
@@ -275,6 +276,9 @@ export default function KitchenBarangPage() {
                                                     <span className="px-3 py-1 bg-gray-100 text-gray-600 text-xs font-bold rounded-lg uppercase tracking-wider">
                                                         {item.satuan}
                                                     </span>
+                                                </td>
+                                                <td className="px-6 py-5 text-right whitespace-nowrap">
+                                                    <p className="text-sm font-bold text-gray-900">{formatCurrency(item.harga_jual)}</p>
                                                 </td>
                                                 <td className="px-6 py-5 text-center">
                                                     <div className="flex items-center justify-center gap-2">
@@ -307,6 +311,7 @@ export default function KitchenBarangPage() {
                                                 <span className="px-1.5 py-0.5 bg-gray-100 text-gray-500 text-[10px] font-bold rounded uppercase tracking-tighter">{item.satuan}</span>
                                             </div>
                                             <h3 className="font-bold text-gray-900 truncate pr-2">{item.nama_barang}</h3>
+                                            <p className="text-xs font-bold text-blue-600 mt-0.5">{formatCurrency(item.harga_jual)}</p>
                                         </div>
                                         <div className="shrink-0">
                                             {item.isActive ? (
