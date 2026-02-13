@@ -443,11 +443,13 @@ export default function TransaksiDetailPage() {
                                     <tr>
                                         <th className="text-left px-3 py-3 text-xs font-bold text-gray-400 uppercase tracking-widest whitespace-nowrap w-10">No</th>
                                         <th className="text-left px-4 py-3 text-xs font-bold text-gray-400 uppercase tracking-widest whitespace-nowrap">Nama Barang</th>
-                                        <th className="text-center px-4 py-3 text-xs font-bold text-gray-400 uppercase tracking-widest whitespace-nowrap w-24">Satuan</th>
                                         <th className="text-center px-4 py-3 text-xs font-bold text-gray-400 uppercase tracking-widest whitespace-nowrap w-16">Qty</th>
-                                        <th className="text-right px-4 py-3 text-xs font-bold text-gray-400 uppercase tracking-widest whitespace-nowrap">Hrg Modal</th>
-                                        <th className="text-right px-4 py-3 text-xs font-bold text-gray-400 uppercase tracking-widest whitespace-nowrap">Hrg Jual</th>
-                                        <th className="text-right px-4 py-3 text-xs font-bold text-gray-400 uppercase tracking-widest whitespace-nowrap">Subtotal</th>
+                                        <th className="text-center px-4 py-3 text-xs font-bold text-gray-400 uppercase tracking-widest whitespace-nowrap w-24">Satuan</th>
+                                        <th className="text-right px-4 py-3 text-xs font-bold text-gray-400 uppercase tracking-widest whitespace-nowrap">Harga Jual</th>
+                                        <th className="text-right px-4 py-3 text-xs font-bold text-gray-400 uppercase tracking-widest whitespace-nowrap">Total Harga Jual</th>
+                                        <th className="text-right px-4 py-3 text-xs font-bold text-gray-400 uppercase tracking-widest whitespace-nowrap">Harga Modal</th>
+                                        <th className="text-right px-4 py-3 text-xs font-bold text-gray-400 uppercase tracking-widest whitespace-nowrap">Total Harga Modal</th>
+                                        <th className="text-right px-4 py-3 text-xs font-bold text-gray-400 uppercase tracking-widest whitespace-nowrap">Keuntungan</th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-gray-100">
@@ -459,20 +461,26 @@ export default function TransaksiDetailPage() {
                                                     {item.nama_barang || item.barang_id?.nama_barang || '-'}
                                                 </p>
                                             </td>
+                                            <td className="px-4 py-4 text-center font-bold text-gray-700 text-sm">{item.qty}</td>
                                             <td className="px-4 py-4 text-center">
                                                 <span className="px-2 py-0.5 text-[10px] font-bold bg-gray-100 text-gray-600 rounded-md uppercase whitespace-nowrap">
                                                     {item.satuan || item.barang_id?.satuan || '-'}
                                                 </span>
                                             </td>
-                                            <td className="px-4 py-4 text-center font-bold text-gray-700 text-sm">{item.qty}</td>
-                                            <td className="px-4 py-4 text-right text-xs text-gray-500 font-medium whitespace-nowrap">
-                                                {formatCurrency(item.harga_modal)}
-                                            </td>
-                                            <td className="px-4 py-4 text-right text-xs text-gray-600 font-bold whitespace-nowrap">
+                                            <td className="px-4 py-4 text-right text-xs text-gray-900 font-bold whitespace-nowrap">
                                                 {formatCurrency(item.harga_jual)}
                                             </td>
                                             <td className="px-4 py-4 text-right font-black text-blue-600 tracking-tight text-sm whitespace-nowrap">
-                                                {formatCurrency(item.subtotal_jual)}
+                                                {formatCurrency(item.qty * item.harga_jual)}
+                                            </td>
+                                            <td className="px-4 py-4 text-right text-xs text-gray-500 font-medium whitespace-nowrap">
+                                                {formatCurrency(item.harga_modal)}
+                                            </td>
+                                            <td className="px-4 py-4 text-right text-xs text-gray-600 font-medium whitespace-nowrap">
+                                                {formatCurrency(item.qty * item.harga_modal)}
+                                            </td>
+                                            <td className="px-4 py-4 text-right font-bold text-green-600 text-sm whitespace-nowrap">
+                                                {formatCurrency((item.qty * item.harga_jual) - (item.qty * item.harga_modal))}
                                             </td>
                                         </tr>
                                     ))}
@@ -483,30 +491,45 @@ export default function TransaksiDetailPage() {
                         {/* Items - Mobile Card View */}
                         <div className="md:hidden divide-y divide-gray-100">
                             {udData.items.map((item, index) => (
-                                <div key={item._id} className="p-4 space-y-3">
+                                <div key={item._id} className="p-4 space-y-4">
                                     <div className="flex justify-between items-start gap-4">
                                         <div className="space-y-1">
                                             <h4 className="font-bold text-gray-900 leading-tight">
                                                 {item.nama_barang || item.barang_id?.nama_barang || '-'}
                                             </h4>
-                                            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
-                                                {item.satuan || item.barang_id?.satuan || '-'} • Qty: <span className="text-gray-900">{item.qty}</span>
+                                            <p className="text-[10px] text-gray-500 uppercase">
+                                                Qty: <span className="font-bold text-gray-900">{item.qty}</span> • {item.satuan || item.barang_id?.satuan || '-'}
                                             </p>
                                         </div>
+                                    </div>
+
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-0.5">Harga Jual</p>
+                                            <p className="text-xs font-bold text-gray-900">{formatCurrency(item.harga_jual)}</p>
+                                        </div>
                                         <div className="text-right">
-                                            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Subtotal</p>
-                                            <p className="font-black text-blue-600 tracking-tight">{formatCurrency(item.subtotal_jual)}</p>
+                                            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-0.5">Total Harga Jual</p>
+                                            <p className="text-sm font-black text-blue-600 tracking-tight">{formatCurrency(item.qty * item.harga_jual)}</p>
                                         </div>
                                     </div>
-                                    <div className="grid grid-cols-2 gap-4 pt-1">
+
+                                    <div className="grid grid-cols-2 gap-4">
                                         <div>
                                             <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-0.5">Harga Modal</p>
                                             <p className="text-xs font-semibold text-gray-600">{formatCurrency(item.harga_modal)}</p>
                                         </div>
                                         <div className="text-right">
-                                            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-0.5">Harga Jual</p>
-                                            <p className="text-xs font-bold text-gray-900">{formatCurrency(item.harga_jual)}</p>
+                                            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-0.5">Total Harga Modal</p>
+                                            <p className="text-xs font-bold text-gray-700">{formatCurrency(item.qty * item.harga_modal)}</p>
                                         </div>
+                                    </div>
+
+                                    <div className="bg-green-50 p-2 rounded-lg flex justify-between items-center">
+                                        <span className="text-[10px] font-bold text-green-700 uppercase">Keuntungan</span>
+                                        <span className="font-bold text-green-600 text-sm">
+                                            {formatCurrency((item.qty * item.harga_jual) - (item.qty * item.harga_modal))}
+                                        </span>
                                     </div>
                                 </div>
                             ))}
