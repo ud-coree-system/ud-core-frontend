@@ -163,7 +163,7 @@ const AppSidebar = () => {
             onMouseLeave={() => setIsHovered(false)}
         >
             {/* Logo Section */}
-            <div className="py-8 flex justify-center">
+            <div className="py-4 flex justify-center">
                 <Link
                     href="/admin"
                     onClick={() => {
@@ -171,7 +171,7 @@ const AppSidebar = () => {
                             setIsMobileOpen(false);
                         }
                     }}
-                    className={`flex flex-col items-center gap-4 ${!isExpanded && !isHovered && !isMobileOpen ? 'lg:px-2' : ''}`}
+                    className={`flex flex-col items-center gap-2 ${!isExpanded && !isHovered && !isMobileOpen ? 'lg:px-2' : ''}`}
                 >
                     <div className="w-24 h-24 flex items-center justify-center flex-shrink-0">
                         <img src="/LOGO MUTIARA CARE.webp" alt="Mutiara Care Logo" className="w-24 h-24 object-contain" />
