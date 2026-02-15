@@ -12,6 +12,7 @@ export default function DatePicker({
     minDate,
     maxDate,
     className = '',
+    inputClassName = '',
     showTimeSelect = false,
     onOpenChange,
     ...props
@@ -124,9 +125,9 @@ export default function DatePicker({
                         value={inputValue || (selected ? formatDate(selected) : '')}
                         onChange={handleInputChange}
                         placeholder={placeholder}
-                        className="w-full px-3 py-2 pr-10 border border-gray-200 rounded-lg
+                        className={inputClassName || `w-full h-[48px] px-3 py-2 pr-10 border border-gray-200 rounded-xl
                                  focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500
-                                 text-gray-900 placeholder:text-gray-400"
+                                 text-gray-900 placeholder:text-gray-400`}
                     />
                     <button
                         type="button"

@@ -10,6 +10,7 @@ export default function SearchableSelect({
     placeholder = 'Pilih opsi...',
     searchPlaceholder = 'Cari...',
     className = '',
+    triggerClassName = '',
     disabled = false,
 }) {
     const [isOpen, setIsOpen] = useState(false);
@@ -51,7 +52,7 @@ export default function SearchableSelect({
             <button
                 type="button"
                 onClick={() => !disabled && setIsOpen(!isOpen)}
-                className={`w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl flex items-center justify-between text-left
+                className={triggerClassName || `w-full h-[48px] px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl flex items-center justify-between text-left
                     transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500
                     ${disabled ? 'opacity-60 cursor-not-allowed' : 'hover:border-gray-300 dark:hover:border-gray-600'}`}
             >

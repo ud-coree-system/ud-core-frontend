@@ -382,7 +382,7 @@ export default function LaporanDapurPage() {
 
             {/* Filter Section */}
             <div className="bg-white rounded-3xl border border-gray-200 p-5 md:p-8 shadow-sm">
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 items-end">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 items-start">
                     <div className="space-y-2">
                         <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest flex items-center gap-2 mb-1">
                             <ChefHat className="w-3 h-3" />
@@ -397,6 +397,7 @@ export default function LaporanDapurPage() {
                             }))}
                             placeholder="Pilih Dapur"
                             searchPlaceholder="Cari dapur..."
+                            triggerClassName="w-full h-[48px] px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl flex items-center justify-between text-left transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500"
                         />
                     </div>
 
@@ -414,6 +415,7 @@ export default function LaporanDapurPage() {
                             }))}
                             placeholder="Semua Periode"
                             searchPlaceholder="Cari periode..."
+                            triggerClassName="w-full h-[48px] px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl flex items-center justify-between text-left transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500"
                         />
                     </div>
 
@@ -428,20 +430,23 @@ export default function LaporanDapurPage() {
                             placeholder="Pilih Tanggal (Opsional)"
                             showTimeSelect
                             dateFormat="Pp"
-                            className="w-full bg-gray-50 border-gray-100 rounded-2xl px-4 py-3 text-sm font-bold focus:ring-4 focus:ring-blue-500/5 transition-all outline-none"
+                            inputClassName="w-full h-[48px] bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-sm font-bold focus:ring-4 focus:ring-blue-500/5 transition-all outline-none"
                             minDate={filterPeriode ? new Date(periodeList.find(p => p._id === filterPeriode)?.tanggal_mulai) : null}
                             maxDate={filterPeriode ? new Date(periodeList.find(p => p._id === filterPeriode)?.tanggal_selesai) : null}
                         />
                     </div>
 
-                    <button
-                        onClick={fetchTransactions}
-                        disabled={loading}
-                        className="bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white rounded-2xl h-[48px] px-8 font-black text-sm transition-all shadow-lg shadow-blue-500/20 flex items-center justify-center gap-3 uppercase tracking-widest"
-                    >
-                        {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Filter className="w-5 h-5" />}
-                        Cari Data
-                    </button>
+                    <div className="space-y-2">
+                        <div className="hidden lg:block h-[19px] mb-1"></div> {/* Spacer to align with labels */}
+                        <button
+                            onClick={fetchTransactions}
+                            disabled={loading}
+                            className="bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white rounded-2xl h-[48px] w-full px-8 font-black text-sm transition-all shadow-lg shadow-blue-500/20 flex items-center justify-center gap-3 uppercase tracking-widest"
+                        >
+                            {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Filter className="w-5 h-5" />}
+                            Cari Data
+                        </button>
+                    </div>
                 </div>
             </div>
 
