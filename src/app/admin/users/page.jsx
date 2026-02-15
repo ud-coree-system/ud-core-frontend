@@ -33,7 +33,7 @@ const INITIAL_FORM = {
 export default function UserManagementPage() {
     const searchParams = useSearchParams();
     const { toast } = useToast();
-    const { isAdmin, user: currentUser } = useAuth();
+    const { isAdmin, isSuperUser, user: currentUser } = useAuth();
 
     // State
     const [data, setData] = useState([]);
@@ -62,6 +62,11 @@ export default function UserManagementPage() {
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
     const [deletingItem, setDeletingItem] = useState(null);
     const [deleteLoading, setDeleteLoading] = useState(false);
+    const [deleteCode, setDeleteCode] = useState('');
+
+    const canEditPassword = !editingItem ||
+        currentUser?.role === 'superuser' ||
+        (currentUser?.role === 'admin' && editingItem?._id === currentUser?._id);
 
     useEffect(() => {
         if (!isAdmin()) {
@@ -94,7 +99,13 @@ export default function UserManagementPage() {
         try {
             const response = await userAPI.getById(id);
             if (response.data.success) {
-                openDetailModal(response.data.data);
+                const user = response.data.data;
+                // Admin can't view superuser details
+                if (currentUser?.role === 'admin' && user?.role === 'superuser') {
+                    toast.error('Akses ditolak');
+                    return;
+                }
+                openDetailModal(user);
             }
         } catch (error) {
             console.error('Failed to fetch user for deep link:', error);
@@ -122,7 +133,12 @@ export default function UserManagementPage() {
             };
             const response = await userAPI.getAll(params);
             if (response.data.success) {
-                setData(response.data.data);
+                let users = response.data.data;
+                // Admin cannot see superusers
+                if (currentUser?.role === 'admin') {
+                    users = users.filter((u) => u.role !== 'superuser');
+                }
+                setData(users);
                 setPagination((prev) => ({
                     ...prev,
                     ...response.data.pagination,
@@ -148,6 +164,14 @@ export default function UserManagementPage() {
     };
 
     const openEditModal = (item) => {
+        if (currentUser?.role === 'admin' && item._id !== currentUser?._id) {
+            toast.error('Admin hanya dapat mengubah data diri sendiri');
+            return;
+        }
+        if (currentUser?.role === 'admin' && item.role === 'superuser') {
+            toast.error('Akses ditolak');
+            return;
+        }
         setEditingItem(item);
         setFormData({
             username: item.username || '',
@@ -233,10 +257,18 @@ export default function UserManagementPage() {
     };
 
     const openDeleteDialog = (item) => {
+        if (!isSuperUser()) {
+            toast.error('Hanya Super User yang dapat menghapus user');
+            return;
+        }
         if (item._id === currentUser?._id) {
             toast.warning('Anda tidak dapat menghapus akun sendiri');
             return;
         }
+
+        // Generate random code for deletion
+        const code = Math.random().toString(36).substring(2, 8).toUpperCase();
+        setDeleteCode(code);
         setDeletingItem(item);
         setDeleteDialogOpen(true);
     };
@@ -391,21 +423,25 @@ export default function UserManagementPage() {
                                                     >
                                                         <Search className="w-4.5 h-4.5" />
                                                     </button>
-                                                    <button
-                                                        onClick={() => openEditModal(item)}
-                                                        className="p-2 hover:bg-blue-50 rounded-lg text-blue-600 transition-colors"
-                                                        title="Edit"
-                                                    >
-                                                        <Edit className="w-4.5 h-4.5" />
-                                                    </button>
-                                                    <button
-                                                        onClick={() => openDeleteDialog(item)}
-                                                        disabled={item._id === currentUser?._id}
-                                                        className="p-2 hover:bg-red-50 rounded-lg text-red-600 transition-colors disabled:opacity-30"
-                                                        title="Hapus"
-                                                    >
-                                                        <Trash2 className="w-4.5 h-4.5" />
-                                                    </button>
+                                                    {(isSuperUser() || (currentUser?.role === 'admin' && item._id === currentUser?._id)) && (
+                                                        <button
+                                                            onClick={() => openEditModal(item)}
+                                                            className="p-2 hover:bg-blue-50 rounded-lg text-blue-600 transition-colors"
+                                                            title="Edit"
+                                                        >
+                                                            <Edit className="w-4.5 h-4.5" />
+                                                        </button>
+                                                    )}
+                                                    {isSuperUser() && (
+                                                        <button
+                                                            onClick={() => openDeleteDialog(item)}
+                                                            disabled={item._id === currentUser?._id}
+                                                            className="p-2 hover:bg-red-50 rounded-lg text-red-600 transition-colors disabled:opacity-30"
+                                                            title="Hapus"
+                                                        >
+                                                            <Trash2 className="w-4.5 h-4.5" />
+                                                        </button>
+                                                    )}
                                                 </div>
                                             </td>
                                         </tr>
@@ -435,19 +471,23 @@ export default function UserManagementPage() {
                                             >
                                                 <Search className="w-4.5 h-4.5" />
                                             </button>
-                                            <button
-                                                onClick={() => openEditModal(item)}
-                                                className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                                            >
-                                                <Edit className="w-4.5 h-4.5" />
-                                            </button>
-                                            <button
-                                                onClick={() => openDeleteDialog(item)}
-                                                disabled={item._id === currentUser?._id}
-                                                className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-30"
-                                            >
-                                                <Trash2 className="w-4.5 h-4.5" />
-                                            </button>
+                                            {(isSuperUser() || (currentUser?.role === 'admin' && item._id === currentUser?._id)) && (
+                                                <button
+                                                    onClick={() => openEditModal(item)}
+                                                    className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                                                >
+                                                    <Edit className="w-4.5 h-4.5" />
+                                                </button>
+                                            )}
+                                            {isSuperUser() && (
+                                                <button
+                                                    onClick={() => openDeleteDialog(item)}
+                                                    disabled={item._id === currentUser?._id}
+                                                    className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-30"
+                                                >
+                                                    <Trash2 className="w-4.5 h-4.5" />
+                                                </button>
+                                            )}
                                         </div>
                                     </div>
 
@@ -545,29 +585,31 @@ export default function UserManagementPage() {
                     </div>
 
                     {/* Password */}
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Password {!editingItem && <span className="text-red-500">*</span>}
-                        </label>
-                        <div className="relative">
-                            <input
-                                type={showPassword ? 'text' : 'password'}
-                                name="password"
-                                value={formData.password}
-                                onChange={handleFormChange}
-                                placeholder={editingItem ? 'Kosongkan jika tidak ingin mengubah' : 'Masukkan password'}
-                                className="w-full px-3 py-2 pr-10 border border-gray-200 rounded-lg
-                         focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
-                            />
-                            <button
-                                type="button"
-                                onClick={() => setShowPassword(!showPassword)}
-                                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                            >
-                                {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                            </button>
+                    {canEditPassword && (
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                                Password {!editingItem && <span className="text-red-500">*</span>}
+                            </label>
+                            <div className="relative">
+                                <input
+                                    type={showPassword ? 'text' : 'password'}
+                                    name="password"
+                                    value={formData.password}
+                                    onChange={handleFormChange}
+                                    placeholder={editingItem ? 'Kosongkan jika tidak ingin mengubah' : 'Masukkan password'}
+                                    className="w-full px-3 py-2 pr-10 border border-gray-200 rounded-lg
+                             focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                                />
+                                <button
+                                    type="button"
+                                    onClick={() => setShowPassword(!showPassword)}
+                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                                >
+                                    {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                                </button>
+                            </div>
                         </div>
-                    </div>
+                    )}
 
                     {/* Role */}
                     <div>
@@ -621,10 +663,11 @@ export default function UserManagementPage() {
                                     name="isActive"
                                     checked={formData.isActive}
                                     onChange={handleFormChange}
-                                    className="w-4 h-4 text-blue-600 rounded border-gray-300"
+                                    disabled={!isSuperUser()}
+                                    className={`w-4 h-4 text-blue-600 rounded border-gray-300 ${!isSuperUser() ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'}`}
                                 />
-                                <span className="text-sm font-medium text-gray-700">
-                                    User Aktif
+                                <span className={`text-sm font-medium ${!isSuperUser() ? 'text-gray-400' : 'text-gray-700'}`}>
+                                    User Aktif {!isSuperUser() && <span className="text-[10px] font-normal block">(Hanya Super User yang dapat mengubah status)</span>}
                                 </span>
                             </label>
                         </div>
@@ -731,9 +774,10 @@ export default function UserManagementPage() {
                 }}
                 onConfirm={handleDelete}
                 title="Hapus User"
-                message={`Apakah Anda yakin ingin menghapus user "${deletingItem?.username}"?`}
-                confirmText="Ya, Hapus"
+                message={`Apakah Anda yakin ingin menghapus user "${deletingItem?.username}"? Tindakan ini tidak dapat dibatalkan.`}
+                confirmText="Ya, Hapus Permanen"
                 loading={deleteLoading}
+                confirmationCode={deleteCode}
             />
         </div>
     );

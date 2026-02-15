@@ -1,7 +1,7 @@
 'use client';
 
 import { AlertTriangle, X } from 'lucide-react';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 
 export default function ConfirmDialog({
     isOpen,
@@ -13,12 +13,16 @@ export default function ConfirmDialog({
     cancelText = 'Batal',
     variant = 'danger', // 'danger' | 'warning' | 'info'
     loading = false,
+    confirmationCode = '', // Optional code to type for confirmation
 }) {
+    const [inputCode, setInputCode] = useState('');
+
     // Lock body scroll and handle bottom bar visibility when modal is open
     useEffect(() => {
         if (isOpen) {
             document.body.style.overflow = 'hidden';
             document.body.classList.add('modal-open');
+            setInputCode(''); // Reset on open
         } else {
             document.body.style.overflow = '';
             document.body.classList.remove('modal-open');
@@ -47,6 +51,7 @@ export default function ConfirmDialog({
     };
 
     const styles = variantStyles[variant];
+    const isConfirmDisabled = loading || (confirmationCode && inputCode !== confirmationCode);
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
@@ -77,12 +82,30 @@ export default function ConfirmDialog({
                     </h3>
 
                     {/* Message */}
-                    <p className="text-gray-500 mb-6">
+                    <p className="text-gray-500 mb-4">
                         {message}
                     </p>
 
+                    {/* Confirmation Code Input */}
+                    {confirmationCode && (
+                        <div className="mb-6 space-y-3">
+                            <p className="text-sm text-gray-600">
+                                Silakan ketik <span className="font-mono font-bold text-gray-900 bg-gray-100 px-2 py-0.5 rounded">{confirmationCode}</span> untuk mengonfirmasi.
+                            </p>
+                            <input
+                                type="text"
+                                value={inputCode}
+                                onChange={(e) => setInputCode(e.target.value)}
+                                placeholder="Ketik kode di sini"
+                                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-center font-mono font-bold uppercase tracking-widest
+                                   focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500"
+                                autoFocus
+                            />
+                        </div>
+                    )}
+
                     {/* Actions */}
-                    <div className="flex gap-3">
+                    <div className="flex gap-3 mt-2">
                         <button
                             onClick={onClose}
                             disabled={loading}
@@ -93,8 +116,8 @@ export default function ConfirmDialog({
                         </button>
                         <button
                             onClick={onConfirm}
-                            disabled={loading}
-                            className={`flex-1 px-4 py-2.5 rounded-lg font-medium transition-colors disabled:opacity-50 ${styles.button}`}
+                            disabled={isConfirmDisabled}
+                            className={`flex-1 px-4 py-2.5 rounded-lg font-medium transition-all disabled:opacity-50 active:scale-95 ${styles.button}`}
                         >
                             {loading ? 'Memproses...' : confirmText}
                         </button>
