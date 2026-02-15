@@ -5,6 +5,7 @@ import { useRouter, useParams } from 'next/navigation';
 import {
     ShoppingCart,
     Search,
+    RefreshCw,
     Trash2,
     Plus,
     Loader2,
@@ -103,6 +104,36 @@ export default function EditTransaksiPage() {
         }
     };
 
+    const handleUpdateBarangMaster = async (item) => {
+        try {
+            // Optimistically set loading in item
+            setItems(prev => prev.map(i => i.barang_id === item.barang_id ? { ...i, isUpdatingMaster: true } : i));
+
+            const payload = {
+                satuan: item.satuan,
+                harga_jual: item.harga_jual,
+                harga_modal: item.harga_modal
+            };
+
+            const response = await barangAPI.update(item.barang_id, payload);
+
+            if (response.data.success) {
+                toast.success(`Data master ${item.nama_barang} berhasil diperbarui`);
+                // Update original values to current values
+                setItems(prev => prev.map(i => i.barang_id === item.barang_id ? {
+                    ...i,
+                    original_satuan: item.satuan,
+                    original_harga_jual: item.harga_jual,
+                    original_harga_modal: item.harga_modal,
+                    isUpdatingMaster: false
+                } : i));
+            }
+        } catch (error) {
+            toast.error(getErrorMessage(error));
+            setItems(prev => prev.map(i => i.barang_id === item.barang_id ? { ...i, isUpdatingMaster: false } : i));
+        }
+    };
+
     const fetchTransaksiDetail = async () => {
         try {
             setFetchingData(true);
@@ -183,17 +214,27 @@ export default function EditTransaksiPage() {
                 setTanggal(new Date(trx.tanggal));
 
                 // Format items for the UI
-                const formattedItems = trx.items.map(item => ({
-                    barang_id: normalizeId(item.barang_id?._id || item.barang_id),
-                    nama_barang: item.nama_barang || item.barang_id?.nama_barang || '-',
-                    satuan: item.satuan || item.barang_id?.satuan || '-',
-                    harga_jual: item.harga_jual,
-                    harga_modal: item.harga_modal,
-                    ud_id: normalizeId(item.ud_id?._id || item.ud_id),
-                    ud_nama: item.ud_nama || item.ud_id?.nama_ud || '-',
-                    ud_kode: item.ud_kode || item.ud_id?.kode_ud || '-',
-                    qty: item.qty,
-                }));
+                const formattedItems = trx.items.map(item => {
+                    const bId = normalizeId(item.barang_id?._id || item.barang_id);
+                    const barangFromMap = barangRes.data.data.find(b => normalizeId(b._id) === bId);
+
+                    return {
+                        barang_id: bId,
+                        nama_barang: item.nama_barang || item.barang_id?.nama_barang || '-',
+                        satuan: item.satuan || item.barang_id?.satuan || '-',
+                        harga_jual: item.harga_jual,
+                        harga_modal: item.harga_modal,
+                        ud_id: normalizeId(item.ud_id?._id || item.ud_id),
+                        ud_nama: item.ud_nama || item.ud_id?.nama_ud || '-',
+                        ud_kode: item.ud_kode || item.ud_id?.kode_ud || '-',
+                        qty: item.qty,
+                        // Store original values from master data for change detection
+                        original_satuan: barangFromMap?.satuan || item.satuan,
+                        original_harga_jual: barangFromMap?.harga_jual || item.harga_jual,
+                        original_harga_modal: barangFromMap?.harga_modal || item.harga_modal,
+                        isUpdatingMaster: false
+                    };
+                });
                 setItems(formattedItems);
             }
         } catch (error) {
@@ -258,6 +299,10 @@ export default function EditTransaksiPage() {
                 ud_nama: barang.ud_id?.nama_ud,
                 ud_kode: barang.ud_id?.kode_ud,
                 qty: 1,
+                original_satuan: barang.satuan,
+                original_harga_jual: barang.harga_jual,
+                original_harga_modal: barang.harga_modal || 0,
+                isUpdatingMaster: false
             },
         ]);
 
@@ -304,6 +349,10 @@ export default function EditTransaksiPage() {
                         ud_nama: udList.find(ud => ud._id === (createdBarang.ud_id?._id || createdBarang.ud_id))?.nama_ud,
                         ud_kode: udList.find(ud => ud._id === (createdBarang.ud_id?._id || createdBarang.ud_id))?.kode_ud,
                         qty: 1,
+                        original_satuan: createdBarang.satuan,
+                        original_harga_jual: createdBarang.harga_jual,
+                        original_harga_modal: createdBarang.harga_modal || 0,
+                        isUpdatingMaster: false
                     },
                 ]);
 
@@ -692,7 +741,7 @@ export default function EditTransaksiPage() {
                                 <tbody className="divide-y divide-gray-100">
                                     {filteredItems.length === 0 ? (
                                         <tr>
-                                            <td colSpan={9} className="text-center py-12 text-gray-500">
+                                            <td colSpan={10} className="text-center py-12 text-gray-500">
                                                 <ShoppingCart className="w-12 h-12 mx-auto mb-3 text-gray-300" />
                                                 {tableSearch ? (
                                                     <>
@@ -709,68 +758,94 @@ export default function EditTransaksiPage() {
                                         </tr>
                                     ) : groupingMode === 'none' ? (
                                         filteredItems.map((item, index) => (
-                                            <tr key={item.barang_id} className="hover:bg-blue-50/20 transition-colors border-b border-gray-100 last:border-0">
-                                                <td className="px-2 py-4 text-[10px] font-bold text-gray-400">{(index + 1).toString().padStart(2, '0')}</td>
-                                                <td className="px-3 py-4 max-w-[150px] lg:max-w-xs">
-                                                    <p className="font-bold text-gray-900 text-sm truncate leading-tight" title={item.nama_barang}>
-                                                        {item.nama_barang}
-                                                    </p>
-                                                    <div className="flex flex-col mt-0.5 text-[8px] uppercase tracking-tighter text-gray-400">
-                                                        <span>{item.ud_nama} • {item.ud_kode}</span>
-                                                    </div>
-                                                </td>
-                                                <td className="px-2 py-4 text-center">
-                                                    <input
-                                                        type="number"
-                                                        value={item.qty}
-                                                        onChange={(e) => handleQtyChange(item.barang_id, e.target.value)}
-                                                        onBlur={() => handleQtyBlur(item.barang_id)}
-                                                        onFocus={(e) => e.target.select()}
-                                                        step="any"
-                                                        className="w-16 px-1 py-1.5 border border-gray-200 rounded-md text-center focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none text-xs font-bold"
-                                                    />
-                                                </td>
-                                                <td className="px-2 py-4 text-center">
-                                                    <input
-                                                        type="text"
-                                                        value={item.satuan}
-                                                        onChange={(e) => handleSatuanChange(item.barang_id, e.target.value)}
-                                                        className="w-14 px-1 py-1.5 border border-gray-200 rounded-md text-center focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none text-[10px] font-bold uppercase"
-                                                    />
-                                                </td>
-                                                <td className="px-2 py-4 text-center">
-                                                    <CurrencyInput
-                                                        value={item.harga_jual}
-                                                        onChange={(e) => handleHargaJualChange(item.barang_id, e.target.value)}
-                                                        className="w-24 px-2 py-1.5 text-center text-xs font-bold text-gray-900"
-                                                    />
-                                                </td>
-                                                <td className="px-3 py-4 text-right font-medium text-gray-900 text-xs">
-                                                    {formatCurrency(item.qty * item.harga_jual)}
-                                                </td>
-                                                <td className="px-2 py-4 text-center">
-                                                    <CurrencyInput
-                                                        value={item.harga_modal}
-                                                        onChange={(e) => handleHargaModalChange(item.barang_id, e.target.value)}
-                                                        className="w-24 px-2 py-1.5 text-center text-xs font-medium"
-                                                    />
-                                                </td>
-                                                <td className="px-3 py-4 text-right font-medium text-gray-600 text-xs">
-                                                    {formatCurrency(item.qty * item.harga_modal)}
-                                                </td>
-                                                <td className="px-3 py-4 text-right font-bold text-green-600 text-xs whitespace-nowrap">
-                                                    {formatCurrency((item.qty * item.harga_jual) - (item.qty * item.harga_modal))}
-                                                </td>
-                                                <td className="px-2 py-4 text-center">
-                                                    <button
-                                                        onClick={() => handleRemoveItem(item.barang_id)}
-                                                        className="p-1.5 hover:bg-red-50 rounded-lg text-red-500 transition-colors"
-                                                        title="Hapus Barang"
-                                                    >
-                                                        <Trash2 className="w-4 h-4" />
-                                                    </button>
-                                                </td>
-                                            </tr>
+                                            <Fragment key={item.barang_id}>
+                                                <tr className="hover:bg-blue-50/20 transition-colors border-b border-gray-100 last:border-0">
+                                                    <td className="px-2 py-4 text-[10px] font-bold text-gray-400">{(index + 1).toString().padStart(2, '0')}</td>
+                                                    <td className="px-3 py-4 max-w-[150px] lg:max-w-xs">
+                                                        <p className="font-bold text-gray-900 text-sm truncate leading-tight" title={item.nama_barang}>
+                                                            {item.nama_barang}
+                                                        </p>
+                                                        <div className="flex flex-col mt-0.5 text-[8px] uppercase tracking-tighter text-gray-400">
+                                                            <span>{item.ud_nama} • {item.ud_kode}</span>
+                                                        </div>
+                                                    </td>
+                                                    <td className="px-2 py-4 text-center">
+                                                        <input
+                                                            type="number"
+                                                            value={item.qty}
+                                                            onChange={(e) => handleQtyChange(item.barang_id, e.target.value)}
+                                                            onBlur={() => handleQtyBlur(item.barang_id)}
+                                                            onFocus={(e) => e.target.select()}
+                                                            step="any"
+                                                            className="w-16 px-1 py-1.5 border border-gray-200 rounded-md text-center focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none text-xs font-bold"
+                                                        />
+                                                    </td>
+                                                    <td className="px-2 py-4 text-center">
+                                                        <input
+                                                            type="text"
+                                                            value={item.satuan}
+                                                            onChange={(e) => handleSatuanChange(item.barang_id, e.target.value)}
+                                                            className="w-14 px-1 py-1.5 border border-gray-200 rounded-md text-center focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none text-[10px] font-bold uppercase"
+                                                        />
+                                                    </td>
+                                                    <td className="px-2 py-4 text-center">
+                                                        <CurrencyInput
+                                                            value={item.harga_jual}
+                                                            onChange={(e) => handleHargaJualChange(item.barang_id, e.target.value)}
+                                                            className="w-24 px-2 py-1.5 text-center text-xs font-bold text-gray-900"
+                                                        />
+                                                    </td>
+                                                    <td className="px-3 py-4 text-right font-medium text-gray-900 text-xs">
+                                                        {formatCurrency(item.qty * item.harga_jual)}
+                                                    </td>
+                                                    <td className="px-2 py-4 text-center">
+                                                        <CurrencyInput
+                                                            value={item.harga_modal}
+                                                            onChange={(e) => handleHargaModalChange(item.barang_id, e.target.value)}
+                                                            className="w-24 px-2 py-1.5 text-center text-xs font-medium"
+                                                        />
+                                                    </td>
+                                                    <td className="px-3 py-4 text-right font-medium text-gray-600 text-xs">
+                                                        {formatCurrency(item.qty * item.harga_modal)}
+                                                    </td>
+                                                    <td className="px-3 py-4 text-right font-bold text-green-600 text-xs whitespace-nowrap">
+                                                        {formatCurrency((item.qty * item.harga_jual) - (item.qty * item.harga_modal))}
+                                                    </td>
+                                                    <td className="px-2 py-4 text-center">
+                                                        <button
+                                                            onClick={() => handleRemoveItem(item.barang_id)}
+                                                            className="p-1.5 hover:bg-red-50 rounded-lg text-red-500 transition-colors"
+                                                            title="Hapus Barang"
+                                                        >
+                                                            <Trash2 className="w-4 h-4" />
+                                                        </button>
+                                                    </td>
+                                                </tr>
+                                                {(item.satuan !== item.original_satuan || item.harga_jual !== item.original_harga_jual || item.harga_modal !== item.original_harga_modal) && (
+                                                    <tr className="bg-amber-50/30 border-b border-amber-100">
+                                                        <td colSpan="10" className="px-4 py-2">
+                                                            <div className="flex items-center justify-between">
+                                                                <div className="flex items-center gap-2 text-amber-700 text-[10px] font-bold uppercase tracking-wider">
+                                                                    <span className="w-2 h-2 bg-amber-400 rounded-full animate-pulse" />
+                                                                    Terdapat perubahan data dari Master Barang
+                                                                </div>
+                                                                <button
+                                                                    onClick={() => handleUpdateBarangMaster(item)}
+                                                                    disabled={item.isUpdatingMaster}
+                                                                    className="flex items-center gap-2 px-3 py-1 bg-amber-100 text-amber-700 hover:bg-amber-200 rounded-lg text-[10px] font-black transition-all disabled:opacity-50"
+                                                                >
+                                                                    {item.isUpdatingMaster ? (
+                                                                        <RefreshCw className="w-3 h-3 animate-spin" />
+                                                                    ) : (
+                                                                        <Save className="w-3 h-3" />
+                                                                    )}
+                                                                    UPDATE KE MASTER DATA
+                                                                </button>
+                                                            </div>
+                                                        </td>
+                                                    </tr>
+                                                )}
+                                            </Fragment>
                                         ))
                                     ) : (
                                         (() => {
@@ -791,75 +866,101 @@ export default function EditTransaksiPage() {
                                             return Object.entries(groupedData).map(([udId, group]) => (
                                                 <Fragment key={udId}>
                                                     <tr className="bg-gray-100/50">
-                                                        <td colSpan="8" className="px-4 py-2">
+                                                        <td colSpan="10" className="px-4 py-2">
                                                             <p className="text-[10px] font-bold text-blue-600 uppercase tracking-widest leading-none">
                                                                 {group.ud_nama || 'Tanpa UD'} ({group.items.length} Barang)
                                                             </p>
                                                         </td>
                                                     </tr>
                                                     {group.items.map((item, localIndex) => (
-                                                        <tr key={item.barang_id} className="hover:bg-blue-50/20 transition-colors border-b border-gray-100 last:border-0">
-                                                            <td className="px-2 py-4 text-[10px] font-bold text-gray-400">{(localIndex + 1).toString().padStart(2, '0')}</td>
-                                                            <td className="px-3 py-4 max-w-[150px] lg:max-w-xs">
-                                                                <p className="font-bold text-gray-900 text-sm truncate leading-tight" title={item.nama_barang}>
-                                                                    {item.nama_barang}
-                                                                </p>
-                                                                <div className="flex flex-col mt-0.5 text-[8px] uppercase tracking-tighter text-gray-400">
-                                                                    <span>{item.ud_nama} • {item.ud_kode}</span>
-                                                                </div>
-                                                            </td>
-                                                            <td className="px-2 py-4 text-center">
-                                                                <input
-                                                                    type="number"
-                                                                    value={item.qty}
-                                                                    onChange={(e) => handleQtyChange(item.barang_id, e.target.value)}
-                                                                    onBlur={() => handleQtyBlur(item.barang_id)}
-                                                                    onFocus={(e) => e.target.select()}
-                                                                    step="any"
-                                                                    className="w-16 px-1 py-1.5 border border-gray-200 rounded-md text-center focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none text-xs font-bold"
-                                                                />
-                                                            </td>
-                                                            <td className="px-2 py-4 text-center">
-                                                                <input
-                                                                    type="text"
-                                                                    value={item.satuan}
-                                                                    onChange={(e) => handleSatuanChange(item.barang_id, e.target.value)}
-                                                                    className="w-14 px-1 py-1.5 border border-gray-200 rounded-md text-center focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none text-[10px] font-bold uppercase"
-                                                                />
-                                                            </td>
-                                                            <td className="px-2 py-4 text-center">
-                                                                <CurrencyInput
-                                                                    value={item.harga_jual}
-                                                                    onChange={(e) => handleHargaJualChange(item.barang_id, e.target.value)}
-                                                                    className="w-24 px-2 py-1.5 text-center text-xs font-bold text-gray-900"
-                                                                />
-                                                            </td>
-                                                            <td className="px-3 py-4 text-right font-medium text-gray-900 text-xs">
-                                                                {formatCurrency(item.qty * item.harga_jual)}
-                                                            </td>
-                                                            <td className="px-2 py-4 text-center">
-                                                                <CurrencyInput
-                                                                    value={item.harga_modal}
-                                                                    onChange={(e) => handleHargaModalChange(item.barang_id, e.target.value)}
-                                                                    className="w-24 px-2 py-1.5 text-center text-xs font-medium"
-                                                                />
-                                                            </td>
-                                                            <td className="px-3 py-4 text-right font-medium text-gray-600 text-xs">
-                                                                {formatCurrency(item.qty * item.harga_modal)}
-                                                            </td>
-                                                            <td className="px-3 py-4 text-right font-bold text-green-600 text-xs whitespace-nowrap">
-                                                                {formatCurrency((item.qty * item.harga_jual) - (item.qty * item.harga_modal))}
-                                                            </td>
-                                                            <td className="px-2 py-4 text-center">
-                                                                <button
-                                                                    onClick={() => handleRemoveItem(item.barang_id)}
-                                                                    className="p-1.5 hover:bg-red-50 rounded-lg text-red-500 transition-colors"
-                                                                    title="Hapus Barang"
-                                                                >
-                                                                    <Trash2 className="w-4 h-4" />
-                                                                </button>
-                                                            </td>
-                                                        </tr>
+                                                        <Fragment key={item.barang_id}>
+                                                            <tr className="hover:bg-blue-50/20 transition-colors border-b border-gray-100 last:border-0">
+                                                                <td className="px-2 py-4 text-[10px] font-bold text-gray-400">{(localIndex + 1).toString().padStart(2, '0')}</td>
+                                                                <td className="px-3 py-4 max-w-[150px] lg:max-w-xs">
+                                                                    <p className="font-bold text-gray-900 text-sm truncate leading-tight" title={item.nama_barang}>
+                                                                        {item.nama_barang}
+                                                                    </p>
+                                                                    <div className="flex flex-col mt-0.5 text-[8px] uppercase tracking-tighter text-gray-400">
+                                                                        <span>{item.ud_nama} • {item.ud_kode}</span>
+                                                                    </div>
+                                                                </td>
+                                                                <td className="px-2 py-4 text-center">
+                                                                    <input
+                                                                        type="number"
+                                                                        value={item.qty}
+                                                                        onChange={(e) => handleQtyChange(item.barang_id, e.target.value)}
+                                                                        onBlur={() => handleQtyBlur(item.barang_id)}
+                                                                        onFocus={(e) => e.target.select()}
+                                                                        step="any"
+                                                                        className="w-16 px-1 py-1.5 border border-gray-200 rounded-md text-center focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none text-xs font-bold"
+                                                                    />
+                                                                </td>
+                                                                <td className="px-2 py-4 text-center">
+                                                                    <input
+                                                                        type="text"
+                                                                        value={item.satuan}
+                                                                        onChange={(e) => handleSatuanChange(item.barang_id, e.target.value)}
+                                                                        className="w-14 px-1 py-1.5 border border-gray-200 rounded-md text-center focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none text-[10px] font-bold uppercase"
+                                                                    />
+                                                                </td>
+                                                                <td className="px-2 py-4 text-center">
+                                                                    <CurrencyInput
+                                                                        value={item.harga_jual}
+                                                                        onChange={(e) => handleHargaJualChange(item.barang_id, e.target.value)}
+                                                                        className="w-24 px-2 py-1.5 text-center text-xs font-bold text-gray-900"
+                                                                    />
+                                                                </td>
+                                                                <td className="px-3 py-4 text-right font-medium text-gray-900 text-xs">
+                                                                    {formatCurrency(item.qty * item.harga_jual)}
+                                                                </td>
+                                                                <td className="px-2 py-4 text-center">
+                                                                    <CurrencyInput
+                                                                        value={item.harga_modal}
+                                                                        onChange={(e) => handleHargaModalChange(item.barang_id, e.target.value)}
+                                                                        className="w-24 px-2 py-1.5 text-center text-xs font-medium"
+                                                                    />
+                                                                </td>
+                                                                <td className="px-3 py-4 text-right font-medium text-gray-600 text-xs">
+                                                                    {formatCurrency(item.qty * item.harga_modal)}
+                                                                </td>
+                                                                <td className="px-3 py-4 text-right font-bold text-green-600 text-xs whitespace-nowrap">
+                                                                    {formatCurrency((item.qty * item.harga_jual) - (item.qty * item.harga_modal))}
+                                                                </td>
+                                                                <td className="px-2 py-4 text-center">
+                                                                    <button
+                                                                        onClick={() => handleRemoveItem(item.barang_id)}
+                                                                        className="p-1.5 hover:bg-red-50 rounded-lg text-red-500 transition-colors"
+                                                                        title="Hapus Barang"
+                                                                    >
+                                                                        <Trash2 className="w-4 h-4" />
+                                                                    </button>
+                                                                </td>
+                                                            </tr>
+                                                            {(item.satuan !== item.original_satuan || item.harga_jual !== item.original_harga_jual || item.harga_modal !== item.original_harga_modal) && (
+                                                                <tr className="bg-amber-50/30 border-b border-amber-100">
+                                                                    <td colSpan="10" className="px-4 py-2">
+                                                                        <div className="flex items-center justify-between">
+                                                                            <div className="flex items-center gap-2 text-amber-700 text-[10px] font-bold uppercase tracking-wider">
+                                                                                <span className="w-2 h-2 bg-amber-400 rounded-full animate-pulse" />
+                                                                                Terdapat perubahan data dari Master Barang
+                                                                            </div>
+                                                                            <button
+                                                                                onClick={() => handleUpdateBarangMaster(item)}
+                                                                                disabled={item.isUpdatingMaster}
+                                                                                className="flex items-center gap-2 px-3 py-1 bg-amber-100 text-amber-700 hover:bg-amber-200 rounded-lg text-[10px] font-black transition-all disabled:opacity-50"
+                                                                            >
+                                                                                {item.isUpdatingMaster ? (
+                                                                                    <RefreshCw className="w-3 h-3 animate-spin" />
+                                                                                ) : (
+                                                                                    <Save className="w-3 h-3" />
+                                                                                )}
+                                                                                UPDATE KE MASTER DATA
+                                                                            </button>
+                                                                        </div>
+                                                                    </td>
+                                                                </tr>
+                                                            )}
+                                                        </Fragment>
                                                     ))}
                                                 </Fragment>
                                             ));
@@ -967,6 +1068,20 @@ export default function EditTransaksiPage() {
                                                     {formatCurrency((item.qty * item.harga_jual) - (item.qty * item.harga_modal))}
                                                 </span>
                                             </div>
+                                            {(item.satuan !== item.original_satuan || item.harga_jual !== item.original_harga_jual || item.harga_modal !== item.original_harga_modal) && (
+                                                <button
+                                                    onClick={() => handleUpdateBarangMaster(item)}
+                                                    disabled={item.isUpdatingMaster}
+                                                    className="w-full flex items-center justify-center gap-2 py-2.5 bg-amber-50 text-amber-700 border border-amber-200 rounded-xl text-xs font-bold hover:bg-amber-100 transition-colors disabled:opacity-50"
+                                                >
+                                                    {item.isUpdatingMaster ? (
+                                                        <RefreshCw className="w-4 h-4 animate-spin" />
+                                                    ) : (
+                                                        <Save className="w-4 h-4" />
+                                                    )}
+                                                    Update ke Master Data
+                                                </button>
+                                            )}
                                         </div>
                                     ))}
                                 </div>
@@ -1077,6 +1192,20 @@ export default function EditTransaksiPage() {
                                                             {formatCurrency((item.qty * item.harga_jual) - (item.qty * item.harga_modal))}
                                                         </span>
                                                     </div>
+                                                    {(item.satuan !== item.original_satuan || item.harga_jual !== item.original_harga_jual || item.harga_modal !== item.original_harga_modal) && (
+                                                        <button
+                                                            onClick={() => handleUpdateBarangMaster(item)}
+                                                            disabled={item.isUpdatingMaster}
+                                                            className="ml-6 flex items-center justify-center gap-2 py-2.5 bg-amber-50 text-amber-700 border border-amber-200 rounded-xl text-xs font-bold hover:bg-amber-100 transition-colors disabled:opacity-50"
+                                                        >
+                                                            {item.isUpdatingMaster ? (
+                                                                <RefreshCw className="w-4 h-4 animate-spin" />
+                                                            ) : (
+                                                                <Save className="w-4 h-4" />
+                                                            )}
+                                                            Update ke Master Data
+                                                        </button>
+                                                    )}
                                                 </div>
                                             ))}
                                         </div>

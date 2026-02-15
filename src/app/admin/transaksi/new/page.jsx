@@ -14,6 +14,7 @@ import {
     ArrowLeft,
     X,
     FileSpreadsheet,
+    RefreshCw,
 } from 'lucide-react';
 import { transaksiAPI, periodeAPI, dapurAPI, barangAPI, udAPI } from '@/lib/api';
 import DatePicker from '@/components/ui/DatePicker';
@@ -158,6 +159,9 @@ export default function NewTransaksiPage() {
                 ud_nama: barang.ud_id?.nama_ud,
                 ud_kode: barang.ud_id?.kode_ud,
                 qty: 1,
+                original_satuan: barang.satuan,
+                original_harga_jual: barang.harga_jual,
+                original_harga_modal: barang.harga_modal || 0,
             },
         ]);
 
@@ -205,6 +209,9 @@ export default function NewTransaksiPage() {
                         ud_nama: udList.find(ud => ud._id === (createdBarang.ud_id?._id || createdBarang.ud_id))?.nama_ud,
                         ud_kode: udList.find(ud => ud._id === (createdBarang.ud_id?._id || createdBarang.ud_id))?.kode_ud,
                         qty: 1,
+                        original_satuan: createdBarang.satuan,
+                        original_harga_jual: createdBarang.harga_jual,
+                        original_harga_modal: createdBarang.harga_modal || 0,
                     },
                 ]);
 
@@ -266,6 +273,36 @@ export default function NewTransaksiPage() {
         setItems((prev) =>
             prev.map((item) => (item.barang_id === barangId ? { ...item, harga_modal: newHarga } : item))
         );
+    };
+
+    const handleUpdateBarangMaster = async (item) => {
+        try {
+            // Optimistically set loading in item
+            setItems(prev => prev.map(i => i.barang_id === item.barang_id ? { ...i, isUpdatingMaster: true } : i));
+
+            const payload = {
+                satuan: item.satuan,
+                harga_jual: item.harga_jual,
+                harga_modal: item.harga_modal
+            };
+
+            const response = await barangAPI.update(item.barang_id, payload);
+
+            if (response.data.success) {
+                toast.success(`Data master ${item.nama_barang} berhasil diperbarui`);
+                // Update original values to current values
+                setItems(prev => prev.map(i => i.barang_id === item.barang_id ? {
+                    ...i,
+                    original_satuan: item.satuan,
+                    original_harga_jual: item.harga_jual,
+                    original_harga_modal: item.harga_modal,
+                    isUpdatingMaster: false
+                } : i));
+            }
+        } catch (error) {
+            toast.error(getErrorMessage(error));
+            setItems(prev => prev.map(i => i.barang_id === item.barang_id ? { ...i, isUpdatingMaster: false } : i));
+        }
     };
 
     const handleRemoveItem = (barangId) => {
@@ -636,6 +673,20 @@ export default function NewTransaksiPage() {
                                                 <td className="px-4 py-4">
                                                     <p className="font-medium text-gray-900">{item.nama_barang}</p>
                                                     <p className="text-[10px] text-gray-400 uppercase tracking-tighter">{item.ud_nama} • {item.ud_kode}</p>
+                                                    {(item.satuan !== item.original_satuan || item.harga_jual !== item.original_harga_jual || item.harga_modal !== item.original_harga_modal) && (
+                                                        <button
+                                                            onClick={() => handleUpdateBarangMaster(item)}
+                                                            disabled={item.isUpdatingMaster}
+                                                            className="mt-2 inline-flex items-center gap-1.5 px-2 py-1 bg-amber-50 text-amber-700 border border-amber-200 rounded text-[10px] font-bold hover:bg-amber-100 transition-colors disabled:opacity-50"
+                                                        >
+                                                            {item.isUpdatingMaster ? (
+                                                                <RefreshCw className="w-3 h-3 animate-spin" />
+                                                            ) : (
+                                                                <Save className="w-3 h-3" />
+                                                            )}
+                                                            Update ke Master Data
+                                                        </button>
+                                                    )}
                                                 </td>
                                                 <td className="px-4 py-4 text-center">
                                                     <input
@@ -723,6 +774,20 @@ export default function NewTransaksiPage() {
                                                             <td className="px-4 py-4">
                                                                 <p className="font-medium text-gray-900">{item.nama_barang}</p>
                                                                 <p className="text-[10px] text-gray-400 uppercase tracking-tighter">{item.ud_nama} • {item.ud_kode}</p>
+                                                                {(item.satuan !== item.original_satuan || item.harga_jual !== item.original_harga_jual || item.harga_modal !== item.original_harga_modal) && (
+                                                                    <button
+                                                                        onClick={() => handleUpdateBarangMaster(item)}
+                                                                        disabled={item.isUpdatingMaster}
+                                                                        className="mt-2 inline-flex items-center gap-1.5 px-2 py-1 bg-amber-50 text-amber-700 border border-amber-200 rounded text-[10px] font-bold hover:bg-amber-100 transition-colors disabled:opacity-50"
+                                                                    >
+                                                                        {item.isUpdatingMaster ? (
+                                                                            <RefreshCw className="w-3 h-3 animate-spin" />
+                                                                        ) : (
+                                                                            <Save className="w-3 h-3" />
+                                                                        )}
+                                                                        Update ke Master Data
+                                                                    </button>
+                                                                )}
                                                             </td>
                                                             <td className="px-4 py-4 text-center">
                                                                 <input
@@ -883,6 +948,20 @@ export default function NewTransaksiPage() {
                                                     {formatCurrency((item.qty * item.harga_jual) - (item.qty * item.harga_modal))}
                                                 </span>
                                             </div>
+                                            {(item.satuan !== item.original_satuan || item.harga_jual !== item.original_harga_jual || item.harga_modal !== item.original_harga_modal) && (
+                                                <button
+                                                    onClick={() => handleUpdateBarangMaster(item)}
+                                                    disabled={item.isUpdatingMaster}
+                                                    className="w-full flex items-center justify-center gap-2 py-2.5 bg-amber-50 text-amber-700 border border-amber-200 rounded-xl text-xs font-bold hover:bg-amber-100 transition-colors disabled:opacity-50"
+                                                >
+                                                    {item.isUpdatingMaster ? (
+                                                        <RefreshCw className="w-4 h-4 animate-spin" />
+                                                    ) : (
+                                                        <Save className="w-4 h-4" />
+                                                    )}
+                                                    Update ke Master Data
+                                                </button>
+                                            )}
                                         </div>
                                     ))}
                                 </div>
@@ -993,6 +1072,20 @@ export default function NewTransaksiPage() {
                                                             {formatCurrency((item.qty * item.harga_jual) - (item.qty * item.harga_modal))}
                                                         </span>
                                                     </div>
+                                                    {(item.satuan !== item.original_satuan || item.harga_jual !== item.original_harga_jual || item.harga_modal !== item.original_harga_modal) && (
+                                                        <button
+                                                            onClick={() => handleUpdateBarangMaster(item)}
+                                                            disabled={item.isUpdatingMaster}
+                                                            className="ml-6 flex items-center justify-center gap-2 py-2.5 bg-amber-50 text-amber-700 border border-amber-200 rounded-xl text-xs font-bold hover:bg-amber-100 transition-colors disabled:opacity-50"
+                                                        >
+                                                            {item.isUpdatingMaster ? (
+                                                                <RefreshCw className="w-4 h-4 animate-spin" />
+                                                            ) : (
+                                                                <Save className="w-4 h-4" />
+                                                            )}
+                                                            Update ke Master Data
+                                                        </button>
+                                                    )}
                                                 </div>
                                             ))}
                                         </div>
@@ -1001,86 +1094,86 @@ export default function NewTransaksiPage() {
                             )}
                         </div>
                     </div>
+                </div>
+            </div>
 
-                    {/* Summary Section (Mobile Optimized) */}
-                    {items.length > 0 && (
-                        <div className="bg-gray-50 rounded-lg p-4 space-y-3">
-                            <div className="flex justify-between items-center text-sm">
-                                <span className="text-gray-500">Total Modal</span>
-                                <span className="text-gray-900 font-medium">{formatCurrency(calculateTotalModal())}</span>
-                            </div>
-                            <div className="flex justify-between items-center text-sm">
-                                <span className="text-gray-500">Estimasi Keuntungan</span>
-                                <span className="text-green-600 font-bold">{formatCurrency(calculateTotal() - calculateTotalModal())}</span>
-                            </div>
-                            <div className="pt-2 border-t border-gray-200 flex justify-between items-center">
-                                <span className="text-base font-bold text-gray-700">TOTAL</span>
-                                <span className="text-2xl font-black text-blue-600 tracking-tight">
-                                    {formatCurrency(calculateTotal())}
-                                </span>
-                            </div>
-                        </div>
-                    )}
-
-                    {/* Actions - Desktop */}
-                    <div className="hidden md:flex justify-end gap-3 mt-8">
-                        <button
-                            onClick={() => router.back()}
-                            disabled={submitting}
-                            className="px-6 py-2.5 border border-gray-300 rounded-lg text-gray-700 font-medium
-                     hover:bg-gray-50 transition-colors disabled:opacity-50"
-                        >
-                            Batal
-                        </button>
-                        <button
-                            onClick={() => handleSubmit(false)}
-                            disabled={submitting || items.length === 0}
-                            className="inline-flex items-center gap-2 px-6 py-2.5 bg-gray-600 text-white rounded-lg font-medium
-                     hover:bg-gray-700 transition-colors disabled:opacity-50"
-                        >
-                            <Save className="w-5 h-5" />
-                            Simpan Draft
-                        </button>
-                        <button
-                            onClick={() => handleSubmit(true)}
-                            disabled={submitting || items.length === 0}
-                            className="inline-flex items-center gap-2 px-6 py-2.5 bg-green-600 text-white rounded-lg font-medium
-                     hover:bg-green-700 transition-colors disabled:opacity-50 shadow-lg shadow-green-500/20"
-                        >
-                            {submitting ? (
-                                <Loader2 className="w-5 h-5 animate-spin" />
-                            ) : (
-                                <CheckCircle className="w-5 h-5" />
-                            )}
-                            Simpan & Selesai
-                        </button>
+            {/* Summary Section (Mobile Optimized) */}
+            {items.length > 0 && (
+                <div className="bg-gray-50 rounded-lg p-4 space-y-3">
+                    <div className="flex justify-between items-center text-sm">
+                        <span className="text-gray-500">Total Modal</span>
+                        <span className="text-gray-900 font-medium">{formatCurrency(calculateTotalModal())}</span>
+                    </div>
+                    <div className="flex justify-between items-center text-sm">
+                        <span className="text-gray-500">Estimasi Keuntungan</span>
+                        <span className="text-green-600 font-bold">{formatCurrency(calculateTotal() - calculateTotalModal())}</span>
+                    </div>
+                    <div className="pt-2 border-t border-gray-200 flex justify-between items-center">
+                        <span className="text-base font-bold text-gray-700">TOTAL</span>
+                        <span className="text-2xl font-black text-blue-600 tracking-tight">
+                            {formatCurrency(calculateTotal())}
+                        </span>
                     </div>
                 </div>
+            )}
 
-                {/* Mobile Bottom Action Bar */}
-                <div className="md:hidden fixed bottom-16 left-0 right-0 p-4 bg-white border-t border-gray-200 shadow-[0_-4px_12px_rgba(0,0,0,0.05)] z-40">
-                    <div className="flex gap-2">
-                        <button
-                            onClick={() => handleSubmit(false)}
-                            disabled={submitting || items.length === 0}
-                            className="flex-1 flex flex-col items-center justify-center gap-1 py-2 bg-gray-50 text-gray-700 rounded-xl border border-gray-200 disabled:opacity-50"
-                        >
-                            <Save className="w-5 h-5" />
-                            <span className="text-[10px] font-bold uppercase">Draft</span>
-                        </button>
-                        <button
-                            onClick={() => handleSubmit(true)}
-                            disabled={submitting || items.length === 0}
-                            className="flex-[2.5] flex items-center justify-center gap-2 py-3.5 bg-green-600 text-white rounded-xl font-bold shadow-lg shadow-green-500/20 active:scale-[0.98] transition-transform disabled:opacity-50"
-                        >
-                            {submitting ? (
-                                <Loader2 className="w-5 h-5 animate-spin" />
-                            ) : (
-                                <CheckCircle className="w-5 h-5" />
-                            )}
-                            Simpan & Selesai
-                        </button>
-                    </div>
+            {/* Actions - Desktop */}
+            <div className="hidden md:flex justify-end gap-3 mt-8">
+                <button
+                    onClick={() => router.back()}
+                    disabled={submitting}
+                    className="px-6 py-2.5 border border-gray-300 rounded-lg text-gray-700 font-medium
+                     hover:bg-gray-50 transition-colors disabled:opacity-50"
+                >
+                    Batal
+                </button>
+                <button
+                    onClick={() => handleSubmit(false)}
+                    disabled={submitting || items.length === 0}
+                    className="inline-flex items-center gap-2 px-6 py-2.5 bg-gray-600 text-white rounded-lg font-medium
+                     hover:bg-gray-700 transition-colors disabled:opacity-50"
+                >
+                    <Save className="w-5 h-5" />
+                    Simpan Draft
+                </button>
+                <button
+                    onClick={() => handleSubmit(true)}
+                    disabled={submitting || items.length === 0}
+                    className="inline-flex items-center gap-2 px-6 py-2.5 bg-green-600 text-white rounded-lg font-medium
+                     hover:bg-green-700 transition-colors disabled:opacity-50 shadow-lg shadow-green-500/20"
+                >
+                    {submitting ? (
+                        <Loader2 className="w-5 h-5 animate-spin" />
+                    ) : (
+                        <CheckCircle className="w-5 h-5" />
+                    )}
+                    Simpan & Selesai
+                </button>
+            </div>
+
+            {/* Mobile Bottom Action Bar */}
+            <div className="md:hidden fixed bottom-16 left-0 right-0 p-4 bg-white border-t border-gray-200 shadow-[0_-4px_12px_rgba(0,0,0,0.05)] z-40">
+                <div className="flex gap-2">
+                    <button
+                        onClick={() => handleSubmit(false)}
+                        disabled={submitting || items.length === 0}
+                        className="flex-1 flex flex-col items-center justify-center gap-1 py-2 bg-gray-50 text-gray-700 rounded-xl border border-gray-200 disabled:opacity-50"
+                    >
+                        <Save className="w-5 h-5" />
+                        <span className="text-[10px] font-bold uppercase">Draft</span>
+                    </button>
+                    <button
+                        onClick={() => handleSubmit(true)}
+                        disabled={submitting || items.length === 0}
+                        className="flex-[2.5] flex items-center justify-center gap-2 py-3.5 bg-green-600 text-white rounded-xl font-bold shadow-lg shadow-green-500/20 active:scale-[0.98] transition-transform disabled:opacity-50"
+                    >
+                        {submitting ? (
+                            <Loader2 className="w-5 h-5 animate-spin" />
+                        ) : (
+                            <CheckCircle className="w-5 h-5" />
+                        )}
+                        Simpan & Selesai
+                    </button>
                 </div>
             </div>
 
