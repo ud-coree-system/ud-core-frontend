@@ -539,6 +539,9 @@ export default function EditTransaksiPage() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
                     {/* Periode */}
                     <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                            Periode <span className="text-red-500">*</span>
+                        </label>
                         <SearchableSelect
                             value={periodeId}
                             onChange={(e) => {

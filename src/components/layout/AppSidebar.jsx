@@ -163,7 +163,7 @@ const AppSidebar = () => {
             onMouseLeave={() => setIsHovered(false)}
         >
             {/* Logo Section */}
-            <div className="pt-4 pb-0 flex justify-center">
+            <div className={`flex justify-center pt-0 pb-0 ${isExpanded || isHovered || isMobileOpen ? '-mt-6' : 'mt-4'}`}>
                 <Link
                     href="/admin"
                     onClick={() => {
