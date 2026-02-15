@@ -17,8 +17,9 @@ import {
 import { transaksiAPI, periodeAPI, dapurAPI, barangAPI, udAPI } from '@/lib/api';
 import DatePicker from '@/components/ui/DatePicker';
 import { useToast } from '@/contexts/ToastContext';
-import { getErrorMessage, formatCurrency, debounce, normalizeId } from '@/lib/utils';
+import { getErrorMessage, formatCurrency, formatDateShort, debounce, normalizeId } from '@/lib/utils';
 import CurrencyInput from '@/components/ui/CurrencyInput';
+import SearchableSelect from '@/components/ui/SearchableSelect';
 
 const SATUAN_OPTIONS = [
     { value: 'pcs', label: 'Pieces (pcs)' },
@@ -538,22 +539,30 @@ export default function EditTransaksiPage() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
                     {/* Periode */}
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Periode <span className="text-red-500">*</span>
-                        </label>
-                        <select
+                        <SearchableSelect
                             value={periodeId}
-                            onChange={(e) => setPeriodeId(e.target.value)}
-                            className="w-full px-3 py-2.5 border border-gray-200 rounded-lg
-                       focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 bg-white text-gray-900"
-                        >
-                            <option value="">Pilih Periode</option>
-                            {periodeList.map((p) => (
-                                <option key={p._id} value={p._id}>
-                                    {p.nama_periode}
-                                </option>
-                            ))}
-                        </select>
+                            onChange={(e) => {
+                                const newPeriodeId = e.target.value;
+                                setPeriodeId(newPeriodeId);
+
+                                // Adjust date if outside range
+                                if (newPeriodeId) {
+                                    const selectedP = periodeList.find(p => p._id === newPeriodeId);
+                                    if (selectedP) {
+                                        const start = new Date(selectedP.tanggal_mulai);
+                                        const end = new Date(selectedP.tanggal_selesai);
+                                        if (tanggal < start) setTanggal(start);
+                                        else if (tanggal > end) setTanggal(end);
+                                    }
+                                }
+                            }}
+                            options={periodeList.map(p => ({
+                                value: p._id,
+                                label: `${p.nama_periode} (${formatDateShort(p.tanggal_mulai)} - ${formatDateShort(p.tanggal_selesai)})`
+                            }))}
+                            placeholder="Pilih Periode"
+                            searchPlaceholder="Cari periode..."
+                        />
                     </div>
 
                     {/* Dapur */}
@@ -561,19 +570,16 @@ export default function EditTransaksiPage() {
                         <label className="block text-sm font-medium text-gray-700 mb-1">
                             Dapur <span className="text-red-500">*</span>
                         </label>
-                        <select
+                        <SearchableSelect
                             value={dapurId}
                             onChange={(e) => setDapurId(e.target.value)}
-                            className="w-full px-3 py-2.5 border border-gray-200 rounded-lg
-                       focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 bg-white text-gray-900"
-                        >
-                            <option value="">Pilih Dapur</option>
-                            {dapurList.map((d) => (
-                                <option key={d._id} value={d._id}>
-                                    {d.nama_dapur}
-                                </option>
-                            ))}
-                        </select>
+                            options={dapurList.map(d => ({
+                                value: d._id,
+                                label: d.nama_dapur
+                            }))}
+                            placeholder="Pilih Dapur"
+                            searchPlaceholder="Cari dapur..."
+                        />
                     </div>
 
                     {/* Tanggal */}
@@ -585,6 +591,8 @@ export default function EditTransaksiPage() {
                             selected={tanggal}
                             onChange={(date) => setTanggal(date)}
                             placeholder="Pilih tanggal"
+                            minDate={periodeId ? new Date(periodeList.find(p => p._id === periodeId)?.tanggal_mulai) : null}
+                            maxDate={periodeId ? new Date(periodeList.find(p => p._id === periodeId)?.tanggal_selesai) : null}
                         />
                     </div>
                 </div>
@@ -595,7 +603,7 @@ export default function EditTransaksiPage() {
                         <label className="block text-sm font-medium text-gray-700 mb-1">
                             Filter Unit Dagang (UD)
                         </label>
-                        <select
+                        <SearchableSelect
                             value={selectedUdId}
                             onChange={(e) => {
                                 const val = e.target.value;
@@ -604,16 +612,16 @@ export default function EditTransaksiPage() {
                                     searchBarang(searchQuery, val);
                                 }
                             }}
-                            className="w-full px-3 py-2.5 border border-gray-200 rounded-lg
-                           focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 bg-white text-gray-900"
-                        >
-                            <option value="">Semua UD (Tanpa Filter)</option>
-                            {udList.map((ud) => (
-                                <option key={ud._id} value={ud._id}>
-                                    {ud.nama_ud} ({ud.kode_ud})
-                                </option>
-                            ))}
-                        </select>
+                            options={[
+                                { value: '', label: 'Semua UD (Tanpa Filter)' },
+                                ...udList.map((ud) => ({
+                                    value: ud._id,
+                                    label: `${ud.nama_ud} (${ud.kode_ud})`
+                                }))
+                            ]}
+                            placeholder="Pilih Unit Dagang"
+                            searchPlaceholder="Cari Unit Dagang..."
+                        />
                     </div>
 
                     <div>

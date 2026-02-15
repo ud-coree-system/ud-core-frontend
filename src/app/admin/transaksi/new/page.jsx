@@ -596,7 +596,7 @@ export default function NewTransaksiPage() {
                         <label className="block text-sm font-medium text-gray-700 mb-1">
                             Filter Unit Dagang (UD)
                         </label>
-                        <select
+                        <SearchableSelect
                             value={selectedUdId}
                             onChange={(e) => {
                                 const val = e.target.value;
@@ -605,16 +605,16 @@ export default function NewTransaksiPage() {
                                     searchBarang(searchQuery, val);
                                 }
                             }}
-                            className="w-full px-3 py-2.5 border border-gray-200 rounded-lg
-                           focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 bg-white text-gray-900"
-                        >
-                            <option value="">Semua UD (Tanpa Filter)</option>
-                            {udList.map((ud) => (
-                                <option key={ud._id} value={ud._id}>
-                                    {ud.nama_ud} ({ud.kode_ud})
-                                </option>
-                            ))}
-                        </select>
+                            options={[
+                                { value: '', label: 'Semua UD (Tanpa Filter)' },
+                                ...udList.map((ud) => ({
+                                    value: ud._id,
+                                    label: `${ud.nama_ud} (${ud.kode_ud})`
+                                }))
+                            ]}
+                            placeholder="Pilih Unit Dagang"
+                            searchPlaceholder="Cari Unit Dagang..."
+                        />
                     </div>
 
                     <div>
