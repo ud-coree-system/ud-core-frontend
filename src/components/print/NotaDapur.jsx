@@ -87,6 +87,15 @@ const PrintStyles = () => (
             font-family: Arial, Helvetica, sans-serif !important; 
             font-size: 12pt !important;
         }
+        .font-verdana { 
+            font-family: Verdana, Geneva, sans-serif !important; 
+        }
+        .font-leelawadee { 
+            font-family: 'Leelawadee UI Semilight', 'Leelawadee UI', 'Segoe UI', sans-serif !important; 
+        }
+        .font-californian { 
+            font-family: 'Californian FB', serif !important; 
+        }
         .no-repeat-header thead {
             display: table-row-group !important;
         }
@@ -401,7 +410,7 @@ const TemplateBanyuMas = ({ data, udData, udId }) => (
 
 // Template 5: UD BOGA FOOD RAYA
 const TemplateBogaFood = ({ data, udData, udId }) => (
-    <div id={`nota-${udId}`} className="nota-container page-break font-arial text-black bg-white">
+    <div id={`nota-${udId}`} className="nota-container page-break font-californian text-black bg-white">
         <div className="flex justify-between items-center mb-4">
             <div className="w-1/3 text-left">
                 <div className="font-bold text-lg">UD BOGA FOOD RAYA</div>
@@ -471,7 +480,7 @@ const TemplateBogaFood = ({ data, udData, udId }) => (
 
 // Template 6: UD KAYA ALAM
 const TemplateKayaAlam = ({ data, udData, udId }) => (
-    <div id={`nota-${udId}`} className="nota-container page-break font-arial text-black bg-white">
+    <div id={`nota-${udId}`} className="nota-container page-break font-verdana text-black bg-white">
         <div className="flex justify-center items-center gap-12 mb-6">
             <div>
                 <img src="/LOGO KAYA ALAM.jpeg" alt="Kaya Alam Logo" className="h-44 w-auto" />
@@ -536,7 +545,7 @@ const TemplateKayaAlam = ({ data, udData, udId }) => (
 // Template 7: UD MAYUR SEHAT
 // Template 7: UD MAYUR SEHAT
 const TemplateMayurSehat = ({ data, udData, udId }) => (
-    <div id={`nota-${udId}`} className="nota-container page-break font-arial text-black bg-white">
+    <div id={`nota-${udId}`} className="nota-container page-break font-leelawadee text-black bg-white">
         <div className="flex border-2 border-black mb-4">
             <div className="w-1/2 p-0.5 flex justify-center items-center border-r-2 border-black">
                 <img src="/LOGO MAYUR SEHAT.jpeg" alt="Mayur Sehat Logo" className="h-40 w-auto" />
