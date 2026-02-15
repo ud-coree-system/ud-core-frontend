@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { formatCurrency, formatDate } from '@/lib/utils';
+import { formatCurrency, formatDate, formatNumber } from '@/lib/utils';
 
 /**
  * NotaDapur Component
@@ -86,6 +86,9 @@ const PrintStyles = () => (
         .font-arial { 
             font-family: Arial, Helvetica, sans-serif !important; 
             font-size: 12pt !important;
+        }
+        .no-repeat-header thead {
+            display: table-row-group !important;
         }
     `}} />
 );
@@ -533,80 +536,76 @@ const TemplateKayaAlam = ({ data, udData, udId }) => (
 );
 
 // Template 7: UD MAYUR SEHAT
+// Template 7: UD MAYUR SEHAT
 const TemplateMayurSehat = ({ data, udData, udId }) => (
     <div id={`nota-${udId}`} className="nota-container page-break font-arial text-black bg-white">
-        <div className="flex justify-between items-start mb-4">
-            <div className="flex flex-col items-center flex-1">
-                <img src="/LOGO MAYUR SEHAT.jpeg" alt="Mayur Sehat Logo" className="h-20 w-auto" />
-                <div className="text-[14px] font-bold text-center mt-2">
-                    UD MAYUR SEHAT<br />
-                    Mataram - NTB
-                </div>
+        <div className="flex border-2 border-black mb-4">
+            <div className="w-1/2 p-4 flex justify-center items-center border-r-2 border-black">
+                <img src="/LOGO MAYUR SEHAT.jpeg" alt="Mayur Sehat Logo" className="h-28 w-auto" />
             </div>
-            <div className="border border-black">
-                <table className="text-sm">
-                    <tbody>
-                        <tr className="border-b border-black">
-                            <td className="px-2 py-1 font-bold border-r border-black">Tgl.</td>
-                            <td className="px-2 py-1">{formatDate(data.tanggal)}</td>
-                        </tr>
-                        <tr className="border-b border-black">
-                            <td className="px-2 py-1 font-bold border-r border-black">Kepada</td>
-                            <td className="px-2 py-1">{data.dapur_id?.nama_dapur}</td>
-                        </tr>
-                        <tr>
-                            <td className="px-2 py-1 font-bold border-r border-black">Alamat</td>
-                            <td className="px-2 py-1">{data.dapur_id?.alamat}</td>
-                        </tr>
-                    </tbody>
-                </table>
+            <div className="w-1/2 flex flex-col">
+                <div className="p-2 border-b-2 border-black text-center h-12 flex items-center justify-center text-lg">
+                    Tanggal Transaksi. {(() => {
+                        const d = new Date(data.tanggal);
+                        return `${d.getDate()}-${d.getMonth() + 1}-${d.getFullYear()}`;
+                    })()}
+                </div>
+                <div className="border-b-2 border-black h-8 flex items-center justify-center"></div>
+                <div className="p-2 text-center h-12 flex items-center justify-center text-lg font-bold italic">
+                    Tertuju. {data.dapur_id?.nama_dapur || 'Dapur SPPG Monjok'}
+                </div>
             </div>
         </div>
 
-        <table className="nota-table">
+        <table className="nota-table border-2 border-black no-repeat-header">
             <thead>
-                <tr>
-                    <th className="w-10">No.</th>
-                    <th>Nama Pesanan</th>
-                    <th className="text-center w-16">Qty.</th>
-                    <th className="text-center w-16">Sat.</th>
-                    <th className="text-right w-24">Harga</th>
-                    <th className="text-right w-32">Jumlah</th>
+                <tr className="bg-gray-200">
+                    <th className="w-16 text-center border-2 border-black font-bold">No.</th>
+                    <th className="text-center border-2 border-black font-bold">Barang</th>
+                    <th className="text-center w-24 border-2 border-black font-bold">Bnyk</th>
+                    <th className="text-center w-24 border-2 border-black font-bold">Sat.</th>
+                    <th className="text-center w-36 border-2 border-black font-bold">Harga</th>
+                    <th className="text-center w-40 border-2 border-black font-bold">Total</th>
                 </tr>
             </thead>
             <tbody>
                 {udData.items.map((item, idx) => (
                     <tr key={idx}>
-                        <td className="text-center">{idx + 1}</td>
-                        <td>{item.nama_barang || item.barang_id?.nama_barang}</td>
-                        <td className="text-center">{item.qty}</td>
-                        <td className="text-center">{item.satuan || item.barang_id?.satuan}</td>
-                        <td className="text-right">{formatCurrency(item.harga_jual).replace('Rp', '')}</td>
-                        <td className="text-right">{formatCurrency(item.subtotal_jual).replace('Rp', '')}</td>
+                        <td className="text-center border border-black bg-gray-200 font-bold">{idx + 1}</td>
+                        <td className="border border-black px-2">{item.nama_barang || item.barang_id?.nama_barang}</td>
+                        <td className="text-center border border-black">{formatNumber(item.qty)}</td>
+                        <td className="text-center border border-black">{item.satuan || item.barang_id?.satuan}</td>
+                        <td className="text-right border border-black px-2">{formatCurrency(item.harga_jual).replace('Rp', '')}</td>
+                        <td className="text-right border border-black px-2">{formatCurrency(item.subtotal_jual).replace('Rp', '')}</td>
                     </tr>
                 ))}
                 {[...Array(Math.max(0, 15 - udData.items.length))].map((_, idx) => (
                     <tr key={`empty-${idx}`}>
-                        <td className="h-6">&nbsp;</td><td></td><td></td><td></td><td></td><td></td>
+                        <td className="h-6 text-center border border-black bg-gray-200 font-bold">{udData.items.length + idx + 1}</td>
+                        <td className="border border-black"></td><td className="border border-black"></td><td className="border border-black"></td><td className="border border-black"></td><td className="border border-black"></td>
                     </tr>
                 ))}
             </tbody>
             <tfoot>
-                <tr>
-                    <td colSpan="5" className="text-right font-bold border-t-2">TOTAL (Rp.)</td>
-                    <td className="text-right font-bold border-t-2">{formatCurrency(udData.total).replace('Rp', '')}</td>
+                <tr className="font-bold">
+                    <td colSpan="5" className="text-right border-2 border-black bg-white px-2">DISCOUNT</td>
+                    <td className="text-right border-2 border-black bg-white px-2">-</td>
+                </tr>
+                <tr className="font-bold">
+                    <td colSpan="5" className="text-right border-2 border-black bg-gray-100 uppercase px-2">TOTAL (Rp.)</td>
+                    <td className="text-right border-2 border-black bg-white px-2">{formatCurrency(udData.total).replace('Rp', '')}</td>
                 </tr>
             </tfoot>
         </table>
 
-        <div className="flex justify-between mt-12 px-12 no-break">
+        <div className="flex justify-between mt-12 px-32 no-break">
             <div className="text-center">
-                <div>Penerima,</div>
-                <div className="mt-16 border-t border-black w-40"></div>
+                <div className="mb-20 font-bold">Penerima,</div>
+                <div className="border-t border-dashed border-black w-48 mx-auto"></div>
             </div>
             <div className="text-center">
-                <div>Hormat Kami,</div>
-                <div className="mt-16 border-t border-black w-40"></div>
+                <div className="mb-20 font-bold">Pengirim,</div>
+                <div className="border-t border-dashed border-black w-56 mx-auto"></div>
             </div>
         </div>
     </div>
