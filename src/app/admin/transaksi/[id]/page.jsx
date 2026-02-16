@@ -9,7 +9,7 @@ import {
     Printer,
     CheckCircle,
 } from 'lucide-react';
-import { getErrorMessage, formatCurrency, formatDate, getStatusClass, toLocalDate, formatDateFilename, normalizeId } from '@/lib/utils';
+import { getErrorMessage, formatCurrency, formatNumber, formatDate, getStatusClass, toLocalDate, formatDateFilename, normalizeId } from '@/lib/utils';
 import { transaksiAPI, barangAPI, udAPI } from '@/lib/api';
 import { useToast } from '@/contexts/ToastContext';
 import NotaDapur from '@/components/print/NotaDapur';
@@ -156,7 +156,8 @@ export default function TransaksiDetailPage() {
     const handlePrintAll = () => {
         const originalTitle = document.title;
         const dateStr = data.tanggal ? formatDateFilename(data.tanggal) : 'date';
-        const newTitle = `Semua_Nota_${dateStr}`;
+        const dapurName = data.dapur_id?.nama_dapur?.replace(/\s+/g, '_') || 'Dapur';
+        const newTitle = `Nota_${dapurName}_Semua_${dateStr}`;
         document.title = newTitle;
 
         setPrinting('all');
@@ -176,8 +177,9 @@ export default function TransaksiDetailPage() {
         const udData = itemsByUD[udId];
         const originalTitle = document.title;
         const dateStr = data.tanggal ? formatDateFilename(data.tanggal) : 'date';
+        const dapurName = data.dapur_id?.nama_dapur?.replace(/\s+/g, '_') || 'Dapur';
         const udName = udData?.nama_ud || 'UD';
-        const newTitle = `Nota_${udName.replace(/\s+/g, '_')}_${dateStr}`;
+        const newTitle = `Nota_${dapurName}_${udName.replace(/\s+/g, '_')}_${dateStr}`;
         document.title = newTitle;
 
         setPrinting(udId);
@@ -196,7 +198,8 @@ export default function TransaksiDetailPage() {
         try {
             setDownloading(udId);
             const dateStr = data.tanggal ? formatDateFilename(data.tanggal) : 'date';
-            const fileName = `Nota_${udName.replace(/\s+/g, '_')}_${dateStr}.pdf`;
+            const dapurName = data.dapur_id?.nama_dapur?.replace(/\s+/g, '_') || 'Dapur';
+            const fileName = `Nota_${dapurName}_${udName.replace(/\s+/g, '_')}_${dateStr}.pdf`;
 
             // Persistent title for mobile tab identification
             document.title = fileName.replace('.pdf', '');
@@ -226,14 +229,15 @@ export default function TransaksiDetailPage() {
         try {
             setDownloadingAll(true);
             const dateStr = data.tanggal ? formatDateFilename(data.tanggal) : 'date';
+            const dapurName = data.dapur_id?.nama_dapur?.replace(/\s+/g, '_') || 'Dapur';
 
-            document.title = `Semua_Nota_${dateStr}`;
+            document.title = `Nota_${dapurName}_Semua_${dateStr}`;
 
             // Beri waktu React untuk render komponen ke DOM
             await new Promise(resolve => setTimeout(resolve, 300));
 
             for (const [udId, udData] of udEntries) {
-                const fileName = `Nota_${udData.nama_ud.replace(/\s+/g, '_')}_${dateStr}.pdf`;
+                const fileName = `Nota_${dapurName}_${udData.nama_ud.replace(/\s+/g, '_')}_${dateStr}.pdf`;
                 await downloadPDF(`pdf-nota-${udId}`, fileName);
                 // Small delay to prevent browser blocking multiple downloads
                 await new Promise(resolve => setTimeout(resolve, 500));
@@ -461,7 +465,7 @@ export default function TransaksiDetailPage() {
                                                     {item.nama_barang || item.barang_id?.nama_barang || '-'}
                                                 </p>
                                             </td>
-                                            <td className="px-4 py-4 text-center font-bold text-gray-700 text-sm">{item.qty}</td>
+                                            <td className="px-4 py-4 text-center font-bold text-gray-700 text-sm">{formatNumber(item.qty)}</td>
                                             <td className="px-4 py-4 text-center">
                                                 <span className="px-2 py-0.5 text-[10px] font-bold bg-gray-100 text-gray-600 rounded-md uppercase whitespace-nowrap">
                                                     {item.satuan || item.barang_id?.satuan || '-'}
@@ -498,7 +502,7 @@ export default function TransaksiDetailPage() {
                                                 {item.nama_barang || item.barang_id?.nama_barang || '-'}
                                             </h4>
                                             <p className="text-[10px] text-gray-500 uppercase">
-                                                Qty: <span className="font-bold text-gray-900">{item.qty}</span> • {item.satuan || item.barang_id?.satuan || '-'}
+                                                Qty: <span className="font-bold text-gray-900">{formatNumber(item.qty)}</span> • {item.satuan || item.barang_id?.satuan || '-'}
                                             </p>
                                         </div>
                                     </div>

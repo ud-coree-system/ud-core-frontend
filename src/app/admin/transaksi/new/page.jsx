@@ -21,6 +21,7 @@ import DatePicker from '@/components/ui/DatePicker';
 import { useToast } from '@/contexts/ToastContext';
 import { getErrorMessage, formatCurrency, formatDateShort, toDateInputValue, debounce } from '@/lib/utils';
 import CurrencyInput from '@/components/ui/CurrencyInput';
+import QuantityInput from '@/components/ui/QuantityInput';
 import SearchableSelect from '@/components/ui/SearchableSelect';
 
 const SATUAN_OPTIONS = [
@@ -780,14 +781,12 @@ export default function NewTransaksiPage() {
                                                     )}
                                                 </td>
                                                 <td className="px-4 py-4 text-center">
-                                                    <input
-                                                        type="number"
+                                                    <QuantityInput
                                                         value={item.qty}
                                                         onChange={(e) => handleQtyChange(item.barang_id, e.target.value)}
                                                         onBlur={() => handleQtyBlur(item.barang_id)}
                                                         onFocus={(e) => e.target.select()}
-                                                        step="any"
-                                                        className="w-20 px-2 py-1.5 border border-gray-200 rounded-md text-center focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none"
+                                                        className="w-20 px-2 py-1.5 text-center"
                                                     />
                                                 </td>
                                                 <td className="px-4 py-4 text-center">
@@ -881,14 +880,12 @@ export default function NewTransaksiPage() {
                                                                 )}
                                                             </td>
                                                             <td className="px-4 py-4 text-center">
-                                                                <input
-                                                                    type="number"
+                                                                <QuantityInput
                                                                     value={item.qty}
                                                                     onChange={(e) => handleQtyChange(item.barang_id, e.target.value)}
                                                                     onBlur={() => handleQtyBlur(item.barang_id)}
                                                                     onFocus={(e) => e.target.select()}
-                                                                    step="any"
-                                                                    className="w-20 px-2 py-1.5 border border-gray-200 rounded-md text-center focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none"
+                                                                    className="w-20 px-2 py-1.5 text-center"
                                                                 />
                                                             </td>
                                                             <td className="px-4 py-4 text-center">
@@ -978,14 +975,12 @@ export default function NewTransaksiPage() {
                                             <div className="grid grid-cols-2 gap-3">
                                                 <div className="space-y-1">
                                                     <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Qty</label>
-                                                    <input
-                                                        type="number"
+                                                    <QuantityInput
                                                         value={item.qty}
                                                         onChange={(e) => handleQtyChange(item.barang_id, e.target.value)}
                                                         onBlur={() => handleQtyBlur(item.barang_id)}
                                                         onFocus={(e) => e.target.select()}
-                                                        step="any"
-                                                        className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500/20 outline-none"
+                                                        className="w-full px-3 py-2"
                                                     />
                                                 </div>
                                                 <div className="space-y-1">
@@ -1102,14 +1097,12 @@ export default function NewTransaksiPage() {
                                                     <div className="grid grid-cols-2 gap-3 pl-6">
                                                         <div className="space-y-1">
                                                             <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Qty</label>
-                                                            <input
-                                                                type="number"
+                                                            <QuantityInput
                                                                 value={item.qty}
                                                                 onChange={(e) => handleQtyChange(item.barang_id, e.target.value)}
                                                                 onBlur={() => handleQtyBlur(item.barang_id)}
                                                                 onFocus={(e) => e.target.select()}
-                                                                step="any"
-                                                                className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500/20 outline-none"
+                                                                className="w-full px-3 py-2"
                                                             />
                                                         </div>
                                                         <div className="space-y-1">

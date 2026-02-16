@@ -22,6 +22,7 @@ import DatePicker from '@/components/ui/DatePicker';
 import { useToast } from '@/contexts/ToastContext';
 import { getErrorMessage, formatCurrency, formatDateShort, normalizeId, debounce } from '@/lib/utils';
 import CurrencyInput from '@/components/ui/CurrencyInput';
+import QuantityInput from '@/components/ui/QuantityInput';
 import SearchableSelect from '@/components/ui/SearchableSelect';
 import ConfirmDialog from '@/components/ui/ConfirmDialog';
 
@@ -683,7 +684,7 @@ export default function BulkTransaksiPage() {
                                                     <input type="text" value={item.satuan} onChange={e => handleSatuanChange(item.originalIndex, e.target.value)} className="w-16 px-2 py-1 text-xs border rounded text-center" />
                                                 </td>
                                                 <td className="px-4 py-3 text-center">
-                                                    <input type="number" value={item.qty} onChange={e => handleQtyChange(item.originalIndex, e.target.value)} className="w-20 px-2 py-1 border rounded text-center" />
+                                                    <QuantityInput value={item.qty} onChange={e => handleQtyChange(item.originalIndex, e.target.value)} className="w-20 px-2 py-1 text-center" />
                                                 </td>
                                                 <td className="px-4 py-3 text-center">
                                                     <CurrencyInput value={item.harga_modal} onChange={e => handleHargaModalChange(item.originalIndex, e.target.value)} className="!w-24 !px-2 !py-1 text-xs" />
@@ -781,7 +782,7 @@ export default function BulkTransaksiPage() {
                                                                 <input type="text" value={item.satuan} onChange={e => handleSatuanChange(item.originalIndex, e.target.value)} className="w-16 px-2 py-1 text-xs border rounded text-center" />
                                                             </td>
                                                             <td className="px-4 py-3 text-center">
-                                                                <input type="number" value={item.qty} onChange={e => handleQtyChange(item.originalIndex, e.target.value)} className="w-20 px-2 py-1 border rounded text-center" />
+                                                                <QuantityInput value={item.qty} onChange={e => handleQtyChange(item.originalIndex, e.target.value)} className="w-20 px-2 py-1 text-center" />
                                                             </td>
                                                             <td className="px-4 py-3 text-center">
                                                                 <CurrencyInput value={item.harga_modal} onChange={e => handleHargaModalChange(item.originalIndex, e.target.value)} className="!w-24 !px-2 !py-1 text-xs" />
