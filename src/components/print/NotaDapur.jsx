@@ -67,10 +67,13 @@ const PrintStyles = () => (
         .nota-table th, .nota-table td {
             border: 1px solid black;
             padding: 4px 8px;
-            text-align: left;
             font-size: 16px;
         }
+        .nota-table td {
+            text-align: left;
+        }
         .nota-table th {
+            text-align: center;
             background-color: #f2f2f2;
             text-transform: uppercase;
         }
@@ -126,10 +129,10 @@ const TemplateESC = ({ data, udData, udId }) => (
                 <tr>
                     <th className="w-10">No.</th>
                     <th>Nama Pesanan</th>
-                    <th className="text-center w-16">Qty.</th>
-                    <th className="text-center w-16">Sat.</th>
-                    <th className="text-right w-24">Harga</th>
-                    <th className="text-right w-32">Jumlah</th>
+                    <th className="w-16">Qty.</th>
+                    <th className="w-16">Sat.</th>
+                    <th className="w-24">Harga</th>
+                    <th className="w-32">Jumlah</th>
                 </tr>
             </thead>
             <tbody>
@@ -204,11 +207,11 @@ const TemplatePilarPangan = ({ data, udData, udId }) => (
         <table className="nota-table">
             <thead>
                 <tr>
-                    <th className="text-center w-20">JUMLAH</th>
-                    <th className="text-center w-20">SATUAN</th>
+                    <th className="w-20">JUMLAH</th>
+                    <th className="w-20">SATUAN</th>
                     <th>NAMA BARANG</th>
-                    <th className="text-right w-32">HARGA</th>
-                    <th className="text-right w-32">JUMLAH</th>
+                    <th className="w-32">HARGA</th>
+                    <th className="w-32">JUMLAH</th>
                 </tr>
             </thead>
             <tbody>
@@ -284,10 +287,10 @@ const TemplateASM = ({ data, udData, udId }) => (
                 <tr>
                     <th className="w-10">No.</th>
                     <th>Nama Pesanan</th>
-                    <th className="text-center w-16">Qty.</th>
-                    <th className="text-center w-16">Sat.</th>
-                    <th className="text-right w-24">Harga</th>
-                    <th className="text-right w-32">Jumlah</th>
+                    <th className="w-16">Qty.</th>
+                    <th className="w-16">Sat.</th>
+                    <th className="w-24">Harga</th>
+                    <th className="w-32">Jumlah</th>
                 </tr>
             </thead>
             <tbody>
@@ -364,10 +367,10 @@ const TemplateBanyuMas = ({ data, udData, udId }) => (
                 <tr>
                     <th className="w-10">No.</th>
                     <th>Nama Barang</th>
-                    <th className="text-center w-16">Jml</th>
-                    <th className="text-center w-16">Sat</th>
-                    <th className="text-right w-24">Harga Satuan</th>
-                    <th className="text-right w-32">Jumlah</th>
+                    <th className="w-16">Jml</th>
+                    <th className="w-16">Sat</th>
+                    <th className="w-24">Harga Satuan</th>
+                    <th className="w-32">Jumlah</th>
                 </tr>
             </thead>
             <tbody>
@@ -431,12 +434,12 @@ const TemplateBogaFood = ({ data, udData, udId }) => (
         <table className="nota-table">
             <thead>
                 <tr>
-                    <th className="w-10 text-center">No.</th>
-                    <th className="text-center">Pembelian</th>
-                    <th className="text-center w-16">Qty</th>
-                    <th className="text-center w-16">Sat</th>
-                    <th className="text-right w-32">Harga Satuan</th>
-                    <th className="text-right w-40">Jumlah Pembelian</th>
+                    <th className="w-10">No.</th>
+                    <th>Pembelian</th>
+                    <th className="w-16">Qty</th>
+                    <th className="w-16">Sat</th>
+                    <th className="w-32">Harga Satuan</th>
+                    <th className="w-40">Jumlah Pembelian</th>
                 </tr>
             </thead>
             <tbody>
@@ -505,12 +508,12 @@ const TemplateKayaAlam = ({ data, udData, udId }) => (
         <table className="nota-table border-2 border-black">
             <thead>
                 <tr>
-                    <th className="w-12 text-center font-bold border border-black">NO.</th>
-                    <th className="text-center font-bold border border-black">NAMA BARANG</th>
-                    <th className="w-24 text-center font-bold border border-black">JUMLAH</th>
-                    <th className="w-16 text-center font-bold border border-black">SAT</th>
-                    <th className="w-32 text-center font-bold border border-black">HARGA</th>
-                    <th className="w-32 text-center font-bold border border-black">TOTAL</th>
+                    <th className="w-12 font-bold border border-black">NO.</th>
+                    <th className="font-bold border border-black">NAMA BARANG</th>
+                    <th className="w-24 font-bold border border-black">JUMLAH</th>
+                    <th className="w-16 font-bold border border-black">SAT</th>
+                    <th className="w-32 font-bold border border-black">HARGA</th>
+                    <th className="w-32 font-bold border border-black">TOTAL</th>
                 </tr>
             </thead>
             <tbody>
@@ -581,12 +584,12 @@ const TemplateMayurSehat = ({ data, udData, udId }) => (
         <table className="nota-table border-2 border-black no-repeat-header">
             <thead>
                 <tr className="bg-gray-200">
-                    <th className="w-16 text-center border-2 border-black font-bold">No.</th>
-                    <th className="text-center border-2 border-black font-bold">Barang</th>
-                    <th className="text-center w-24 border-2 border-black font-bold">Bnyk</th>
-                    <th className="text-center w-24 border-2 border-black font-bold">Sat.</th>
-                    <th className="text-center w-36 border-2 border-black font-bold">Harga</th>
-                    <th className="text-center w-40 border-2 border-black font-bold">Total</th>
+                    <th className="w-16 border-2 border-black font-bold">No.</th>
+                    <th className="border-2 border-black font-bold">Barang</th>
+                    <th className="w-24 border-2 border-black font-bold">Bnyk</th>
+                    <th className="w-24 border-2 border-black font-bold">Sat.</th>
+                    <th className="w-36 border-2 border-black font-bold">Harga</th>
+                    <th className="w-40 border-2 border-black font-bold">Total</th>
                 </tr>
             </thead>
             <tbody>
@@ -659,10 +662,10 @@ const TemplateGeneric = ({ data, udData, udId }) => (
                 <tr>
                     <th className="w-10">No.</th>
                     <th>Nama Barang</th>
-                    <th className="text-center w-16">Qty.</th>
-                    <th className="text-center w-16">Sat.</th>
-                    <th className="text-right w-24">Harga</th>
-                    <th className="text-right w-32">Jumlah</th>
+                    <th className="w-16">Qty.</th>
+                    <th className="w-16">Sat.</th>
+                    <th className="w-24">Harga</th>
+                    <th className="w-32">Jumlah</th>
                 </tr>
             </thead>
             <tbody>
