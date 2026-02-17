@@ -31,7 +31,7 @@ const PrintStyles = () => (
             }
             @page {
                 size: portrait;
-                margin: 1cm;
+                margin: 1.5cm 1.5cm 4cm 1.5cm;
             }
             .no-break {
                 break-inside: avoid;
@@ -102,6 +102,11 @@ const PrintStyles = () => (
         .no-repeat-header thead {
             display: table-row-group !important;
         }
+        @media print {
+            thead, tfoot {
+                display: table-row-group !important;
+            }
+        }
     `}} />
 );
 
@@ -156,7 +161,8 @@ const TemplateESC = ({ data, udData, udId }) => (
             <tfoot>
                 <tr>
                     <td colSpan="5" className="text-right font-bold border-t-2">SUB TOTAL</td>
-                    <td className="text-right font-bold border-t-2">{formatCurrency(udData.total).replace('Rp', '')}</td>
+                    {/* <td className="text-right font-bold border-t-2">{formatCurrency(udData.total).replace('Rp', '')}</td> */}
+                    <td className="text-right font-bold border-t-2">-</td>
                 </tr>
                 <tr>
                     <td colSpan="5" className="text-right font-bold">DISCOUNT</td>
@@ -438,22 +444,22 @@ const TemplateBogaFood = ({ data, udData, udId }) => (
                     <th>Pembelian</th>
                     <th className="w-16">Qty</th>
                     <th className="w-16">Sat</th>
-                    <th className="w-32">Harga Satuan</th>
-                    <th className="w-40">Jumlah Pembelian</th>
+                    <th className="w-24">Harga Satuan</th>
+                    <th className="w-32">Jumlah Pembelian</th>
                 </tr>
             </thead>
             <tbody>
                 {udData.items.map((item, idx) => (
                     <tr key={idx}>
                         <td className="text-center">{idx + 1}</td>
-                        <td>{item.nama_barang || item.barang_id?.nama_barang}</td>
+                        <td>{(item.nama_barang || item.barang_id?.nama_barang || '').replace(/\./g, '')}</td>
                         <td className="text-center">{item.qty}</td>
                         <td className="text-center">{item.satuan || item.barang_id?.satuan}</td>
                         <td className="text-right">{formatCurrency(item.harga_jual).replace('Rp', '')}</td>
                         <td className="text-right">{formatCurrency(item.subtotal_jual).replace('Rp', '')}</td>
                     </tr>
                 ))}
-                {[...Array(Math.max(0, 15 - udData.items.length))].map((_, idx) => (
+                {[...Array(Math.max(0, 10 - udData.items.length))].map((_, idx) => (
                     <tr key={`empty-${idx}`}>
                         <td className="h-6 text-center">{udData.items.length + idx + 1}</td>
                         <td></td><td></td><td></td><td></td><td></td>
@@ -546,14 +552,14 @@ const TemplateKayaAlam = ({ data, udData, udId }) => (
             </tfoot>
         </table>
 
-        <div className="flex justify-between mt-12 px-24 no-break italic">
+        <div className="flex justify-between mt-12 px-24 no-break">
             <div className="text-center">
-                <div className="font-bold">PENERIMA,</div>
-                <div className="mt-24 border-t border-black w-56"></div>
+                <div>Penerima :</div>
+                <div className="mt-20 border-t border-black w-48"></div>
             </div>
             <div className="text-center">
-                <div className="font-bold">HORMAT KAMI,</div>
-                <div className="mt-24 border-t border-black w-56"></div>
+                <div>Hormat Kami :</div>
+                <div className="mt-20 border-t border-black w-48"></div>
             </div>
         </div>
     </div >
@@ -584,12 +590,12 @@ const TemplateMayurSehat = ({ data, udData, udId }) => (
         <table className="nota-table border-2 border-black no-repeat-header">
             <thead>
                 <tr className="bg-gray-200">
-                    <th className="w-16 border-2 border-black font-bold">No.</th>
+                    <th className="w-10 border-2 border-black font-bold">No.</th>
                     <th className="border-2 border-black font-bold">Barang</th>
-                    <th className="w-24 border-2 border-black font-bold">Bnyk</th>
-                    <th className="w-24 border-2 border-black font-bold">Sat.</th>
-                    <th className="w-36 border-2 border-black font-bold">Harga</th>
-                    <th className="w-40 border-2 border-black font-bold">Total</th>
+                    <th className="w-16 border-2 border-black font-bold">Bnyk</th>
+                    <th className="w-16 border-2 border-black font-bold">Sat.</th>
+                    <th className="w-24 border-2 border-black font-bold">Harga</th>
+                    <th className="w-32 border-2 border-black font-bold">Total</th>
                 </tr>
             </thead>
             <tbody>
@@ -621,15 +627,14 @@ const TemplateMayurSehat = ({ data, udData, udId }) => (
                 </tr>
             </tfoot>
         </table>
-
-        <div className="flex justify-between mt-12 px-32 no-break">
+        <div className="flex justify-between mt-12 px-24 no-break">
             <div className="text-center">
-                <div className="mb-20 font-bold">Penerima,</div>
-                <div className="border-t border-dashed border-black w-48 mx-auto"></div>
+                <div>Penerima :</div>
+                <div className="mt-20 border-t border-black w-48"></div>
             </div>
             <div className="text-center">
-                <div className="mb-20 font-bold">Pengirim,</div>
-                <div className="border-t border-dashed border-black w-56 mx-auto"></div>
+                <div>Hormat Kami :</div>
+                <div className="mt-20 border-t border-black w-48"></div>
             </div>
         </div>
     </div>
@@ -734,11 +739,28 @@ export default function NotaDapur({ data, itemsByUD, udIdFilter = null }) {
         ? Object.entries(itemsByUD).filter(([id]) => id === udIdFilter)
         : Object.entries(itemsByUD);
 
+    const grandTotal = filteredEntries.reduce((acc, [_, udData]) => acc + (udData.total || 0), 0);
+
     return (
         <div id="print-area" className="hidden print:block">
             <PrintStyles />
             {filteredEntries.map(([udId, udData]) =>
                 getTemplate(udData.nama_ud, udData, udId)
+            )}
+
+            {/* Grand Total Summary at the end of all notes */}
+            {filteredEntries.length > 1 && (
+                <div className="nota-container mt-8 border-t-4 border-double border-black pt-4 page-break-after-avoid">
+                    <div className="flex justify-between items-center px-4">
+                        <div className="text-xl font-bold uppercase">TOTAL KESELURUHAN ({filteredEntries.length} NOTA)</div>
+                        <div className="text-2xl font-bold border-b-4 border-double border-black">
+                            {formatCurrency(grandTotal)}
+                        </div>
+                    </div>
+                    <div className="text-center mt-8 text-sm italic">
+                        *** Akhir dari dokumen cetak ***
+                    </div>
+                </div>
             )}
         </div>
     );

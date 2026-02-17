@@ -116,6 +116,11 @@ const AppHeader = () => {
 
                     {/* Clock - Desktop Only */}
                     <div className="hidden lg:flex flex-1 justify-center">
+                        <img
+                            src="/TOPAN.webp"
+                            alt="Topan Logo"
+                            className="h-7 ml-2 -mt-1 mr-2 w-auto rounded-lg object-contain"
+                        />
                         <div className="flex flex-col items-center">
                             <span className="text-sm font-semibold text-gray-800 dark:text-white capitalize">
                                 {currentTime.toLocaleDateString('id-ID', {
