@@ -15,11 +15,12 @@ import {
 } from 'lucide-react';
 import { transaksiAPI, periodeAPI, dapurAPI } from '@/lib/api';
 import { useToast } from '@/contexts/ToastContext';
-import { getErrorMessage, formatCurrency, formatDateShort, getStatusClass } from '@/lib/utils';
+import { getErrorMessage, formatCurrency, formatDateShort, getStatusClass, toLocalDate } from '@/lib/utils';
 import Pagination from '@/components/ui/Pagination';
 import EmptyState from '@/components/ui/EmptyState';
 import ConfirmDialog from '@/components/ui/ConfirmDialog';
 import SearchableSelect from '@/components/ui/SearchableSelect';
+import DatePicker from '@/components/ui/DatePicker';
 
 export default function TransaksiListPage() {
     const { toast } = useToast();
@@ -39,10 +40,12 @@ export default function TransaksiListPage() {
     const [filterPeriode, setFilterPeriode] = useState('');
     const [filterDapur, setFilterDapur] = useState('');
     const [filterStatus, setFilterStatus] = useState('');
+    const [filterTanggal, setFilterTanggal] = useState(null);
 
     // Options
     const [periodeList, setPeriodeList] = useState([]);
     const [dapurList, setDapurList] = useState([]);
+    const [highlightedDates, setHighlightedDates] = useState([]);
 
     // Delete state
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -72,7 +75,8 @@ export default function TransaksiListPage() {
 
     useEffect(() => {
         fetchData();
-    }, [pagination.page, filterPeriode, filterDapur, filterStatus]);
+        fetchHighlightedDates();
+    }, [pagination.page, filterPeriode, filterDapur, filterStatus, filterTanggal]);
 
     const fetchOptions = async () => {
         try {
@@ -97,23 +101,54 @@ export default function TransaksiListPage() {
             setLoading(true);
             const params = {
                 page: pagination.page,
-                limit: pagination.limit,
+                limit: filterTanggal ? 500 : pagination.limit,
                 periode_id: filterPeriode || undefined,
                 dapur_id: filterDapur || undefined,
                 status: filterStatus || undefined,
+                tanggal: filterTanggal ? `${filterTanggal.getFullYear()}-${String(filterTanggal.getMonth() + 1).padStart(2, '0')}-${String(filterTanggal.getDate()).padStart(2, '0')}` : undefined,
             };
             const response = await transaksiAPI.getAll(params);
             if (response.data.success) {
-                setData(response.data.data);
+                let filteredData = response.data.data;
+
+                // Backup client-side filter for tanggal (in case API doesn't support it)
+                if (filterTanggal) {
+                    const targetDateStr = `${filterTanggal.getFullYear()}-${String(filterTanggal.getMonth() + 1).padStart(2, '0')}-${String(filterTanggal.getDate()).padStart(2, '0')}`;
+                    filteredData = filteredData.filter(item => toLocalDate(item.tanggal) === targetDateStr);
+                }
+
+                setData(filteredData);
                 setPagination((prev) => ({
                     ...prev,
                     ...response.data.pagination,
+                    // If we filtered client-side, the total count from server might be misleading, 
+                    // but for simple list view this is better than showing wrong dates.
                 }));
             }
         } catch (error) {
             toast.error(getErrorMessage(error));
         } finally {
             setLoading(false);
+        }
+    };
+
+    const fetchHighlightedDates = async () => {
+        try {
+            // Fetch a larger set to get more dates for highlighting
+            // ideally we'd have a specific endpoint, but let's fetch 100 recent ones 
+            // filtered by the current Dapur and Periode
+            const params = {
+                limit: 100,
+                periode_id: filterPeriode || undefined,
+                dapur_id: filterDapur || undefined,
+            };
+            const response = await transaksiAPI.getAll(params);
+            if (response.data.success) {
+                const dates = response.data.data.map(item => new Date(item.tanggal));
+                setHighlightedDates(dates);
+            }
+        } catch (error) {
+            console.error('Failed to fetch highlighted dates:', error);
         }
     };
 
@@ -228,7 +263,7 @@ export default function TransaksiListPage() {
 
             {/* Filters */}
             <div className="bg-white rounded-xl border border-gray-200 p-4 shadow-sm">
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 md:gap-4">
                     {/* Periode */}
                     <div className="relative">
                         <SearchableSelect
@@ -284,12 +319,28 @@ export default function TransaksiListPage() {
                         </select>
                     </div>
 
+                    {/* Tanggal */}
+                    <div className="relative">
+                        <DatePicker
+                            selected={filterTanggal}
+                            onChange={(date) => {
+                                setFilterTanggal(date);
+                                setPagination((prev) => ({ ...prev, page: 1 }));
+                            }}
+                            placeholder="Semua Tanggal"
+                            highlightDates={highlightedDates}
+                            className="w-full"
+                            inputClassName="w-full pl-3 pr-4 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 bg-white text-sm h-[42px]"
+                        />
+                    </div>
+
                     {/* Reset */}
                     <button
                         onClick={() => {
                             setFilterPeriode('');
                             setFilterDapur('');
                             setFilterStatus('');
+                            setFilterTanggal(null);
                             setPagination((prev) => ({ ...prev, page: 1 }));
                         }}
                         className="px-4 py-2.5 border border-gray-300 rounded-lg text-gray-700 font-medium

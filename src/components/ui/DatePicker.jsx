@@ -253,6 +253,35 @@ export default function DatePicker({
                         background-color: #eff6ff;
                     }
 
+                    .react-datepicker__day--highlighted {
+                        background-color: #dbeafe;
+                        color: #1e40af;
+                        border-radius: 0.25rem;
+                        font-weight: bold;
+                        position: relative;
+                    }
+
+                    .react-datepicker__day--highlighted::after {
+                        content: '';
+                        position: absolute;
+                        bottom: 2px;
+                        left: 50%;
+                        transform: translateX(-50%);
+                        width: 3px;
+                        height: 3px;
+                        background-color: #3b82f6;
+                        border-radius: 50%;
+                    }
+
+                    .react-datepicker__day--highlighted:hover {
+                        background-color: #bfdbfe;
+                    }
+
+                    .react-datepicker__day--selected.react-datepicker__day--highlighted {
+                        background-color: #2563eb;
+                        color: white;
+                    }
+
                     .react-datepicker__navigation {
                         top: 0.3rem;
                         width: 1.1rem;
