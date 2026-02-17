@@ -31,7 +31,7 @@ const PrintStyles = () => (
             }
             @page {
                 size: portrait;
-                margin: 1.5cm 1.5cm 4cm 1.5cm;
+                margin: 1.5cm 1.5cm 2cm 1.5cm;
             }
             .no-break {
                 break-inside: avoid;
@@ -106,6 +106,17 @@ const PrintStyles = () => (
             thead, tfoot {
                 display: table-row-group !important;
             }
+            .nota-table tr {
+                break-inside: avoid;
+                page-break-inside: avoid;
+            }
+            tfoot {
+                break-inside: avoid;
+                page-break-inside: avoid;
+            }
+            .signature-row td {
+                border: none !important;
+            }
         }
     `}} />
 );
@@ -172,19 +183,23 @@ const TemplateESC = ({ data, udData, udId }) => (
                     <td colSpan="5" className="text-right font-bold">TOTAL</td>
                     <td className="text-right font-bold">{formatCurrency(udData.total).replace('Rp', '')}</td>
                 </tr>
+                {/* Signature Row */}
+                <tr className="no-break signature-row">
+                    <td colSpan="6" className="pt-12">
+                        <div className="flex justify-between px-12">
+                            <div className="text-center">
+                                <div>Penerima,</div>
+                                <div className="mt-16 border-t border-black w-40"></div>
+                            </div>
+                            <div className="text-center">
+                                <div>Hormat Kami,</div>
+                                <div className="mt-16 border-t border-black w-40"></div>
+                            </div>
+                        </div>
+                    </td>
+                </tr>
             </tfoot>
         </table>
-
-        <div className="flex justify-between mt-12 px-12 no-break">
-            <div className="text-center">
-                <div>Penerima,</div>
-                <div className="mt-16 border-t border-black w-40"></div>
-            </div>
-            <div className="text-center">
-                <div>Hormat Kami,</div>
-                <div className="mt-16 border-t border-black w-40"></div>
-            </div>
-        </div>
     </div>
 );
 
@@ -241,19 +256,23 @@ const TemplatePilarPangan = ({ data, udData, udId }) => (
                     <td colSpan="4" className="text-right font-bold border-t-2">JUMLAH TOTAL (RP)</td>
                     <td className="text-right font-bold border-t-2">{formatCurrency(udData.total).replace('Rp', '')}</td>
                 </tr>
+                {/* Signature Row */}
+                <tr className="no-break signature-row">
+                    <td colSpan="5" className="pt-12">
+                        <div className="flex justify-between px-12">
+                            <div className="text-center">
+                                <div className="uppercase">PENERIMA,</div>
+                                <div className="mt-16 border-t border-black w-40"></div>
+                            </div>
+                            <div className="text-center">
+                                <div className="uppercase">PENGIRIM,</div>
+                                <div className="mt-16 border-t border-black w-40"></div>
+                            </div>
+                        </div>
+                    </td>
+                </tr>
             </tfoot>
         </table>
-
-        <div className="flex justify-between mt-12 px-12 no-break">
-            <div className="text-center">
-                <div className="uppercase">PENERIMA,</div>
-                <div className="mt-16 border-t border-black w-40"></div>
-            </div>
-            <div className="text-center">
-                <div className="uppercase">PENGIRIM,</div>
-                <div className="mt-16 border-t border-black w-40"></div>
-            </div>
-        </div>
     </div>
 );
 
@@ -321,19 +340,23 @@ const TemplateASM = ({ data, udData, udId }) => (
                     <td colSpan="5" className="text-right font-bold border-t-2">TOTAL (Rp.)</td>
                     <td className="text-right font-bold border-t-2">{formatCurrency(udData.total).replace('Rp', '')}</td>
                 </tr>
+                {/* Signature Row */}
+                <tr className="no-break signature-row">
+                    <td colSpan="6" className="pt-12">
+                        <div className="flex justify-between px-12">
+                            <div className="text-center">
+                                <div>Penerima,</div>
+                                <div className="mt-16 border-t border-black w-40"></div>
+                            </div>
+                            <div className="text-center">
+                                <div>Hormat Kami,</div>
+                                <div className="mt-16 border-t border-black w-40"></div>
+                            </div>
+                        </div>
+                    </td>
+                </tr>
             </tfoot>
         </table>
-
-        <div className="flex justify-between mt-12 px-12 no-break">
-            <div className="text-center">
-                <div>Penerima,</div>
-                <div className="mt-16 border-t border-black w-40"></div>
-            </div>
-            <div className="text-center">
-                <div>Hormat Kami,</div>
-                <div className="mt-16 border-t border-black w-40"></div>
-            </div>
-        </div>
     </div>
 );
 
@@ -401,19 +424,23 @@ const TemplateBanyuMas = ({ data, udData, udId }) => (
                     <td colSpan="5" className="text-right font-bold border-t-2">TOTAL (Rp.)</td>
                     <td className="text-right font-bold border-t-2">{formatCurrency(udData.total).replace('Rp', '')}</td>
                 </tr>
+                {/* Signature Row */}
+                <tr className="no-break signature-row">
+                    <td colSpan="6" className="pt-12">
+                        <div className="flex justify-between px-12">
+                            <div className="text-center">
+                                <div>Penerima,</div>
+                                <div className="mt-16 border-t border-black w-40"></div>
+                            </div>
+                            <div className="text-center">
+                                <div className="mb-0">Pengirim,</div>
+                                <div className="mt-16 border-t border-black w-40"></div>
+                            </div>
+                        </div>
+                    </td>
+                </tr>
             </tfoot>
         </table>
-
-        <div className="flex justify-between mt-12 px-12 no-break">
-            <div className="text-center">
-                <div>Penerima,</div>
-                <div className="mt-16 border-t border-black w-40"></div>
-            </div>
-            <div className="text-center">
-                <div className="mb-0">Pengirim,</div>
-                <div className="mt-16 border-t border-black w-40"></div>
-            </div>
-        </div>
     </div>
 );
 
@@ -471,19 +498,23 @@ const TemplateBogaFood = ({ data, udData, udId }) => (
                     <td colSpan="5" className="text-right font-bold border-t-2">TOTAL (Rp.)</td>
                     <td className="text-right font-bold border-t-2">{formatCurrency(udData.total).replace('Rp', '')}</td>
                 </tr>
+                {/* Signature Row */}
+                <tr className="no-break signature-row">
+                    <td colSpan="6" className="pt-12">
+                        <div className="flex justify-between px-24">
+                            <div className="text-center">
+                                <div>Penerima :</div>
+                                <div className="mt-20 border-t border-black w-48"></div>
+                            </div>
+                            <div className="text-center">
+                                <div>Hormat Kami :</div>
+                                <div className="mt-20 border-t border-black w-48"></div>
+                            </div>
+                        </div>
+                    </td>
+                </tr>
             </tfoot>
         </table>
-
-        <div className="flex justify-between mt-12 px-24 no-break">
-            <div className="text-center">
-                <div>Penerima :</div>
-                <div className="mt-20 border-t border-black w-48"></div>
-            </div>
-            <div className="text-center">
-                <div>Hormat Kami :</div>
-                <div className="mt-20 border-t border-black w-48"></div>
-            </div>
-        </div>
     </div>
 );
 
@@ -511,7 +542,7 @@ const TemplateKayaAlam = ({ data, udData, udId }) => (
             </div>
         </div>
 
-        <table className="nota-table border-2 border-black">
+        <table className="nota-table">
             <thead>
                 <tr>
                     <th className="w-12 font-bold border border-black">NO.</th>
@@ -549,19 +580,23 @@ const TemplateKayaAlam = ({ data, udData, udId }) => (
                     <td colSpan="5" className="text-center font-bold border-2 border-black uppercase bg-white py-2">TOTAL TRANSAKSI (RP)</td>
                     <td className="text-right font-bold border-2 border-black px-2">{formatCurrency(udData.total).replace('Rp', '')}</td>
                 </tr>
+                {/* Signature Row */}
+                <tr className="no-break signature-row">
+                    <td colSpan="6" className="pt-12">
+                        <div className="flex justify-between px-24">
+                            <div className="text-center">
+                                <div>Penerima :</div>
+                                <div className="mt-20 border-t border-black w-48"></div>
+                            </div>
+                            <div className="text-center">
+                                <div>Hormat Kami :</div>
+                                <div className="mt-20 border-t border-black w-48"></div>
+                            </div>
+                        </div>
+                    </td>
+                </tr>
             </tfoot>
         </table>
-
-        <div className="flex justify-between mt-12 px-24 no-break">
-            <div className="text-center">
-                <div>Penerima :</div>
-                <div className="mt-20 border-t border-black w-48"></div>
-            </div>
-            <div className="text-center">
-                <div>Hormat Kami :</div>
-                <div className="mt-20 border-t border-black w-48"></div>
-            </div>
-        </div>
     </div >
 );
 
@@ -587,7 +622,7 @@ const TemplateMayurSehat = ({ data, udData, udId }) => (
             </div>
         </div>
 
-        <table className="nota-table border-2 border-black no-repeat-header">
+        <table className="nota-table no-repeat-header">
             <thead>
                 <tr className="bg-gray-200">
                     <th className="w-10 border-2 border-black font-bold">No.</th>
@@ -625,18 +660,23 @@ const TemplateMayurSehat = ({ data, udData, udId }) => (
                     <td colSpan="5" className="text-right border-2 border-black bg-gray-100 uppercase px-2">TOTAL (Rp.)</td>
                     <td className="text-right border-2 border-black bg-white px-2">{formatCurrency(udData.total).replace('Rp', '')}</td>
                 </tr>
+                {/* Signature Row */}
+                <tr className="no-break signature-row">
+                    <td colSpan="6" className="pt-12">
+                        <div className="flex justify-between px-24">
+                            <div className="text-center">
+                                <div>Penerima :</div>
+                                <div className="mt-20 border-t border-black w-48"></div>
+                            </div>
+                            <div className="text-center">
+                                <div>Hormat Kami :</div>
+                                <div className="mt-20 border-t border-black w-48"></div>
+                            </div>
+                        </div>
+                    </td>
+                </tr>
             </tfoot>
         </table>
-        <div className="flex justify-between mt-12 px-24 no-break">
-            <div className="text-center">
-                <div>Penerima :</div>
-                <div className="mt-20 border-t border-black w-48"></div>
-            </div>
-            <div className="text-center">
-                <div>Hormat Kami :</div>
-                <div className="mt-20 border-t border-black w-48"></div>
-            </div>
-        </div>
     </div>
 );
 
@@ -695,19 +735,23 @@ const TemplateGeneric = ({ data, udData, udId }) => (
                     <td colSpan="5" className="text-right font-bold border-t-2">TOTAL (Rp.)</td>
                     <td className="text-right font-bold border-t-2">{formatCurrency(udData.total).replace('Rp', '')}</td>
                 </tr>
+                {/* Signature Row */}
+                <tr className="no-break signature-row">
+                    <td colSpan="6" className="pt-12">
+                        <div className="flex justify-between px-12">
+                            <div className="text-center">
+                                <div>Penerima,</div>
+                                <div className="mt-16 border-t border-black w-40"></div>
+                            </div>
+                            <div className="text-center">
+                                <div>Pengirim,</div>
+                                <div className="mt-16 border-t border-black w-40"></div>
+                            </div>
+                        </div>
+                    </td>
+                </tr>
             </tfoot>
         </table>
-
-        <div className="flex justify-between mt-12 px-12 no-break">
-            <div className="text-center">
-                <div>Penerima,</div>
-                <div className="mt-16 border-t border-black w-40"></div>
-            </div>
-            <div className="text-center">
-                <div>Pengirim,</div>
-                <div className="mt-16 border-t border-black w-40"></div>
-            </div>
-        </div>
     </div>
 );
 
