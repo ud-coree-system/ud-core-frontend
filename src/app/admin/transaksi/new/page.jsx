@@ -62,6 +62,7 @@ export default function NewTransaksiPage() {
     const [loading, setLoading] = useState(true);
     const [submitting, setSubmitting] = useState(false);
     const [tableSearch, setTableSearch] = useState('');
+    const [tableUdFilter, setTableUdFilter] = useState('');
     const [groupingMode, setGroupingMode] = useState('ud');
 
     const SESSION_STORAGE_KEY = 'new_transaksi_state';
@@ -121,6 +122,7 @@ export default function NewTransaksiPage() {
                 if (parsed.tanggal) setTanggal(new Date(parsed.tanggal));
                 if (parsed.items) setItems(parsed.items);
                 if (parsed.selectedUdId) setSelectedUdId(parsed.selectedUdId);
+                if (parsed.tableUdFilter) setTableUdFilter(parsed.tableUdFilter);
                 if (parsed.groupingMode) setGroupingMode(parsed.groupingMode);
             } catch (error) {
                 console.error('Error loading saved state:', error);
@@ -139,10 +141,23 @@ export default function NewTransaksiPage() {
             tanggal: tanggal instanceof Date ? tanggal.toISOString() : new Date().toISOString(),
             items,
             selectedUdId,
+            tableUdFilter,
             groupingMode
         };
         sessionStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(stateToSave));
-    }, [periodeId, dapurId, tanggal, items, selectedUdId, groupingMode, isLoaded]);
+    }, [periodeId, dapurId, tanggal, items, selectedUdId, tableUdFilter, groupingMode, isLoaded]);
+
+    // Sync table filter with items: if filtered UD is no longer in items, reset it
+    useEffect(() => {
+        if (tableUdFilter && items.length > 0) {
+            const udExists = items.some(item => item.ud_id === tableUdFilter);
+            if (!udExists) {
+                setTableUdFilter('');
+            }
+        } else if (items.length === 0 && tableUdFilter) {
+            setTableUdFilter('');
+        }
+    }, [items, tableUdFilter]);
 
     // Create Barang Modal state
     const [showCreateModal, setShowCreateModal] = useState(false);
@@ -474,10 +489,12 @@ export default function NewTransaksiPage() {
         }
     };
 
-    const filteredItems = items.filter((item) =>
-        item.nama_barang.toLowerCase().includes(tableSearch.toLowerCase()) ||
-        item.ud_nama?.toLowerCase().includes(tableSearch.toLowerCase())
-    );
+    const filteredItems = items.filter((item) => {
+        const matchesSearch = item.nama_barang.toLowerCase().includes(tableSearch.toLowerCase()) ||
+            item.ud_nama?.toLowerCase().includes(tableSearch.toLowerCase());
+        const matchesUd = !tableUdFilter || item.ud_id === tableUdFilter;
+        return matchesSearch && matchesUd;
+    });
 
     if (loading) {
         return (
@@ -700,25 +717,39 @@ export default function NewTransaksiPage() {
 
                 {/* Items List */}
                 <div className="space-y-4 mb-6">
-                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <div className="flex flex-col sm:flex-row md:items-center justify-between gap-4">
                         <h2 className="text-lg font-bold text-gray-900">Daftar Barang</h2>
-                        <div className="relative">
-                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                            <input
-                                type="text"
-                                value={tableSearch}
-                                onChange={(e) => setTableSearch(e.target.value)}
-                                placeholder="Filter barang di tabel..."
-                                className="w-full pl-9 pr-10 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
-                            />
-                            {tableSearch && (
-                                <button
-                                    onClick={() => setTableSearch('')}
-                                    className="absolute right-3 top-1/2 -translate-y-1/2 p-1 hover:bg-gray-100 rounded-full transition-colors"
-                                >
-                                    <X className="w-3.5 h-3.5 text-gray-400" />
-                                </button>
-                            )}
+                        <div className="flex flex-col sm:flex-row gap-2">
+                            <select
+                                value={tableUdFilter}
+                                onChange={(e) => setTableUdFilter(e.target.value)}
+                                className="px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 bg-white"
+                            >
+                                <option value="">Semua UD (Tabel)</option>
+                                {[...new Set(items.map(item => item.ud_id))].filter(Boolean).map(udId => (
+                                    <option key={udId} value={udId}>
+                                        {items.find(item => item.ud_id === udId)?.ud_nama}
+                                    </option>
+                                ))}
+                            </select>
+                            <div className="relative">
+                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                                <input
+                                    type="text"
+                                    value={tableSearch}
+                                    onChange={(e) => setTableSearch(e.target.value)}
+                                    placeholder="Cari di tabel..."
+                                    className="w-full pl-9 pr-10 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                                />
+                                {tableSearch && (
+                                    <button
+                                        onClick={() => setTableSearch('')}
+                                        className="absolute right-3 top-1/2 -translate-y-1/2 p-1 hover:bg-gray-100 rounded-full transition-colors"
+                                    >
+                                        <X className="w-3.5 h-3.5 text-gray-400" />
+                                    </button>
+                                )}
+                            </div>
                         </div>
                     </div>
 
@@ -833,22 +864,24 @@ export default function NewTransaksiPage() {
                                         ))
                                     ) : (
                                         (() => {
-                                            const sortedData = [...filteredItems].sort((a, b) => (a.ud_nama || 'ZZZ').localeCompare(b.ud_nama || 'ZZZ'));
-                                            const groupedData = sortedData.reduce((acc, item) => {
+                                            const groups = [];
+                                            filteredItems.forEach(item => {
                                                 const udId = item.ud_id || 'others';
-                                                if (!acc[udId]) {
-                                                    acc[udId] = {
+                                                let group = groups.find(g => g.udId === udId);
+                                                if (!group) {
+                                                    group = {
+                                                        udId,
                                                         ud_nama: item.ud_nama,
                                                         ud_kode: item.ud_kode,
                                                         items: []
                                                     };
+                                                    groups.push(group);
                                                 }
-                                                acc[udId].items.push(item);
-                                                return acc;
-                                            }, {});
+                                                group.items.push(item);
+                                            });
 
-                                            return Object.entries(groupedData).map(([udId, group]) => (
-                                                <Fragment key={udId}>
+                                            return groups.map((group) => (
+                                                <Fragment key={group.udId}>
                                                     <tr className="bg-gray-100/50">
                                                         <td colSpan="9" className="px-4 py-2">
                                                             <p className="text-xs font-bold text-blue-600 uppercase tracking-wider">
@@ -1053,22 +1086,24 @@ export default function NewTransaksiPage() {
                                 </div>
                             ) : (
                                 (() => {
-                                    const sortedData = [...filteredItems].sort((a, b) => (a.ud_nama || 'ZZZ').localeCompare(b.ud_nama || 'ZZZ'));
-                                    const groupedData = sortedData.reduce((acc, item) => {
+                                    const groups = [];
+                                    filteredItems.forEach(item => {
                                         const udId = item.ud_id || 'others';
-                                        if (!acc[udId]) {
-                                            acc[udId] = {
+                                        let group = groups.find(g => g.udId === udId);
+                                        if (!group) {
+                                            group = {
+                                                udId,
                                                 ud_nama: item.ud_nama,
                                                 ud_kode: item.ud_kode,
                                                 items: []
                                             };
+                                            groups.push(group);
                                         }
-                                        acc[udId].items.push(item);
-                                        return acc;
-                                    }, {});
+                                        group.items.push(item);
+                                    });
 
-                                    return Object.entries(groupedData).map(([udId, group]) => (
-                                        <div key={udId} className="divide-y divide-gray-100">
+                                    return groups.map((group) => (
+                                        <div key={group.udId} className="divide-y divide-gray-100">
                                             <div className="bg-gray-50 px-4 py-2 border-y border-gray-100">
                                                 <p className="text-[10px] font-bold text-blue-600 uppercase tracking-widest">
                                                     {group.ud_nama || 'Tanpa UD'} ({group.items.length} Barang)
