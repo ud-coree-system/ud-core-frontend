@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import { transaksiAPI, periodeAPI, dapurAPI, barangAPI, udAPI } from '@/lib/api';
 import DatePicker from '@/components/ui/DatePicker';
+import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/contexts/ToastContext';
 import { getErrorMessage, formatCurrency, formatDateShort, toDateInputValue, debounce } from '@/lib/utils';
 import CurrencyInput from '@/components/ui/CurrencyInput';
@@ -42,7 +43,15 @@ const SATUAN_OPTIONS = [
 export default function NewTransaksiPage() {
     const router = useRouter();
     const { toast } = useToast();
+    const { isReadOnly } = useAuth();
     const searchInputRef = useRef(null);
+
+    // Redirect ud_operator ke list transaksi
+    useEffect(() => {
+        if (isReadOnly()) {
+            router.replace('/admin/transaksi');
+        }
+    }, []);
 
     // Form state
     const [periodeId, setPeriodeId] = useState('');

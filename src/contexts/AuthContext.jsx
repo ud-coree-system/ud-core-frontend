@@ -65,6 +65,11 @@ export function AuthProvider({ children }) {
         return user?.role === 'superuser';
     };
 
+    // ud_operator & manusia_biasa hanya bisa read; tidak bisa create/update/delete
+    const isReadOnly = () => {
+        return user?.role === 'manusia_biasa';
+    };
+
     const value = {
         user,
         loading,
@@ -72,6 +77,7 @@ export function AuthProvider({ children }) {
         logout,
         isAdmin,
         isSuperUser,
+        isReadOnly,
         checkAuth,
     };
 

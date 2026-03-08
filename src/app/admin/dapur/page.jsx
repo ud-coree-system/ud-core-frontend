@@ -11,6 +11,7 @@ import {
     Loader2,
 } from 'lucide-react';
 import { dapurAPI } from '@/lib/api';
+import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/contexts/ToastContext';
 import { getErrorMessage } from '@/lib/utils';
 import Modal from '@/components/ui/Modal';
@@ -27,6 +28,7 @@ const INITIAL_FORM = {
 export default function DapurManagementPage() {
     const searchParams = useSearchParams();
     const { toast } = useToast();
+    const { isReadOnly } = useAuth();
 
     // State
     const [data, setData] = useState([]);
@@ -207,14 +209,16 @@ export default function DapurManagementPage() {
                     <h1 className="text-xl sm:text-2xl font-bold text-gray-900 leading-tight">Management Dapur</h1>
                     <p className="text-sm sm:text-base text-gray-500 mt-0.5 sm:mt-1">Kelola data Dapur MBG</p>
                 </div>
-                <button
-                    onClick={openCreateModal}
-                    className="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-blue-600 text-white rounded-xl
+                {!isReadOnly() && (
+                    <button
+                        onClick={openCreateModal}
+                        className="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-blue-600 text-white rounded-xl
                    hover:bg-blue-700 active:bg-blue-800 transition-all font-medium shadow-sm shadow-blue-200 w-full sm:w-auto"
-                >
-                    <Plus className="w-5 h-5" />
-                    Tambah Dapur
-                </button>
+                    >
+                        <Plus className="w-5 h-5" />
+                        Tambah Dapur
+                    </button>
+                )}
             </div>
 
             {/* Search Bar */}
@@ -285,20 +289,24 @@ export default function DapurManagementPage() {
                                     </div>
 
                                     <div className="flex items-center gap-3 pt-4 border-t border-gray-50">
-                                        <button
-                                            onClick={() => openEditModal(item)}
-                                            className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-blue-50 text-blue-600 rounded-lg text-sm font-semibold hover:bg-blue-100 transition-colors"
-                                        >
-                                            <Edit className="w-4 h-4" />
-                                            Edit
-                                        </button>
-                                        <button
-                                            onClick={() => openDeleteDialog(item)}
-                                            className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-red-50 text-red-600 rounded-lg text-sm font-semibold hover:bg-red-100 transition-colors"
-                                        >
-                                            <Trash2 className="w-4 h-4" />
-                                            Hapus
-                                        </button>
+                                        {!isReadOnly() && (
+                                            <>
+                                                <button
+                                                    onClick={() => openEditModal(item)}
+                                                    className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-blue-50 text-blue-600 rounded-lg text-sm font-semibold hover:bg-blue-100 transition-colors"
+                                                >
+                                                    <Edit className="w-4 h-4" />
+                                                    Edit
+                                                </button>
+                                                <button
+                                                    onClick={() => openDeleteDialog(item)}
+                                                    className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-red-50 text-red-600 rounded-lg text-sm font-semibold hover:bg-red-100 transition-colors"
+                                                >
+                                                    <Trash2 className="w-4 h-4" />
+                                                    Hapus
+                                                </button>
+                                            </>
+                                        )}
                                     </div>
                                 </div>
                             ))}
@@ -358,20 +366,24 @@ export default function DapurManagementPage() {
                                                 </td>
                                                 <td className="px-3 md:px-4 lg:px-6 py-4">
                                                     <div className="flex items-center justify-center gap-1">
-                                                        <button
-                                                            onClick={() => openEditModal(item)}
-                                                            className="p-1.5 md:p-2 hover:bg-blue-50 rounded-lg text-blue-600 transition-all hover:scale-110"
-                                                            title="Edit"
-                                                        >
-                                                            <Edit className="w-4 h-4" />
-                                                        </button>
-                                                        <button
-                                                            onClick={() => openDeleteDialog(item)}
-                                                            className="p-1.5 md:p-2 hover:bg-red-50 rounded-lg text-red-600 transition-all hover:scale-110"
-                                                            title="Hapus"
-                                                        >
-                                                            <Trash2 className="w-4 h-4" />
-                                                        </button>
+                                                        {!isReadOnly() && (
+                                                            <>
+                                                                <button
+                                                                    onClick={() => openEditModal(item)}
+                                                                    className="p-1.5 md:p-2 hover:bg-blue-50 rounded-lg text-blue-600 transition-all hover:scale-110"
+                                                                    title="Edit"
+                                                                >
+                                                                    <Edit className="w-4 h-4" />
+                                                                </button>
+                                                                <button
+                                                                    onClick={() => openDeleteDialog(item)}
+                                                                    className="p-1.5 md:p-2 hover:bg-red-50 rounded-lg text-red-600 transition-all hover:scale-110"
+                                                                    title="Hapus"
+                                                                >
+                                                                    <Trash2 className="w-4 h-4" />
+                                                                </button>
+                                                            </>
+                                                        )}
                                                     </div>
                                                 </td>
                                             </tr>

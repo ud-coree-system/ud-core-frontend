@@ -14,6 +14,7 @@ import {
     X,
 } from 'lucide-react';
 import { periodeAPI } from '@/lib/api';
+import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/contexts/ToastContext';
 import { getErrorMessage, formatDate, toDateInputValue } from '@/lib/utils';
 import Modal from '@/components/ui/Modal';
@@ -32,6 +33,7 @@ const INITIAL_FORM = {
 export default function PeriodeManagementPage() {
     const searchParams = useSearchParams();
     const { toast } = useToast();
+    const { isReadOnly } = useAuth();
 
     // State
     const [data, setData] = useState([]);
@@ -289,14 +291,16 @@ export default function PeriodeManagementPage() {
                     <h1 className="text-xl sm:text-2xl font-bold text-gray-900 leading-tight">Management Periode</h1>
                     <p className="text-sm sm:text-base text-gray-500 mt-0.5 sm:mt-1">Kelola data periode operasional</p>
                 </div>
-                <button
-                    onClick={openCreateModal}
-                    className="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-blue-600 text-white rounded-xl
+                {!isReadOnly() && (
+                    <button
+                        onClick={openCreateModal}
+                        className="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-blue-600 text-white rounded-xl
                    hover:bg-blue-700 active:bg-blue-800 transition-all font-medium shadow-sm shadow-blue-200 w-full sm:w-auto"
-                >
-                    <Plus className="w-5 h-5" />
-                    Tambah Periode
-                </button>
+                    >
+                        <Plus className="w-5 h-5" />
+                        Tambah Periode
+                    </button>
+                )}
             </div>
 
             <div className="bg-white rounded-xl sm:rounded-2xl border border-gray-100 p-3 sm:p-4 shadow-sm">
@@ -401,29 +405,36 @@ export default function PeriodeManagementPage() {
 
                                     <div className="flex items-center gap-2 pt-4 border-t border-gray-100">
                                         {!item.isClosed ? (
-                                            <>
-                                                <button
-                                                    onClick={() => openEditModal(item)}
-                                                    className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-blue-50 text-blue-600 rounded-xl text-sm font-bold hover:bg-blue-100 transition-colors active:scale-95"
-                                                >
-                                                    <Edit className="w-4 h-4" />
-                                                    Edit
-                                                </button>
-                                                <button
-                                                    onClick={() => openCloseDialog(item)}
-                                                    className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-purple-50 text-purple-600 rounded-xl text-sm font-bold hover:bg-purple-100 transition-colors active:scale-95"
-                                                >
-                                                    <Lock className="w-4 h-4" />
-                                                    Tutup
-                                                </button>
-                                                <button
-                                                    onClick={() => openDeleteDialog(item)}
-                                                    className="p-2.5 bg-red-50 text-red-600 rounded-xl hover:bg-red-100 transition-colors active:scale-95"
-                                                    title="Hapus"
-                                                >
-                                                    <Trash2 className="w-4 h-4" />
-                                                </button>
-                                            </>
+                                            !isReadOnly() ? (
+                                                <>
+                                                    <button
+                                                        onClick={() => openEditModal(item)}
+                                                        className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-blue-50 text-blue-600 rounded-xl text-sm font-bold hover:bg-blue-100 transition-colors active:scale-95"
+                                                    >
+                                                        <Edit className="w-4 h-4" />
+                                                        Edit
+                                                    </button>
+                                                    <button
+                                                        onClick={() => openCloseDialog(item)}
+                                                        className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-purple-50 text-purple-600 rounded-xl text-sm font-bold hover:bg-purple-100 transition-colors active:scale-95"
+                                                    >
+                                                        <Lock className="w-4 h-4" />
+                                                        Tutup
+                                                    </button>
+                                                    <button
+                                                        onClick={() => openDeleteDialog(item)}
+                                                        className="p-2.5 bg-red-50 text-red-600 rounded-xl hover:bg-red-100 transition-colors active:scale-95"
+                                                        title="Hapus"
+                                                    >
+                                                        <Trash2 className="w-4 h-4" />
+                                                    </button>
+                                                </>
+                                            ) : (
+                                                <div className="w-full flex items-center justify-center gap-2 py-3 text-sm font-bold text-gray-400 bg-gray-50 rounded-xl border border-dashed border-gray-200">
+                                                    <Unlock className="w-4 h-4" />
+                                                    PERIODE TERBUKA
+                                                </div>
+                                            )
                                         ) : (
                                             <div className="w-full flex items-center justify-center gap-2 py-3 text-sm font-bold text-gray-400 bg-gray-50 rounded-xl border border-dashed border-gray-200">
                                                 <Lock className="w-4 h-4" />
@@ -496,29 +507,33 @@ export default function PeriodeManagementPage() {
                                                 <td className="px-2 md:px-3 lg:px-6 py-4 whitespace-nowrap">
                                                     <div className="flex items-center justify-center gap-0.5 md:gap-1">
                                                         {!item.isClosed ? (
-                                                            <>
-                                                                <button
-                                                                    onClick={() => openEditModal(item)}
-                                                                    className="p-1 md:p-1.5 lg:p-2 hover:bg-blue-50 rounded-lg text-blue-600 transition-all hover:scale-110"
-                                                                    title="Edit"
-                                                                >
-                                                                    <Edit className="w-3.5 h-3.5 md:w-4 h-4" />
-                                                                </button>
-                                                                <button
-                                                                    onClick={() => openCloseDialog(item)}
-                                                                    className="p-1 md:p-1.5 lg:p-2 hover:bg-purple-50 rounded-lg text-purple-600 transition-all hover:scale-110"
-                                                                    title="Tutup Periode"
-                                                                >
-                                                                    <Lock className="w-3.5 h-3.5 md:w-4 h-4" />
-                                                                </button>
-                                                                <button
-                                                                    onClick={() => openDeleteDialog(item)}
-                                                                    className="p-1 md:p-1.5 lg:p-2 hover:bg-red-50 rounded-lg text-red-600 transition-all hover:scale-110"
-                                                                    title="Hapus"
-                                                                >
-                                                                    <Trash2 className="w-3.5 h-3.5 md:w-4 h-4" />
-                                                                </button>
-                                                            </>
+                                                            !isReadOnly() ? (
+                                                                <>
+                                                                    <button
+                                                                        onClick={() => openEditModal(item)}
+                                                                        className="p-1 md:p-1.5 lg:p-2 hover:bg-blue-50 rounded-lg text-blue-600 transition-all hover:scale-110"
+                                                                        title="Edit"
+                                                                    >
+                                                                        <Edit className="w-3.5 h-3.5 md:w-4 h-4" />
+                                                                    </button>
+                                                                    <button
+                                                                        onClick={() => openCloseDialog(item)}
+                                                                        className="p-1 md:p-1.5 lg:p-2 hover:bg-purple-50 rounded-lg text-purple-600 transition-all hover:scale-110"
+                                                                        title="Tutup Periode"
+                                                                    >
+                                                                        <Lock className="w-3.5 h-3.5 md:w-4 h-4" />
+                                                                    </button>
+                                                                    <button
+                                                                        onClick={() => openDeleteDialog(item)}
+                                                                        className="p-1 md:p-1.5 lg:p-2 hover:bg-red-50 rounded-lg text-red-600 transition-all hover:scale-110"
+                                                                        title="Hapus"
+                                                                    >
+                                                                        <Trash2 className="w-3.5 h-3.5 md:w-4 h-4" />
+                                                                    </button>
+                                                                </>
+                                                            ) : (
+                                                                <span className="text-[10px] md:text-xs text-gray-400 font-medium italic">Buka</span>
+                                                            )
                                                         ) : (
                                                             <span className="text-[10px] md:text-xs text-gray-400 font-medium italic">Terkunci</span>
                                                         )}

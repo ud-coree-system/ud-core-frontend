@@ -33,7 +33,7 @@ const INITIAL_FORM = {
 export default function UserManagementPage() {
     const searchParams = useSearchParams();
     const { toast } = useToast();
-    const { isAdmin, isSuperUser, user: currentUser } = useAuth();
+    const { isAdmin, isSuperUser, isReadOnly, user: currentUser } = useAuth();
 
     // State
     const [data, setData] = useState([]);
@@ -314,14 +314,16 @@ export default function UserManagementPage() {
                         Kelola data pengguna dan hak akses sistem
                     </p>
                 </div>
-                <button
-                    onClick={openCreateModal}
-                    className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-blue-600 text-white rounded-xl
+                {!isReadOnly() && (
+                    <button
+                        onClick={openCreateModal}
+                        className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-blue-600 text-white rounded-xl
                    hover:bg-blue-700 transition-all font-semibold shadow-lg shadow-blue-500/20 active:scale-95 group"
-                >
-                    <Plus className="w-5 h-5 group-hover:rotate-90 transition-transform" />
-                    <span>Tambah User</span>
-                </button>
+                    >
+                        <Plus className="w-5 h-5 group-hover:rotate-90 transition-transform" />
+                        <span>Tambah User</span>
+                    </button>
+                )}
             </div>
 
             {/* Search */}
@@ -395,9 +397,11 @@ export default function UserManagementPage() {
                                                         ? 'bg-red-100 text-red-700 ring-1 ring-inset ring-red-600/10'
                                                         : item.role === 'admin'
                                                             ? 'bg-purple-100 text-purple-700 ring-1 ring-inset ring-purple-600/10'
-                                                            : 'bg-blue-100 text-blue-700 ring-1 ring-inset ring-blue-600/10'}
+                                                            : item.role === 'manusia_biasa'
+                                                                ? 'bg-amber-100 text-amber-700 ring-1 ring-inset ring-amber-600/10'
+                                                                : 'bg-blue-100 text-blue-700 ring-1 ring-inset ring-blue-600/10'}
                                                 `}>
-                                                    {item.role?.replace('_', ' ')}
+                                                    {item.role === 'manusia_biasa' ? 'Manusia Biasa' : item.role?.replace('_', ' ')}
                                                 </span>
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap hidden xl:table-cell">
@@ -423,7 +427,7 @@ export default function UserManagementPage() {
                                                     >
                                                         <Search className="w-4.5 h-4.5" />
                                                     </button>
-                                                    {(isSuperUser() || (currentUser?.role === 'admin' && item._id === currentUser?._id)) && (
+                                                    {!isReadOnly() && (isSuperUser() || (currentUser?.role === 'admin' && item._id === currentUser?._id)) && (
                                                         <button
                                                             onClick={() => openEditModal(item)}
                                                             className="p-2 hover:bg-blue-50 rounded-lg text-blue-600 transition-colors"
@@ -432,7 +436,7 @@ export default function UserManagementPage() {
                                                             <Edit className="w-4.5 h-4.5" />
                                                         </button>
                                                     )}
-                                                    {isSuperUser() && (
+                                                    {!isReadOnly() && isSuperUser() && (
                                                         <button
                                                             onClick={() => openDeleteDialog(item)}
                                                             disabled={item._id === currentUser?._id}
@@ -471,7 +475,7 @@ export default function UserManagementPage() {
                                             >
                                                 <Search className="w-4.5 h-4.5" />
                                             </button>
-                                            {(isSuperUser() || (currentUser?.role === 'admin' && item._id === currentUser?._id)) && (
+                                            {!isReadOnly() && (isSuperUser() || (currentUser?.role === 'admin' && item._id === currentUser?._id)) && (
                                                 <button
                                                     onClick={() => openEditModal(item)}
                                                     className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
@@ -479,7 +483,7 @@ export default function UserManagementPage() {
                                                     <Edit className="w-4.5 h-4.5" />
                                                 </button>
                                             )}
-                                            {isSuperUser() && (
+                                            {!isReadOnly() && isSuperUser() && (
                                                 <button
                                                     onClick={() => openDeleteDialog(item)}
                                                     disabled={item._id === currentUser?._id}
@@ -628,6 +632,7 @@ export default function UserManagementPage() {
                             {currentUser?.role === 'superuser' && (
                                 <option value="superuser">Super User</option>
                             )}
+                            <option value="manusia_biasa">Manusia Biasa</option>
                         </select>
                     </div>
 

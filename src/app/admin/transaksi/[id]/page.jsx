@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import { getErrorMessage, formatCurrency, formatNumber, formatDate, getStatusClass, toLocalDate, formatDateFilename, normalizeId } from '@/lib/utils';
 import { transaksiAPI, barangAPI, udAPI } from '@/lib/api';
+import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/contexts/ToastContext';
 import NotaDapur from '@/components/print/NotaDapur';
 import NotaDapurPDF from '@/components/print/NotaDapurPDF';
@@ -21,6 +22,7 @@ export default function TransaksiDetailPage() {
     const router = useRouter();
     const params = useParams();
     const { toast } = useToast();
+    const { isReadOnly } = useAuth();
 
     const [data, setData] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -291,7 +293,7 @@ export default function TransaksiDetailPage() {
                 </div>
 
                 <div className="grid grid-cols-2 sm:flex sm:items-center gap-2">
-                    {data.status === 'draft' && (
+                    {data.status === 'draft' && !isReadOnly() && (
                         <button
                             onClick={handleComplete}
                             disabled={completing}

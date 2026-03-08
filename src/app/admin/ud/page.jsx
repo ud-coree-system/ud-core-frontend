@@ -13,6 +13,7 @@ import {
     Eye,
 } from 'lucide-react';
 import { udAPI } from '@/lib/api';
+import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/contexts/ToastContext';
 import { getErrorMessage } from '@/lib/utils';
 import Modal from '@/components/ui/Modal';
@@ -42,6 +43,7 @@ const INITIAL_FORM = {
 export default function UDManagementPage() {
     const searchParams = useSearchParams();
     const { toast } = useToast();
+    const { isReadOnly } = useAuth();
 
     // State
     const [data, setData] = useState([]);
@@ -266,14 +268,16 @@ export default function UDManagementPage() {
                     <h1 className="text-2xl font-bold text-gray-900">Management UD</h1>
                     <p className="text-gray-500 mt-1">Kelola data Usaha Dagang</p>
                 </div>
-                <button
-                    onClick={openCreateModal}
-                    className="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-blue-600 text-white rounded-lg
+                {!isReadOnly() && (
+                    <button
+                        onClick={openCreateModal}
+                        className="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-blue-600 text-white rounded-lg
                    hover:bg-blue-700 transition-colors font-medium w-full sm:w-auto"
-                >
-                    <Plus className="w-5 h-5" />
-                    Tambah UD
-                </button>
+                    >
+                        <Plus className="w-5 h-5" />
+                        Tambah UD
+                    </button>
+                )}
             </div>
 
             {/* Search Bar */}
@@ -371,20 +375,24 @@ export default function UDManagementPage() {
                                                     >
                                                         <Eye className="w-4 h-4" />
                                                     </button>
-                                                    <button
-                                                        onClick={() => openEditModal(item)}
-                                                        className="p-2 hover:bg-blue-50 rounded-lg text-blue-600 transition-colors"
-                                                        title="Edit"
-                                                    >
-                                                        <Edit className="w-4 h-4" />
-                                                    </button>
-                                                    <button
-                                                        onClick={() => openDeleteDialog(item)}
-                                                        className="p-2 hover:bg-red-50 rounded-lg text-red-600 transition-colors"
-                                                        title="Hapus"
-                                                    >
-                                                        <Trash2 className="w-4 h-4" />
-                                                    </button>
+                                                    {!isReadOnly() && (
+                                                        <>
+                                                            <button
+                                                                onClick={() => openEditModal(item)}
+                                                                className="p-2 hover:bg-blue-50 rounded-lg text-blue-600 transition-colors"
+                                                                title="Edit"
+                                                            >
+                                                                <Edit className="w-4 h-4" />
+                                                            </button>
+                                                            <button
+                                                                onClick={() => openDeleteDialog(item)}
+                                                                className="p-2 hover:bg-red-50 rounded-lg text-red-600 transition-colors"
+                                                                title="Hapus"
+                                                            >
+                                                                <Trash2 className="w-4 h-4" />
+                                                            </button>
+                                                        </>
+                                                    )}
                                                 </div>
                                             </td>
                                         </tr>
@@ -426,18 +434,22 @@ export default function UDManagementPage() {
                                             >
                                                 <Eye className="w-5 h-5" />
                                             </button>
-                                            <button
-                                                onClick={() => openEditModal(item)}
-                                                className="p-2 bg-blue-50 text-blue-600 rounded-lg"
-                                            >
-                                                <Edit className="w-5 h-5" />
-                                            </button>
-                                            <button
-                                                onClick={() => openDeleteDialog(item)}
-                                                className="p-2 bg-red-50 text-red-600 rounded-lg"
-                                            >
-                                                <Trash2 className="w-5 h-5" />
-                                            </button>
+                                            {!isReadOnly() && (
+                                                <>
+                                                    <button
+                                                        onClick={() => openEditModal(item)}
+                                                        className="p-2 bg-blue-50 text-blue-600 rounded-lg"
+                                                    >
+                                                        <Edit className="w-5 h-5" />
+                                                    </button>
+                                                    <button
+                                                        onClick={() => openDeleteDialog(item)}
+                                                        className="p-2 bg-red-50 text-red-600 rounded-lg"
+                                                    >
+                                                        <Trash2 className="w-5 h-5" />
+                                                    </button>
+                                                </>
+                                            )}
                                         </div>
                                     </div>
                                 </div>

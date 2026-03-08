@@ -14,6 +14,7 @@ import {
     RotateCcw,
 } from 'lucide-react';
 import { transaksiAPI, periodeAPI, dapurAPI } from '@/lib/api';
+import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/contexts/ToastContext';
 import { getErrorMessage, formatCurrency, formatDateShort, getStatusClass, toLocalDate } from '@/lib/utils';
 import Pagination from '@/components/ui/Pagination';
@@ -24,6 +25,7 @@ import DatePicker from '@/components/ui/DatePicker';
 
 export default function TransaksiListPage() {
     const { toast } = useToast();
+    const { isReadOnly } = useAuth();
 
     // State
     const [data, setData] = useState([]);
@@ -251,14 +253,16 @@ export default function TransaksiListPage() {
                     <h1 className="text-xl md:text-2xl font-bold text-gray-900 leading-tight">List Transaksi</h1>
                     <p className="text-sm md:text-base text-gray-500 mt-0.5">Daftar semua transaksi</p>
                 </div>
-                <Link
-                    href="/admin/transaksi/new"
-                    className="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-blue-600 text-white rounded-xl
-                           hover:bg-blue-700 transition-all font-semibold shadow-lg shadow-blue-500/20 active:scale-95"
-                >
-                    <Plus className="w-5 h-5" />
-                    Input Transaksi
-                </Link>
+                {!isReadOnly() && (
+                    <Link
+                        href="/admin/transaksi/new"
+                        className="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-blue-600 text-white rounded-xl
+                               hover:bg-blue-700 transition-all font-semibold shadow-lg shadow-blue-500/20 active:scale-95"
+                    >
+                        <Plus className="w-5 h-5" />
+                        Input Transaksi
+                    </Link>
+                )}
             </div>
 
             {/* Filters */}
@@ -453,7 +457,7 @@ export default function TransaksiListPage() {
                                                     >
                                                         <Eye className="w-4 h-4" />
                                                     </Link>
-                                                    {item.status === 'draft' && (
+                                                    {!isReadOnly() && item.status === 'draft' && (
                                                         <>
                                                             <Link
                                                                 href={`/admin/transaksi/${item._id}/edit`}
@@ -474,7 +478,7 @@ export default function TransaksiListPage() {
                                                             </button>
                                                         </>
                                                     )}
-                                                    {item.status === 'completed' && (
+                                                    {!isReadOnly() && item.status === 'completed' && (
                                                         <button
                                                             onClick={() => {
                                                                 setUncompletingItem(item);
@@ -487,7 +491,7 @@ export default function TransaksiListPage() {
                                                             <RotateCcw className="w-4 h-4" />
                                                         </button>
                                                     )}
-                                                    {item.status === 'cancelled' && (
+                                                    {!isReadOnly() && item.status === 'cancelled' && (
                                                         <>
                                                             <button
                                                                 onClick={() => {
@@ -562,7 +566,7 @@ export default function TransaksiListPage() {
                                             >
                                                 <Eye className="w-5 h-5" />
                                             </Link>
-                                            {item.status === 'draft' && (
+                                            {!isReadOnly() && item.status === 'draft' && (
                                                 <>
                                                     <Link
                                                         href={`/admin/transaksi/${item._id}/edit`}
@@ -583,7 +587,7 @@ export default function TransaksiListPage() {
                                                     </button>
                                                 </>
                                             )}
-                                            {item.status === 'completed' && (
+                                            {!isReadOnly() && item.status === 'completed' && (
                                                 <button
                                                     onClick={() => {
                                                         setUncompletingItem(item);
@@ -596,7 +600,7 @@ export default function TransaksiListPage() {
                                                     <RotateCcw className="w-5 h-5" />
                                                 </button>
                                             )}
-                                            {item.status === 'cancelled' && (
+                                            {!isReadOnly() && item.status === 'cancelled' && (
                                                 <>
                                                     <button
                                                         onClick={() => {

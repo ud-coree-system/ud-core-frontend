@@ -18,6 +18,7 @@ import {
     ChevronDown,
 } from 'lucide-react';
 import { barangAPI, udAPI } from '@/lib/api';
+import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/contexts/ToastContext';
 import { getErrorMessage, formatCurrency } from '@/lib/utils';
 import Modal from '@/components/ui/Modal';
@@ -56,6 +57,7 @@ const INITIAL_FORM = {
 export default function BarangManagementPage() {
     const searchParams = useSearchParams();
     const { toast } = useToast();
+    const { isReadOnly } = useAuth();
 
     // State
     const [data, setData] = useState([]);
@@ -393,14 +395,16 @@ export default function BarangManagementPage() {
                     <p className="text-xs sm:text-sm text-gray-500 mt-1">Kelola data barang dari berbagai UD</p>
                 </div>
                 <div className="flex items-center gap-2">
-                    <Link
-                        href="/admin/barang/bulk-upload"
-                        className="inline-flex items-center justify-center gap-2 px-4 py-2.5 border border-gray-300
-                                   text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium text-sm sm:text-base"
-                    >
-                        <Upload className="w-5 h-5" />
-                        <span className="hidden sm:inline">Bulk Upload</span>
-                    </Link>
+                    {!isReadOnly() && (
+                        <Link
+                            href="/admin/barang/bulk-upload"
+                            className="inline-flex items-center justify-center gap-2 px-4 py-2.5 border border-gray-300
+                                       text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium text-sm sm:text-base"
+                        >
+                            <Upload className="w-5 h-5" />
+                            <span className="hidden sm:inline">Bulk Upload</span>
+                        </Link>
+                    )}
 
                     {/* Download Dropdown */}
                     <div className="relative" ref={downloadMenuRef}>
@@ -453,14 +457,16 @@ export default function BarangManagementPage() {
                         )}
                     </div>
 
-                    <button
-                        onClick={openCreateModal}
-                        className="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-blue-600 text-white rounded-lg
-                                   hover:bg-blue-700 transition-colors font-medium text-sm sm:text-base"
-                    >
-                        <Plus className="w-5 h-5" />
-                        Tambah Barang
-                    </button>
+                    {!isReadOnly() && (
+                        <button
+                            onClick={openCreateModal}
+                            className="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-blue-600 text-white rounded-lg
+                                       hover:bg-blue-700 transition-colors font-medium text-sm sm:text-base"
+                        >
+                            <Plus className="w-5 h-5" />
+                            Tambah Barang
+                        </button>
+                    )}
                 </div>
             </div>
 
@@ -643,20 +649,24 @@ export default function BarangManagementPage() {
                                                     </td>
                                                     <td className="px-3 md:px-4 py-4">
                                                         <div className="flex items-center justify-center gap-1 md:gap-2">
-                                                            <button
-                                                                onClick={() => openEditModal(item)}
-                                                                className="p-1.5 md:p-2 hover:bg-blue-50 rounded-lg text-blue-600 transition-colors"
-                                                                title="Edit"
-                                                            >
-                                                                <Edit className="w-4 h-4" />
-                                                            </button>
-                                                            <button
-                                                                onClick={() => openDeleteDialog(item)}
-                                                                className="p-1.5 md:p-2 hover:bg-red-50 rounded-lg text-red-600 transition-colors"
-                                                                title="Hapus"
-                                                            >
-                                                                <Trash2 className="w-4 h-4" />
-                                                            </button>
+                                                            {!isReadOnly() && (
+                                                                <>
+                                                                    <button
+                                                                        onClick={() => openEditModal(item)}
+                                                                        className="p-1.5 md:p-2 hover:bg-blue-50 rounded-lg text-blue-600 transition-colors"
+                                                                        title="Edit"
+                                                                    >
+                                                                        <Edit className="w-4 h-4" />
+                                                                    </button>
+                                                                    <button
+                                                                        onClick={() => openDeleteDialog(item)}
+                                                                        className="p-1.5 md:p-2 hover:bg-red-50 rounded-lg text-red-600 transition-colors"
+                                                                        title="Hapus"
+                                                                    >
+                                                                        <Trash2 className="w-4 h-4" />
+                                                                    </button>
+                                                                </>
+                                                            )}
                                                         </div>
                                                     </td>
                                                 </tr>
@@ -739,20 +749,24 @@ export default function BarangManagementPage() {
                                                                 </td>
                                                                 <td className="px-3 md:px-4 py-4">
                                                                     <div className="flex items-center justify-center gap-1 md:gap-2">
-                                                                        <button
-                                                                            onClick={() => openEditModal(item)}
-                                                                            className="p-1.5 md:p-2 hover:bg-blue-50 rounded-lg text-blue-600 transition-colors"
-                                                                            title="Edit"
-                                                                        >
-                                                                            <Edit className="w-4 h-4" />
-                                                                        </button>
-                                                                        <button
-                                                                            onClick={() => openDeleteDialog(item)}
-                                                                            className="p-1.5 md:p-2 hover:bg-red-50 rounded-lg text-red-600 transition-colors"
-                                                                            title="Hapus"
-                                                                        >
-                                                                            <Trash2 className="w-4 h-4" />
-                                                                        </button>
+                                                                        {!isReadOnly() && (
+                                                                            <>
+                                                                                <button
+                                                                                    onClick={() => openEditModal(item)}
+                                                                                    className="p-1.5 md:p-2 hover:bg-blue-50 rounded-lg text-blue-600 transition-colors"
+                                                                                    title="Edit"
+                                                                                >
+                                                                                    <Edit className="w-4 h-4" />
+                                                                                </button>
+                                                                                <button
+                                                                                    onClick={() => openDeleteDialog(item)}
+                                                                                    className="p-1.5 md:p-2 hover:bg-red-50 rounded-lg text-red-600 transition-colors"
+                                                                                    title="Hapus"
+                                                                                >
+                                                                                    <Trash2 className="w-4 h-4" />
+                                                                                </button>
+                                                                            </>
+                                                                        )}
                                                                     </div>
                                                                 </td>
                                                             </tr>
@@ -795,18 +809,22 @@ export default function BarangManagementPage() {
                                                     </div>
                                                 </div>
                                                 <div className="flex items-center gap-1">
-                                                    <button
-                                                        onClick={() => openEditModal(item)}
-                                                        className="p-2 hover:bg-blue-50 rounded-lg text-blue-600 transition-colors"
-                                                    >
-                                                        <Edit className="w-4 h-4" />
-                                                    </button>
-                                                    <button
-                                                        onClick={() => openDeleteDialog(item)}
-                                                        className="p-2 hover:bg-red-50 rounded-lg text-red-600 transition-colors"
-                                                    >
-                                                        <Trash2 className="w-4 h-4" />
-                                                    </button>
+                                                    {!isReadOnly() && (
+                                                        <>
+                                                            <button
+                                                                onClick={() => openEditModal(item)}
+                                                                className="p-2 hover:bg-blue-50 rounded-lg text-blue-600 transition-colors"
+                                                            >
+                                                                <Edit className="w-4 h-4" />
+                                                            </button>
+                                                            <button
+                                                                onClick={() => openDeleteDialog(item)}
+                                                                className="p-2 hover:bg-red-50 rounded-lg text-red-600 transition-colors"
+                                                            >
+                                                                <Trash2 className="w-4 h-4" />
+                                                            </button>
+                                                        </>
+                                                    )}
                                                 </div>
                                             </div>
 
@@ -900,18 +918,22 @@ export default function BarangManagementPage() {
                                                                 </div>
                                                             </div>
                                                             <div className="flex items-center gap-1">
-                                                                <button
-                                                                    onClick={() => openEditModal(item)}
-                                                                    className="p-2 hover:bg-blue-50 rounded-lg text-blue-600 transition-colors"
-                                                                >
-                                                                    <Edit className="w-4 h-4" />
-                                                                </button>
-                                                                <button
-                                                                    onClick={() => openDeleteDialog(item)}
-                                                                    className="p-2 hover:bg-red-50 rounded-lg text-red-600 transition-colors"
-                                                                >
-                                                                    <Trash2 className="w-4 h-4" />
-                                                                </button>
+                                                                {!isReadOnly() && (
+                                                                    <>
+                                                                        <button
+                                                                            onClick={() => openEditModal(item)}
+                                                                            className="p-2 hover:bg-blue-50 rounded-lg text-blue-600 transition-colors"
+                                                                        >
+                                                                            <Edit className="w-4 h-4" />
+                                                                        </button>
+                                                                        <button
+                                                                            onClick={() => openDeleteDialog(item)}
+                                                                            className="p-2 hover:bg-red-50 rounded-lg text-red-600 transition-colors"
+                                                                        >
+                                                                            <Trash2 className="w-4 h-4" />
+                                                                        </button>
+                                                                    </>
+                                                                )}
                                                             </div>
                                                         </div>
 
