@@ -2,18 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback, Fragment } from 'react';
 import { useRouter, useParams } from 'next/navigation';
-import {
-    ShoppingCart,
-    Search,
-    RefreshCw,
-    Trash2,
-    Plus,
-    Loader2,
-    Save,
-    CheckCircle,
-    ArrowLeft,
-    X,
-} from 'lucide-react';
+import { ShoppingCart, Search, RefreshCw, Trash2, Plus, Loader2, Save, CheckCircle, ArrowLeft, X } from 'lucide-react';
 import { transaksiAPI, periodeAPI, dapurAPI, barangAPI, udAPI } from '@/lib/api';
 import DatePicker from '@/components/ui/DatePicker';
 import { useToast } from '@/contexts/ToastContext';
@@ -43,6 +32,8 @@ export default function EditTransaksiPage() {
     const { toast } = useToast();
     const searchInputRef = useRef(null);
 
+    console.log('EditTransaksiPage Render - params:', params);
+
     // Form state
     const [periodeId, setPeriodeId] = useState('');
     const [dapurId, setDapurId] = useState('');
@@ -70,6 +61,66 @@ export default function EditTransaksiPage() {
     const [tableUdFilter, setTableUdFilter] = useState('');
     const [groupingMode, setGroupingMode] = useState('ud');
 
+    const SESSION_STORAGE_KEY = params?.id ? `edit_transaksi_${params.id}` : null;
+    const [isInitialized, setIsInitialized] = useState(false);
+
+    // Secure Clear Modal state
+    const [showClearModal, setShowClearModal] = useState(false);
+    const [clearConfirmCode, setClearConfirmCode] = useState('');
+    const [userInputCode, setUserInputCode] = useState('');
+
+    const generateRandomCode = () => {
+        const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // Excluded confusing chars like 0, O, 1, I, L
+        let result = '';
+        for (let i = 0; i < 4; i++) {
+            result += chars.charAt(Math.floor(Math.random() * chars.length));
+        }
+        return result;
+    };
+
+    const handleOpenClearModal = () => {
+        setClearConfirmCode(generateRandomCode());
+        setUserInputCode('');
+        setShowClearModal(true);
+    };
+
+    const handleConfirmClear = () => {
+        if (userInputCode.toUpperCase() !== clearConfirmCode) {
+            toast.error('Kode konfirmasi tidak cocok');
+            return;
+        }
+
+        if (SESSION_STORAGE_KEY) {
+            sessionStorage.removeItem(SESSION_STORAGE_KEY);
+        }
+        setShowClearModal(false);
+        toast.info('Draft edit dibersihkan, memuat data asli...');
+        fetchTransaksiDetail(); // Re-fetch to reset to original data
+    };
+
+    const handleClearForm = () => {
+        handleOpenClearModal();
+    };
+
+    const hasData = !!(periodeId || dapurId || items.length > 0);
+
+    // Session persistence: Save on changes
+    useEffect(() => {
+        if (!isInitialized || !SESSION_STORAGE_KEY || fetchingData) return;
+
+        console.log('Saving state to session storage...', { itemsCount: items.length });
+        const stateToSave = {
+            periodeId,
+            dapurId,
+            tanggal: tanggal instanceof Date ? tanggal.toISOString() : new Date().toISOString(),
+            items,
+            selectedUdId,
+            tableUdFilter,
+            groupingMode
+        };
+        sessionStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(stateToSave));
+    }, [periodeId, dapurId, tanggal, items, selectedUdId, tableUdFilter, groupingMode, isInitialized, SESSION_STORAGE_KEY, fetchingData]);
+
     // Create Barang Modal state
     const [showCreateModal, setShowCreateModal] = useState(false);
     const [newBarang, setNewBarang] = useState({
@@ -83,11 +134,15 @@ export default function EditTransaksiPage() {
     const [creatingBarang, setCreatingBarang] = useState(false);
 
     useEffect(() => {
+        console.log('EditTransaksiPage Effect Run - params.id:', params?.id);
         fetchOptions();
-        if (params.id) {
+        if (params?.id) {
+            console.log('Fetching detail for ID:', params.id);
             fetchTransaksiDetail();
+        } else {
+            console.warn('No ID found in params yet');
         }
-    }, [params.id]);
+    }, [params?.id]);
 
     const fetchOptions = async () => {
         try {
@@ -117,6 +172,7 @@ export default function EditTransaksiPage() {
             setItems(prev => prev.map(i => i.barang_id === item.barang_id ? { ...i, isUpdatingMaster: true } : i));
 
             const payload = {
+                nama_barang: item.nama_barang,
                 satuan: item.satuan,
                 harga_jual: item.harga_jual,
                 harga_modal: item.harga_modal
@@ -129,6 +185,7 @@ export default function EditTransaksiPage() {
                 // Update original values to current values
                 setItems(prev => prev.map(i => i.barang_id === item.barang_id ? {
                     ...i,
+                    original_nama_barang: item.nama_barang,
                     original_satuan: item.satuan,
                     original_harga_jual: item.harga_jual,
                     original_harga_modal: item.harga_modal,
@@ -141,14 +198,22 @@ export default function EditTransaksiPage() {
         }
     };
 
+    // Modified fetch: only update states if no session storage data for this ID
     const fetchTransaksiDetail = async () => {
         try {
+            console.log('fetchTransaksiDetail started - ID:', params.id);
             setFetchingData(true);
             const [response, barangRes, udRes] = await Promise.all([
                 transaksiAPI.getById(params.id),
                 barangAPI.getAll({ limit: 1000 }),
                 udAPI.getAll({ limit: 1000 })
             ]);
+
+            console.log('API Responses:', {
+                transaksi: response.data,
+                barang: barangRes.data.success,
+                ud: udRes.data.success
+            });
 
             if (response.data.success) {
                 let trx = response.data.data;
@@ -216,33 +281,33 @@ export default function EditTransaksiPage() {
                 }
 
                 setKodeTransaksi(trx.kode_transaksi);
-                setPeriodeId(trx.periode_id?._id || '');
-                setDapurId(trx.dapur_id?._id || '');
-                setTanggal(new Date(trx.tanggal));
 
-                // Format items for the UI
-                const formattedItems = trx.items.map(item => {
-                    const bId = normalizeId(item.barang_id?._id || item.barang_id);
-                    const barangFromMap = barangRes.data.data.find(b => normalizeId(b._id) === bId);
-
-                    return {
-                        barang_id: bId,
-                        nama_barang: item.nama_barang || item.barang_id?.nama_barang || '-',
-                        satuan: item.satuan || item.barang_id?.satuan || '-',
-                        harga_jual: item.harga_jual,
-                        harga_modal: item.harga_modal,
-                        ud_id: normalizeId(item.ud_id?._id || item.ud_id),
-                        ud_nama: item.ud_nama || item.ud_id?.nama_ud || '-',
-                        ud_kode: item.ud_kode || item.ud_id?.kode_ud || '-',
-                        qty: item.qty,
-                        // Store original values from master data for change detection
-                        original_satuan: barangFromMap?.satuan || item.satuan,
-                        original_harga_jual: barangFromMap?.harga_jual || item.harga_jual,
-                        original_harga_modal: barangFromMap?.harga_modal || item.harga_modal,
-                        isUpdatingMaster: false
-                    };
-                });
-                setItems(formattedItems);
+                // Logic: Prioritize session storage draft
+                const savedState = sessionStorage.getItem(`edit_transaksi_${params.id}`);
+                if (savedState) {
+                    try {
+                        const parsed = JSON.parse(savedState);
+                        console.log('Restoring draft from session storage');
+                        if (parsed.periodeId) setPeriodeId(parsed.periodeId);
+                        if (parsed.dapurId) setDapurId(parsed.dapurId);
+                        if (parsed.tanggal) setTanggal(new Date(parsed.tanggal));
+                        if (parsed.items && parsed.items.length > 0) {
+                            setItems(parsed.items);
+                            if (parsed.selectedUdId) setSelectedUdId(parsed.selectedUdId);
+                            if (parsed.tableUdFilter) setTableUdFilter(parsed.tableUdFilter);
+                            if (parsed.groupingMode) setGroupingMode(parsed.groupingMode);
+                        } else {
+                            console.log('Draft is empty or invalid, falling back to server data');
+                            loadFromServerDraft(trx, barangRes.data.data);
+                        }
+                    } catch (error) {
+                        console.error('Error parsing saved state, falling back to server data:', error);
+                        loadFromServerDraft(trx, barangRes.data.data);
+                    }
+                } else {
+                    console.log('No draft found, loading from server data');
+                    loadFromServerDraft(trx, barangRes.data.data);
+                }
             }
         } catch (error) {
             toast.error(getErrorMessage(error));
@@ -250,7 +315,39 @@ export default function EditTransaksiPage() {
         } finally {
             setFetchingData(false);
             setLoading(false);
+            setIsInitialized(true);
         }
+    };
+
+    const loadFromServerDraft = (trx, barangList) => {
+        setPeriodeId(trx.periode_id?._id || '');
+        setDapurId(trx.dapur_id?._id || '');
+        setTanggal(new Date(trx.tanggal));
+
+        // Format items for the UI
+        const formattedItems = trx.items.map(item => {
+            const bId = normalizeId(item.barang_id?._id || item.barang_id);
+            const barangFromMap = barangList.find(b => normalizeId(b._id) === bId);
+
+            return {
+                barang_id: bId,
+                nama_barang: item.nama_barang || item.barang_id?.nama_barang || '-',
+                satuan: item.satuan || item.barang_id?.satuan || '-',
+                harga_jual: item.harga_jual,
+                harga_modal: item.harga_modal,
+                ud_id: normalizeId(item.ud_id?._id || item.ud_id),
+                ud_nama: item.ud_nama || item.ud_id?.nama_ud || '-',
+                ud_kode: item.ud_kode || item.ud_id?.kode_ud || '-',
+                qty: item.qty,
+                // Store original values from master data for change detection
+                original_nama_barang: barangFromMap?.nama_barang || item.nama_barang || item.barang_id?.nama_barang || '-',
+                original_satuan: barangFromMap?.satuan || item.satuan,
+                original_harga_jual: barangFromMap?.harga_jual || item.harga_jual,
+                original_harga_modal: barangFromMap?.harga_modal || item.harga_modal,
+                isUpdatingMaster: false
+            };
+        });
+        setItems(formattedItems);
     };
 
     // Sync table filter with items: if filtered UD is no longer in items, reset it
@@ -318,6 +415,7 @@ export default function EditTransaksiPage() {
                 ud_nama: barang.ud_id?.nama_ud,
                 ud_kode: barang.ud_id?.kode_ud,
                 qty: 1,
+                original_nama_barang: barang.nama_barang,
                 original_satuan: barang.satuan,
                 original_harga_jual: barang.harga_jual,
                 original_harga_modal: barang.harga_modal || 0,
@@ -368,6 +466,7 @@ export default function EditTransaksiPage() {
                         ud_nama: udList.find(ud => ud._id === (createdBarang.ud_id?._id || createdBarang.ud_id))?.nama_ud,
                         ud_kode: udList.find(ud => ud._id === (createdBarang.ud_id?._id || createdBarang.ud_id))?.kode_ud,
                         qty: 1,
+                        original_nama_barang: createdBarang.nama_barang,
                         original_satuan: createdBarang.satuan,
                         original_harga_jual: createdBarang.harga_jual,
                         original_harga_modal: createdBarang.harga_modal || 0,
@@ -432,6 +531,12 @@ export default function EditTransaksiPage() {
     const handleSatuanChange = (barangId, value) => {
         setItems((prev) =>
             prev.map((item) => (item.barang_id === barangId ? { ...item, satuan: value } : item))
+        );
+    };
+
+    const handleNamaBarangChange = (barangId, value) => {
+        setItems((prev) =>
+            prev.map((item) => (item.barang_id === barangId ? { ...item, nama_barang: value } : item))
         );
     };
 
@@ -511,6 +616,9 @@ export default function EditTransaksiPage() {
                 toast.success('Transaksi berhasil diupdate sebagai draft');
             }
 
+            if (SESSION_STORAGE_KEY) {
+                sessionStorage.removeItem(SESSION_STORAGE_KEY);
+            }
             router.push('/admin/transaksi');
         } catch (error) {
             toast.error(getErrorMessage(error));
@@ -551,6 +659,16 @@ export default function EditTransaksiPage() {
                     <h1 className="text-xl md:text-2xl font-bold text-gray-900 leading-tight">Edit Transaksi</h1>
                     <p className="text-sm md:text-gray-500 font-mono mt-0.5">{kodeTransaksi}</p>
                 </div>
+                {hasData && (
+                    <button
+                        onClick={handleClearForm}
+                        className="ml-auto inline-flex items-center justify-center gap-2 px-4 py-2 bg-red-50 text-red-600 border border-red-200 rounded-xl
+                                   hover:bg-red-100 transition-all font-semibold active:scale-95 text-sm"
+                    >
+                        <Trash2 className="w-4 h-4" />
+                        Bersihkan Form
+                    </button>
+                )}
             </div>
 
             {/* Form */}
@@ -822,9 +940,12 @@ export default function EditTransaksiPage() {
                                                 <tr className="hover:bg-blue-50/20 transition-colors border-b border-gray-100 last:border-0">
                                                     <td className="px-2 py-4 text-[10px] font-bold text-gray-400">{(index + 1).toString().padStart(2, '0')}</td>
                                                     <td className="px-3 py-4 max-w-[150px] lg:max-w-xs">
-                                                        <p className="font-bold text-gray-900 text-sm truncate leading-tight" title={item.nama_barang}>
-                                                            {item.nama_barang}
-                                                        </p>
+                                                        <input
+                                                            type="text"
+                                                            value={item.nama_barang}
+                                                            onChange={(e) => handleNamaBarangChange(item.barang_id, e.target.value)}
+                                                            className="w-full font-bold text-gray-900 text-sm border border-transparent hover:border-gray-200 focus:border-blue-400 focus:ring-2 focus:ring-blue-500/20 rounded px-1 py-0.5 outline-none transition-colors bg-transparent focus:bg-white"
+                                                        />
                                                         <div className="flex flex-col mt-0.5 text-[8px] uppercase tracking-tighter text-gray-400">
                                                             <span>{item.ud_nama} • {item.ud_kode}</span>
                                                         </div>
@@ -879,7 +1000,7 @@ export default function EditTransaksiPage() {
                                                         </button>
                                                     </td>
                                                 </tr>
-                                                {(item.satuan !== item.original_satuan || item.harga_jual !== item.original_harga_jual || item.harga_modal !== item.original_harga_modal) && (
+                                                {(item.nama_barang !== item.original_nama_barang || item.satuan !== item.original_satuan || item.harga_jual !== item.original_harga_jual || item.harga_modal !== item.original_harga_modal) && (
                                                     <tr className="bg-amber-50/30 border-b border-amber-100">
                                                         <td colSpan="10" className="px-4 py-2">
                                                             <div className="flex items-center justify-between">
@@ -935,9 +1056,12 @@ export default function EditTransaksiPage() {
                                                             <tr className="hover:bg-blue-50/20 transition-colors border-b border-gray-100 last:border-0">
                                                                 <td className="px-2 py-4 text-[10px] font-bold text-gray-400">{(localIndex + 1).toString().padStart(2, '0')}</td>
                                                                 <td className="px-3 py-4 max-w-[150px] lg:max-w-xs">
-                                                                    <p className="font-bold text-gray-900 text-sm truncate leading-tight" title={item.nama_barang}>
-                                                                        {item.nama_barang}
-                                                                    </p>
+                                                                    <input
+                                                                        type="text"
+                                                                        value={item.nama_barang}
+                                                                        onChange={(e) => handleNamaBarangChange(item.barang_id, e.target.value)}
+                                                                        className="w-full font-bold text-gray-900 text-sm border border-transparent hover:border-gray-200 focus:border-blue-400 focus:ring-2 focus:ring-blue-500/20 rounded px-1 py-0.5 outline-none transition-colors bg-transparent focus:bg-white"
+                                                                    />
                                                                     <div className="flex flex-col mt-0.5 text-[8px] uppercase tracking-tighter text-gray-400">
                                                                         <span>{item.ud_nama} • {item.ud_kode}</span>
                                                                     </div>
@@ -992,7 +1116,7 @@ export default function EditTransaksiPage() {
                                                                     </button>
                                                                 </td>
                                                             </tr>
-                                                            {(item.satuan !== item.original_satuan || item.harga_jual !== item.original_harga_jual || item.harga_modal !== item.original_harga_modal) && (
+                                                            {(item.nama_barang !== item.original_nama_barang || item.satuan !== item.original_satuan || item.harga_jual !== item.original_harga_jual || item.harga_modal !== item.original_harga_modal) && (
                                                                 <tr className="bg-amber-50/30 border-b border-amber-100">
                                                                     <td colSpan="10" className="px-4 py-2">
                                                                         <div className="flex items-center justify-between">
@@ -1047,14 +1171,19 @@ export default function EditTransaksiPage() {
                                 <div className="divide-y divide-gray-100">
                                     {filteredItems.map((item, index) => (
                                         <div key={item.barang_id} className="p-4 space-y-4">
-                                            <div className="flex justify-between items-start">
-                                                <div className="space-y-1">
-                                                    <p className="font-bold text-gray-900 leading-tight">{item.nama_barang}</p>
+                                            <div className="flex justify-between items-start gap-2">
+                                                <div className="space-y-1 flex-1 min-w-0">
+                                                    <input
+                                                        type="text"
+                                                        value={item.nama_barang}
+                                                        onChange={(e) => handleNamaBarangChange(item.barang_id, e.target.value)}
+                                                        className="w-full font-bold text-gray-900 leading-tight border border-transparent hover:border-gray-200 focus:border-blue-400 focus:ring-2 focus:ring-blue-500/20 rounded px-1 py-0.5 outline-none transition-colors bg-transparent focus:bg-white text-sm"
+                                                    />
                                                     <p className="text-[10px] text-gray-500 uppercase">{item.ud_nama || 'Tanpa UD'}</p>
                                                 </div>
                                                 <button
                                                     onClick={() => handleRemoveItem(item.barang_id)}
-                                                    className="p-2 text-red-500 hover:bg-red-50 rounded-lg"
+                                                    className="p-2 text-red-500 hover:bg-red-50 rounded-lg shrink-0"
                                                 >
                                                     <Trash2 className="w-5 h-5" />
                                                 </button>
@@ -1122,7 +1251,7 @@ export default function EditTransaksiPage() {
                                                     {formatCurrency((item.qty * item.harga_jual) - (item.qty * item.harga_modal))}
                                                 </span>
                                             </div>
-                                            {(item.satuan !== item.original_satuan || item.harga_jual !== item.original_harga_jual || item.harga_modal !== item.original_harga_modal) && (
+                                            {(item.nama_barang !== item.original_nama_barang || item.satuan !== item.original_satuan || item.harga_jual !== item.original_harga_jual || item.harga_modal !== item.original_harga_modal) && (
                                                 <button
                                                     onClick={() => handleUpdateBarangMaster(item)}
                                                     disabled={item.isUpdatingMaster}
@@ -1169,14 +1298,19 @@ export default function EditTransaksiPage() {
                                                             {localIndex + 1}
                                                         </span>
                                                     </div>
-                                                    <div className="flex justify-between items-start pl-6">
-                                                        <div className="space-y-1">
-                                                            <p className="font-bold text-gray-900 leading-tight">{item.nama_barang}</p>
+                                                    <div className="flex justify-between items-start pl-6 gap-2">
+                                                        <div className="space-y-1 flex-1 min-w-0">
+                                                            <input
+                                                                type="text"
+                                                                value={item.nama_barang}
+                                                                onChange={(e) => handleNamaBarangChange(item.barang_id, e.target.value)}
+                                                                className="w-full font-bold text-gray-900 leading-tight border border-transparent hover:border-gray-200 focus:border-blue-400 focus:ring-2 focus:ring-blue-500/20 rounded px-1 py-0.5 outline-none transition-colors bg-transparent focus:bg-white text-sm"
+                                                            />
                                                             <p className="text-[10px] text-gray-500 uppercase">{item.ud_nama || 'Tanpa UD'}</p>
                                                         </div>
                                                         <button
                                                             onClick={() => handleRemoveItem(item.barang_id)}
-                                                            className="p-2 text-red-500 hover:bg-red-50 rounded-lg"
+                                                            className="p-2 text-red-500 hover:bg-red-50 rounded-lg shrink-0"
                                                         >
                                                             <Trash2 className="w-5 h-5" />
                                                         </button>
@@ -1244,7 +1378,7 @@ export default function EditTransaksiPage() {
                                                             {formatCurrency((item.qty * item.harga_jual) - (item.qty * item.harga_modal))}
                                                         </span>
                                                     </div>
-                                                    {(item.satuan !== item.original_satuan || item.harga_jual !== item.original_harga_jual || item.harga_modal !== item.original_harga_modal) && (
+                                                    {(item.nama_barang !== item.original_nama_barang || item.satuan !== item.original_satuan || item.harga_jual !== item.original_harga_jual || item.harga_modal !== item.original_harga_modal) && (
                                                         <button
                                                             onClick={() => handleUpdateBarangMaster(item)}
                                                             disabled={item.isUpdatingMaster}
@@ -1479,6 +1613,63 @@ export default function EditTransaksiPage() {
                                 </button>
                             </div>
                         </form>
+                    </div>
+                </div>
+            )}
+
+            {/* Secure Clear Confirmation Modal */}
+            {showClearModal && (
+                <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+                    <div className="bg-white rounded-2xl w-full max-w-sm shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-200">
+                        <div className="px-6 py-4 border-b border-gray-100 bg-red-50 flex items-center gap-3">
+                            <div className="p-2 bg-red-100 rounded-lg text-red-600">
+                                <Trash2 className="w-5 h-5" />
+                            </div>
+                            <h3 className="text-lg font-bold text-gray-900">Konfirmasi Hapus Draft</h3>
+                        </div>
+
+                        <div className="p-6 space-y-4">
+                            <p className="text-sm text-gray-600 leading-relaxed text-center">
+                                Menghapus draft akan membuang semua perubahan sementara yang belum disimpan dan memuat ulang data asli dari server.
+                            </p>
+
+                            <div className="bg-gray-50 p-4 rounded-xl space-y-3 border border-gray-100">
+                                <div className="text-center">
+                                    <p className="text-[10px] uppercase font-bold text-gray-400 tracking-widest mb-1">Kode Konfirmasi</p>
+                                    <p className="text-3xl font-black text-gray-900 tracking-[0.5em] font-mono pl-[0.5em]">
+                                        {clearConfirmCode}
+                                    </p>
+                                </div>
+
+                                <div>
+                                    <input
+                                        type="text"
+                                        value={userInputCode}
+                                        onChange={(e) => setUserInputCode(e.target.value.toUpperCase())}
+                                        placeholder="Ketik kode di atas"
+                                        className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl text-center font-bold text-lg
+                                               focus:ring-2 focus:ring-red-500/20 focus:border-red-500 outline-none transition-all placeholder:font-normal placeholder:text-sm"
+                                        autoFocus
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="flex gap-3">
+                                <button
+                                    onClick={() => setShowClearModal(false)}
+                                    className="flex-1 py-3 text-sm font-bold text-gray-500 hover:bg-gray-50 rounded-xl transition-all"
+                                >
+                                    Batal
+                                </button>
+                                <button
+                                    onClick={handleConfirmClear}
+                                    className="flex-1 py-3 bg-red-600 text-white text-sm font-bold rounded-xl hover:bg-red-700
+                                           shadow-lg shadow-red-500/20 active:scale-95 transition-all"
+                                >
+                                    Hapus Draft
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 </div>
             )}

@@ -268,6 +268,7 @@ export default function NewTransaksiPage() {
                 ud_nama: barang.ud_id?.nama_ud,
                 ud_kode: barang.ud_id?.kode_ud,
                 qty: 1,
+                original_nama_barang: barang.nama_barang,
                 original_satuan: barang.satuan,
                 original_harga_jual: barang.harga_jual,
                 original_harga_modal: barang.harga_modal || 0,
@@ -318,6 +319,7 @@ export default function NewTransaksiPage() {
                         ud_nama: udList.find(ud => ud._id === (createdBarang.ud_id?._id || createdBarang.ud_id))?.nama_ud,
                         ud_kode: udList.find(ud => ud._id === (createdBarang.ud_id?._id || createdBarang.ud_id))?.kode_ud,
                         qty: 1,
+                        original_nama_barang: createdBarang.nama_barang,
                         original_satuan: createdBarang.satuan,
                         original_harga_jual: createdBarang.harga_jual,
                         original_harga_modal: createdBarang.harga_modal || 0,
@@ -377,6 +379,12 @@ export default function NewTransaksiPage() {
         );
     };
 
+    const handleNamaBarangChange = (barangId, value) => {
+        setItems((prev) =>
+            prev.map((item) => (item.barang_id === barangId ? { ...item, nama_barang: value } : item))
+        );
+    };
+
     const handleHargaModalChange = (barangId, harga) => {
         const newHarga = Math.max(0, parseInt(harga) || 0);
         setItems((prev) =>
@@ -390,6 +398,7 @@ export default function NewTransaksiPage() {
             setItems(prev => prev.map(i => i.barang_id === item.barang_id ? { ...i, isUpdatingMaster: true } : i));
 
             const payload = {
+                nama_barang: item.nama_barang,
                 satuan: item.satuan,
                 harga_jual: item.harga_jual,
                 harga_modal: item.harga_modal
@@ -402,6 +411,7 @@ export default function NewTransaksiPage() {
                 // Update original values to current values
                 setItems(prev => prev.map(i => i.barang_id === item.barang_id ? {
                     ...i,
+                    original_nama_barang: item.nama_barang,
                     original_satuan: item.satuan,
                     original_harga_jual: item.harga_jual,
                     original_harga_modal: item.harga_modal,
@@ -822,9 +832,14 @@ export default function NewTransaksiPage() {
                                             <tr key={item.barang_id} className="hover:bg-gray-50 transition-colors">
                                                 <td className="px-4 py-4 text-gray-600">{index + 1}</td>
                                                 <td className="px-4 py-4">
-                                                    <p className="font-medium text-gray-900">{item.nama_barang}</p>
+                                                    <input
+                                                        type="text"
+                                                        value={item.nama_barang}
+                                                        onChange={(e) => handleNamaBarangChange(item.barang_id, e.target.value)}
+                                                        className="w-full font-medium text-gray-900 border border-transparent hover:border-gray-200 focus:border-blue-400 focus:ring-2 focus:ring-blue-500/20 rounded px-1 py-0.5 outline-none transition-colors bg-transparent focus:bg-white"
+                                                    />
                                                     <p className="text-[10px] text-gray-400 uppercase tracking-tighter">{item.ud_nama} • {item.ud_kode}</p>
-                                                    {(item.satuan !== item.original_satuan || item.harga_jual !== item.original_harga_jual || item.harga_modal !== item.original_harga_modal) && (
+                                                    {(item.nama_barang !== item.original_nama_barang || item.satuan !== item.original_satuan || item.harga_jual !== item.original_harga_jual || item.harga_modal !== item.original_harga_modal) && (
                                                         <button
                                                             onClick={() => handleUpdateBarangMaster(item)}
                                                             disabled={item.isUpdatingMaster}
@@ -923,9 +938,14 @@ export default function NewTransaksiPage() {
                                                                 {localIndex + 1}
                                                             </td>
                                                             <td className="px-4 py-4">
-                                                                <p className="font-medium text-gray-900">{item.nama_barang}</p>
+                                                                <input
+                                                                    type="text"
+                                                                    value={item.nama_barang}
+                                                                    onChange={(e) => handleNamaBarangChange(item.barang_id, e.target.value)}
+                                                                    className="w-full font-medium text-gray-900 border border-transparent hover:border-gray-200 focus:border-blue-400 focus:ring-2 focus:ring-blue-500/20 rounded px-1 py-0.5 outline-none transition-colors bg-transparent focus:bg-white"
+                                                                />
                                                                 <p className="text-[10px] text-gray-400 uppercase tracking-tighter">{item.ud_nama} • {item.ud_kode}</p>
-                                                                {(item.satuan !== item.original_satuan || item.harga_jual !== item.original_harga_jual || item.harga_modal !== item.original_harga_modal) && (
+                                                                {(item.nama_barang !== item.original_nama_barang || item.satuan !== item.original_satuan || item.harga_jual !== item.original_harga_jual || item.harga_modal !== item.original_harga_modal) && (
                                                                     <button
                                                                         onClick={() => handleUpdateBarangMaster(item)}
                                                                         disabled={item.isUpdatingMaster}
@@ -1020,14 +1040,19 @@ export default function NewTransaksiPage() {
                                 <div className="divide-y divide-gray-100">
                                     {filteredItems.map((item, index) => (
                                         <div key={item.barang_id} className="p-4 space-y-4">
-                                            <div className="flex justify-between items-start">
-                                                <div className="space-y-1">
-                                                    <p className="font-bold text-gray-900 leading-tight">{item.nama_barang}</p>
+                                            <div className="flex justify-between items-start gap-2">
+                                                <div className="space-y-1 flex-1 min-w-0">
+                                                    <input
+                                                        type="text"
+                                                        value={item.nama_barang}
+                                                        onChange={(e) => handleNamaBarangChange(item.barang_id, e.target.value)}
+                                                        className="w-full font-bold text-gray-900 leading-tight border border-transparent hover:border-gray-200 focus:border-blue-400 focus:ring-2 focus:ring-blue-500/20 rounded px-1 py-0.5 outline-none transition-colors bg-transparent focus:bg-white text-sm"
+                                                    />
                                                     <p className="text-[10px] text-gray-500 uppercase">{item.ud_nama || 'Tanpa UD'}</p>
                                                 </div>
                                                 <button
                                                     onClick={() => handleRemoveItem(item.barang_id)}
-                                                    className="p-2 text-red-500 hover:bg-red-50 rounded-lg"
+                                                    className="p-2 text-red-500 hover:bg-red-50 rounded-lg shrink-0"
                                                 >
                                                     <Trash2 className="w-5 h-5" />
                                                 </button>
@@ -1095,7 +1120,7 @@ export default function NewTransaksiPage() {
                                                     {formatCurrency((item.qty * item.harga_jual) - (item.qty * item.harga_modal))}
                                                 </span>
                                             </div>
-                                            {(item.satuan !== item.original_satuan || item.harga_jual !== item.original_harga_jual || item.harga_modal !== item.original_harga_modal) && (
+                                            {(item.nama_barang !== item.original_nama_barang || item.satuan !== item.original_satuan || item.harga_jual !== item.original_harga_jual || item.harga_modal !== item.original_harga_modal) && (
                                                 <button
                                                     onClick={() => handleUpdateBarangMaster(item)}
                                                     disabled={item.isUpdatingMaster}
@@ -1144,14 +1169,19 @@ export default function NewTransaksiPage() {
                                                             {localIndex + 1}
                                                         </span>
                                                     </div>
-                                                    <div className="flex justify-between items-start pl-6">
-                                                        <div className="space-y-1">
-                                                            <p className="font-bold text-gray-900 leading-tight">{item.nama_barang}</p>
+                                                    <div className="flex justify-between items-start pl-6 gap-2">
+                                                        <div className="space-y-1 flex-1 min-w-0">
+                                                            <input
+                                                                type="text"
+                                                                value={item.nama_barang}
+                                                                onChange={(e) => handleNamaBarangChange(item.barang_id, e.target.value)}
+                                                                className="w-full font-bold text-gray-900 leading-tight border border-transparent hover:border-gray-200 focus:border-blue-400 focus:ring-2 focus:ring-blue-500/20 rounded px-1 py-0.5 outline-none transition-colors bg-transparent focus:bg-white text-sm"
+                                                            />
                                                             <p className="text-[10px] text-gray-500 uppercase">{item.ud_nama || 'Tanpa UD'}</p>
                                                         </div>
                                                         <button
                                                             onClick={() => handleRemoveItem(item.barang_id)}
-                                                            className="p-2 text-red-500 hover:bg-red-50 rounded-lg"
+                                                            className="p-2 text-red-500 hover:bg-red-50 rounded-lg shrink-0"
                                                         >
                                                             <Trash2 className="w-5 h-5" />
                                                         </button>
@@ -1219,7 +1249,7 @@ export default function NewTransaksiPage() {
                                                             {formatCurrency((item.qty * item.harga_jual) - (item.qty * item.harga_modal))}
                                                         </span>
                                                     </div>
-                                                    {(item.satuan !== item.original_satuan || item.harga_jual !== item.original_harga_jual || item.harga_modal !== item.original_harga_modal) && (
+                                                    {(item.nama_barang !== item.original_nama_barang || item.satuan !== item.original_satuan || item.harga_jual !== item.original_harga_jual || item.harga_modal !== item.original_harga_modal) && (
                                                         <button
                                                             onClick={() => handleUpdateBarangMaster(item)}
                                                             disabled={item.isUpdatingMaster}
